@@ -14,6 +14,8 @@ let allFiles = [];   // flat list: { name, path, handle }
 let activeEl = null; // currently highlighted sidebar item
 let spyHandler = null; // scroll-spy for the outline
 let singleFileHandle = null; // held when in single-file mode, used to expand to folder
+let activeTab = 'file';      // 'folder' = sibling tree, 'file' = current file only
+let currentFileNode = null;  // the file currently open in the reading pane
 
 // Content width presets
 const WIDTHS = ['narrow', 'medium', 'wide', 'full'];
@@ -39,6 +41,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function bindUI() {
   bindOpenMenus();
+  document.querySelectorAll('.sb-tab').forEach(tab => {
+    tab.addEventListener('click', () => setActiveTab(tab.dataset.tab));
+  });
+  // Sync search visibility to the initial tab without clobbering the welcome text.
+  document.querySelector('.sidebar-search').style.display = activeTab === 'folder' ? '' : 'none';
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
   document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
   document.getElementById('widthToggle').addEventListener('click', cycleWidth);
@@ -129,6 +136,34 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
+// ── Sidebar tabs (Folder = sibling tree, File = current file only) ──
+function setActiveTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.sb-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
+  // Search only applies to the folder listing.
+  document.querySelector('.sidebar-search').style.display = tab === 'folder' ? '' : 'none';
+  renderSidebarTree();
+}
+
+// Render #fileTree according to the active tab and current search query.
+function renderSidebarTree() {
+  const container = document.getElementById('fileTree');
+  if (activeTab === 'file') {
+    renderTree(currentFileNode ? [currentFileNode] : [], container);
+  } else {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (q) {
+      const matched = allFiles.filter(f =>
+        f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
+      renderTree(matched, container);
+    } else {
+      renderTree(buildTree(), container);
+    }
+  }
+  if (currentFileNode) highlightSidebar(currentFileNode);
+}
+
 // ── Folder selection ────────────────────────────────────────────────
 async function selectFolder() {
   try {
@@ -170,7 +205,7 @@ async function openSingleFile(handle) {
   document.getElementById('folderNameText').textContent = handle.name;
   showExpandHint(() => expandToFolder(handle));
 
-  renderTree([node], document.getElementById('fileTree'));
+  setActiveTab('file');
   await openFile(node);
 }
 
@@ -215,20 +250,20 @@ async function openDirectContent(name, text, srcUrl) {
   showMarkdownBody();
   document.getElementById('folderNameText').textContent = name;
   document.getElementById('fileStats').textContent = '';
-  renderTree([node], document.getElementById('fileTree'));
+  setActiveTab('file'); // default to the File tab on direct open
   await openFile(node);
 
-  // Discover the other .md files sitting next to this one.
+  // Discover the other .md files sitting next to this one (fills the Folder tab).
   if (srcUrl) {
     try {
       const { dirUrl, nodes } = await loadSiblingsFromUrl(srcUrl, name, text);
       allFiles = nodes;
       window._cachedTree = nodes;
+      currentFileNode = nodes.find(n => n.name === name) || currentFileNode;
       const dirName = decodeURIComponent(dirUrl.replace(/\/+$/, '').split('/').pop()) || dirUrl;
       document.getElementById('folderNameText').textContent = dirName;
       document.getElementById('fileStats').textContent = `${nodes.length} 个 Markdown 文件`;
-      renderTree(nodes, document.getElementById('fileTree'));
-      highlightSidebar(nodes.find(n => n.name === name) || nodes[0]);
+      renderSidebarTree(); // stays on File tab; Folder tab now has the siblings
       return;
     } catch (e) {
       console.warn('[Leaflet Mark View] 无法列出同目录文件，回退到手动选择:', e);
@@ -376,7 +411,7 @@ async function loadFolder(dirHandle, preferName = null) {
   window._cachedTree = tree;
   allFiles = flattenFiles(tree);
 
-  renderTree(tree, document.getElementById('fileTree'));
+  setActiveTab('folder'); // folder picker → default to the Folder tab
   document.getElementById('fileStats').textContent = `${allFiles.length} 个 Markdown 文件`;
 
   if (allFiles.length > 0) {
@@ -468,23 +503,10 @@ function createNode(node) {
 }
 
 // ── Search ──────────────────────────────────────────────────────────
-function onSearch(e) {
-  const q = e.target.value.trim().toLowerCase();
-  if (!q) {
-    renderTree(buildTree(), document.getElementById('fileTree'));
-    return;
-  }
-  const matched = allFiles.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
-  const container = document.getElementById('fileTree');
-  container.innerHTML = '';
-  if (matched.length === 0) {
-    container.innerHTML = '<div class="sidebar-empty">无匹配结果</div>';
-    return;
-  }
-  matched.forEach(node => {
-    const el = createNode(node);
-    container.appendChild(el);
-  });
+function onSearch() {
+  // Searching always operates on the folder listing.
+  if (activeTab !== 'folder') setActiveTab('folder');
+  else renderSidebarTree();
 }
 
 function buildTree() {
@@ -493,7 +515,11 @@ function buildTree() {
 
 // ── File opening ────────────────────────────────────────────────────
 async function openFile(node) {
-  highlightSidebar(node);
+  currentFileNode = node;
+  // In file-tab view the list shows only the open file, so re-render to reflect
+  // the switch; otherwise just move the highlight within the folder tree.
+  if (activeTab === 'file') renderSidebarTree();
+  else highlightSidebar(node);
 
   // Direct (file://) mode: keep the address bar pointed at the open file so a
   // refresh reopens it instead of the file we first arrived on.
