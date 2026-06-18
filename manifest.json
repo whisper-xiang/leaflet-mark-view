@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Leaflet Mark View",
+  "version": "1.0.0",
+  "author": "轻语",
+  "description": "Browse and preview Markdown files from local folders",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["file:///*"],
+  "content_scripts": [
+    {
+      "matches": ["file:///*"],
+      "js": ["markdown.js", "content.js"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["viewer.html", "viewer.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

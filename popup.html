@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet Mark View</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fcfcfb;
+      --surface: #f5f5f3;
+      --border: #e6e6e1;
+      --text: #1a1a17;
+      --text-muted: #6b6b63;
+      --text-faint: #9a9a90;
+      --accent: #2f6f4e;
+      --accent-hover: #275d42;
+      --accent-soft: #e9f1ec;
+      --accent-on: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101210;
+        --surface: #0b0d0b;
+        --border: #23261f;
+        --text: #e7e9e3;
+        --text-muted: #8a8d83;
+        --text-faint: #5c6057;
+        --accent: #5fae84;
+        --accent-hover: #6ebf93;
+        --accent-soft: #16241c;
+        --accent-on: #0b0d0b;
+      }
+    }
+
+    body {
+      width: 300px;
+      font-family: ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    svg { display: block; }
+
+    .header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .logo-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 21px; height: 21px; }
+
+    .logo h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+    .logo .tagline { font-size: 11.5px; color: var(--text-faint); margin-top: 2px; }
+
+    .body { padding: 16px 20px 18px; }
+
+    .open-btn {
+      width: 100%;
+      height: 40px;
+      background: var(--accent);
+      color: var(--accent-on);
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 550;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background .14s ease, transform .08s ease;
+    }
+    .open-btn svg { width: 15px; height: 15px; }
+    .open-btn:hover { background: var(--accent-hover); }
+    .open-btn:active { transform: translateY(1px); }
+
+    .features {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .feature-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .feature-icon svg { width: 14px; height: 14px; }
+
+    .footer {
+      padding: 11px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 10.5px;
+      color: var(--text-faint);
+      text-align: center;
+      letter-spacing: .01em;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Leaflet Mark View</h1>
+        <div class="tagline">本地 Markdown 阅读器</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    <button class="open-btn" id="openBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+      </svg>
+      打开阅读器
+    </button>
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+        </span>
+        选择本地文件夹，浏览全部 .md 文件
+      </div>
+      <div class="feature">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        </span>
+        完整 GFM 渲染：表格、任务列表、引用
+      </div>
+      <div class="feature">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
+        </span>
+        代码语法高亮，等宽排版
+      </div>
+      <div class="feature">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </span>
+        深色 / 浅色主题切换
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Leaflet Mark View · v1.0</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
