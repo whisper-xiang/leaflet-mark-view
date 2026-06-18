@@ -504,7 +504,12 @@ async function loadFolder(dirHandle, preferName = null) {
   }
 }
 
+function setHomeMode(on) {
+  document.body.classList.toggle('is-home', on);
+}
+
 function showMarkdownBody() {
+  setHomeMode(false);
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('markdownBody').style.display = 'block';
 }
@@ -835,6 +840,7 @@ function goHome() {
   exitSourceMode();
   currentFileNode = null;
 
+  setHomeMode(true);
   document.getElementById('emptyState').style.display = '';
   document.getElementById('markdownBody').style.display = 'none';
   document.getElementById('markdownBody').innerHTML = '';
@@ -882,6 +888,7 @@ async function openFile(node) {
   }
 
   document.getElementById('filePath').textContent = node.path;
+  showMarkdownBody();
   setContent(`<div class="loading"><div class="spinner"></div>加载中…</div>`);
 
   try {
