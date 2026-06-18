@@ -257,7 +257,7 @@ async function selectFile() {
 }
 
 // Open a single .md file with no surrounding folder.
-async function openSingleFile(handle) {
+async function openSingleFile(handle, { autoOpen = true } = {}) {
   rootHandle = null;
   singleFileHandle = handle;
   scopeKey = 'file:' + handle.name;
@@ -266,12 +266,13 @@ async function openSingleFile(handle) {
   allFiles = [node];
   window._cachedTree = [node];
 
-  showMarkdownBody();
   document.getElementById('folderNameText').textContent = handle.name;
-  showExpandHint(() => expandToFolder(handle));
-
   setActiveTab('file');
-  await openFile(node);
+  if (autoOpen) {
+    showMarkdownBody();
+    showExpandHint(() => expandToFolder(handle));
+    await openFile(node);
+  }
 }
 
 // Retrieve content stored by the content script redirect and open it.
@@ -290,7 +291,7 @@ async function tryOpenPending(key, name, srcUrl) {
       text = await r.text();
     }
     if (text != null) {
-      await openDirectContent(name, text, srcUrl);
+      await openDirectContent(name, text, srcUrl, { autoOpen: false });
     } else {
       await tryRestoreFolder();
     }
@@ -304,22 +305,26 @@ async function tryOpenPending(key, name, srcUrl) {
 // We only have the raw text + the file's file:// URL (no FS Access handle), so
 // we render immediately, then try to enumerate sibling .md files by fetching the
 // parent directory listing. If that fails, fall back to a manual folder picker.
-async function openDirectContent(name, text, srcUrl) {
+async function openDirectContent(name, text, srcUrl, { autoOpen = true } = {}) {
   rootHandle = null;
   singleFileHandle = null;
   // Scope memory to the containing directory so it stays stable when siblings load.
   scopeKey = 'dir:' + (srcUrl ? srcUrl.slice(0, srcUrl.lastIndexOf('/') + 1) : name);
   searchIndexBuilt = false;
 
-  const node = { kind: 'file', name, path: name, handle: memHandle(name, text) };
+  const node = { kind: 'file', name, path: name, handle: memHandle(name, text), __text: text };
   allFiles = [node];
   window._cachedTree = [node];
 
-  showMarkdownBody();
   document.getElementById('folderNameText').textContent = name;
   document.getElementById('fileStats').textContent = '';
-  setActiveTab('file'); // default to the File tab on direct open
-  await openFile(node);
+  setActiveTab('file');
+  if (autoOpen) {
+    showMarkdownBody();
+    await openFile(node);
+  } else {
+    clearFileUrlParams();
+  }
 
   // Discover the other .md files sitting next to this one (fills the Folder tab).
   if (srcUrl) {
@@ -328,11 +333,13 @@ async function openDirectContent(name, text, srcUrl) {
       allFiles = nodes;
       window._cachedTree = nodes;
       searchIndexBuilt = false;
-      const oldNode = currentFileNode;
-      currentFileNode = nodes.find(n => n.name === name) || currentFileNode;
-      // openFile() set __text on the old node; carry it over to the replacement.
-      if (currentFileNode !== oldNode && oldNode?.__text != null) {
-        currentFileNode.__text = oldNode.__text;
+      if (autoOpen) {
+        const oldNode = currentFileNode;
+        currentFileNode = nodes.find(n => n.name === name) || currentFileNode;
+        // openFile() set __text on the old node; carry it over to the replacement.
+        if (currentFileNode !== oldNode && oldNode?.__text != null) {
+          currentFileNode.__text = oldNode.__text;
+        }
       }
       const dirName = decodeURIComponent(dirUrl.replace(/\/+$/, '').split('/').pop()) || dirUrl;
       document.getElementById('folderNameText').textContent = dirName;
@@ -343,7 +350,7 @@ async function openDirectContent(name, text, srcUrl) {
       console.warn('[Leaflet Mark View] 无法列出同目录文件，回退到手动选择:', e);
     }
   }
-  showExpandHint(() => selectFolder());
+  if (autoOpen) showExpandHint(() => selectFolder());
 }
 
 // Synthetic handle backed by in-memory text (the file we already have).
@@ -452,10 +459,10 @@ async function tryRestoreFolder() {
 // Restore either a directory or a single file, depending on the handle kind.
 async function restoreHandle(handle) {
   if (handle.kind === 'file') {
-    await openSingleFile(handle);
+    await openSingleFile(handle, { autoOpen: false });
   } else {
     rootHandle = handle;
-    await loadFolder(handle);
+    await loadFolder(handle, null, { autoOpen: false });
   }
 }
 
@@ -475,9 +482,11 @@ function showReconnectBanner(handle) {
 }
 
 // ── Directory scanning ──────────────────────────────────────────────
-async function loadFolder(dirHandle, preferName = null) {
-  showMarkdownBody();
-  setContent(`<div class="loading"><div class="spinner"></div>正在扫描文件夹…</div>`);
+async function loadFolder(dirHandle, preferName = null, { autoOpen = true } = {}) {
+  if (autoOpen) {
+    showMarkdownBody();
+    setContent(`<div class="loading"><div class="spinner"></div>正在扫描文件夹…</div>`);
+  }
   document.getElementById('folderNameText').textContent = dirHandle.name;
   document.getElementById('fileStats').textContent = '';
 
@@ -492,13 +501,15 @@ async function loadFolder(dirHandle, preferName = null) {
   document.getElementById('fileStats').textContent = `${allFiles.length} 个 Markdown 文件`;
 
   if (allFiles.length > 0) {
-    // Prefer an explicit request, then the file open last time in this folder.
-    const lastPath = localStorage.getItem(lastFileKey());
-    const target = (preferName && allFiles.find(f => f.name === preferName))
-      || (lastPath && allFiles.find(f => f.path === lastPath))
-      || allFiles[0];
-    openFile(target);
-  } else {
+    if (autoOpen) {
+      // Prefer an explicit request, then the file open last time in this folder.
+      const lastPath = localStorage.getItem(lastFileKey());
+      const target = (preferName && allFiles.find(f => f.name === preferName))
+        || (lastPath && allFiles.find(f => f.path === lastPath))
+        || allFiles[0];
+      openFile(target);
+    }
+  } else if (autoOpen) {
     clearOutline();
     setContent('<div class="loading">未找到 Markdown 文件</div>');
   }
@@ -834,6 +845,14 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
+function clearFileUrlParams() {
+  const u = new URL(location.href);
+  u.searchParams.delete('pending');
+  u.searchParams.delete('name');
+  u.searchParams.delete('src');
+  history.replaceState(null, '', u.pathname + u.search);
+}
+
 // Return to the welcome home screen (clear open file, keep folder sidebar).
 function goHome() {
   if (editMode && isDirty() && !confirm('当前文件有未保存的修改，确定放弃并返回主页？')) return;
@@ -856,11 +875,7 @@ function goHome() {
   }
   if (activeTab === 'file') renderSidebarTree();
 
-  const u = new URL(location.href);
-  u.searchParams.delete('pending');
-  u.searchParams.delete('name');
-  u.searchParams.delete('src');
-  history.replaceState(null, '', u.pathname + u.search);
+  clearFileUrlParams();
   document.getElementById('contentArea').scrollTop = 0;
 }
 

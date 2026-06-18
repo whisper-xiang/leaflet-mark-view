@@ -587,7 +587,7 @@ body.is-home .content-area::-webkit-scrollbar-thumb { border-color: transparent;
 }
 
 body.is-home .empty-state {
-  opacity: 0.22;
+  opacity: 0;
   transform: translateY(20px) scale(0.96);
   pointer-events: none;
   transition:
