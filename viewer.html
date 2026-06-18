@@ -10,37 +10,56 @@
 
 <!-- Top bar -->
 <header class="topbar">
-  <div class="topbar-logo">
+  <button type="button" class="topbar-logo" id="homeBtn" title="回到主页">
     <svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
       <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
       <path d="M2 21c0-3 1.85-5.36 5.08-6"/>
     </svg>
     Leaflet Mark View
-  </div>
+  </button>
 
   <div class="topbar-divider"></div>
 
   <div class="topbar-file-path" id="filePath">未打开文件</div>
 
   <div class="topbar-actions">
-    <button class="btn-icon btn-text" id="fontSizeToggle" title="调整字体大小">
+    <!-- Contextual: only shown while editing source -->
+    <button class="btn-icon" id="saveFile" title="保存 (⌘/Ctrl+S)" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19V7a2 2 0 0 1 2-2h2M4 13h6M14 19v-8a2 2 0 0 1 2-2h2M14 15h6"/>
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/>
       </svg>
-      <span class="label" id="fontSizeLabel">中</span>
     </button>
-    <button class="btn-icon btn-text" id="widthToggle" title="调整内容宽度">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 9v6M3 9v6M8 12h8M8 12l2.5-2.5M8 12l2.5 2.5M16 12l-2.5-2.5M16 12l-2.5 2.5"/>
-      </svg>
-      <span class="label" id="widthLabel">中</span>
+    <span class="readonly-hint" id="readonlyHint" style="display:none" title="此来源（file:// 直接打开）无法原地写回，保存时将弹出「另存为」">只读 · 另存</span>
+
+    <button class="btn-icon edit-fab" id="editToggle" aria-label="源码 / 编辑">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
     </button>
+
     <button class="btn-icon" id="themeToggle" title="切换主题"></button>
-    <button class="btn-icon" id="outlineToggle" title="显示 / 隐藏大纲">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-      </svg>
-    </button>
+
+    <!-- Settings: hover to reveal the operation list -->
+    <div class="settings-menu">
+      <button class="btn-icon" id="settingsTrigger" title="设置" aria-haspopup="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <div class="settings-list" role="menu">
+        <button class="settings-item" id="fontSizeToggle" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V7a2 2 0 0 1 2-2h2M4 13h6M14 19v-8a2 2 0 0 1 2-2h2M14 15h6"/></svg>
+          <span class="settings-label">字体大小</span><span class="settings-val" id="fontSizeLabel">中</span>
+        </button>
+        <button class="settings-item" id="widthToggle" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 9v6M3 9v6M8 12h8M8 12l2.5-2.5M8 12l2.5 2.5M16 12l-2.5-2.5M16 12l-2.5 2.5"/></svg>
+          <span class="settings-label">内容宽度</span><span class="settings-val" id="widthLabel">中</span>
+        </button>
+        <button class="settings-item" id="outlineToggle" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <span class="settings-label">显示 / 隐藏大纲</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -159,6 +178,9 @@
 
     <!-- Markdown output (hidden until folder is loaded) -->
     <article class="markdown-body" id="markdownBody" style="display:none"></article>
+
+    <!-- Raw source editor (shown when source mode is toggled) -->
+    <textarea class="source-editor" id="sourceEditor" spellcheck="false" style="display:none"></textarea>
 
   </main>
 

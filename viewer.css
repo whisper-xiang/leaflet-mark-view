@@ -49,6 +49,7 @@
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, monospace;
 
   --topbar-h: 52px;
+  --outline-w: 236px;
 }
 
 [data-theme="dark"] {
@@ -134,7 +135,16 @@ svg { display: block; }
   font-weight: 600;
   letter-spacing: -0.01em;
   flex-shrink: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  padding: 4px 8px;
+  margin: 0 0 0 -8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .14s ease;
 }
+.topbar-logo:hover { background: var(--surface-hover); }
 
 .topbar-logo .leaf { color: var(--accent); width: 19px; height: 19px; }
 
@@ -797,7 +807,7 @@ svg { display: block; }
 
 /* ── Outline (right-hand TOC) ── */
 .outline {
-  width: 236px;
+  width: var(--outline-w);
   flex-shrink: 0;
   border-left: 1px solid var(--border);
   background: var(--bg);
@@ -863,3 +873,216 @@ svg { display: block; }
   .sidebar { display: none; }
   .content-area { padding: 28px 22px 64px; }
 }
+
+/* ── Search results (full-text) ─────────────────────────────────────── */
+.tree-file.search-result {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  white-space: normal;
+}
+.tree-file.search-result .sr-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+.tree-file.search-result .tree-file-name { white-space: nowrap; }
+.sr-snippet {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  padding-left: 22px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tree-file mark,
+.sr-snippet mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 0 1px;
+  font-weight: 600;
+}
+
+/* ── YAML front matter card ──────────────────────────────────────────── */
+.markdown-body .front-matter {
+  margin: 0 0 28px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.markdown-body .front-matter .fm-row {
+  display: flex;
+  gap: 12px;
+  padding: 3px 0;
+}
+.markdown-body .front-matter .fm-row + .fm-row { border-top: 1px solid var(--border); }
+.markdown-body .front-matter .fm-key {
+  flex: 0 0 120px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.markdown-body .front-matter .fm-val { flex: 1; color: var(--text); word-break: break-word; }
+
+/* ── Source editor (source ↔ preview) ────────────────────────────────── */
+.source-editor {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - var(--topbar-h) - 160px);
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  tab-size: 2;
+  resize: none;
+  outline: none;
+}
+.source-editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.btn-icon.active { background: var(--accent-soft); color: var(--accent); }
+.btn-icon:disabled { opacity: .4; cursor: default; pointer-events: none; }
+
+/* Unsaved-changes dot on the save button */
+#saveFile { position: relative; }
+#saveFile.dirty { color: var(--accent); }
+#saveFile.dirty::after {
+  content: "";
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.readonly-hint {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: help;
+  user-select: none;
+}
+
+/* Transient toast */
+.lmv-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 200;
+}
+.lmv-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Settings menu (hover-reveal operation list) ─────────────────────── */
+.settings-menu { position: relative; }
+
+.settings-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 208px;
+  padding: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity .14s ease, transform .14s ease, visibility .14s;
+  z-index: 100;
+}
+/* Bridge the 6px gap so the menu stays open while moving from trigger to list. */
+.settings-list::before {
+  content: "";
+  position: absolute;
+  top: -8px; left: 0; right: 0;
+  height: 8px;
+}
+.settings-menu:hover .settings-list,
+.settings-list:hover,
+.settings-menu:focus-within .settings-list {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.settings-menu:hover #settingsTrigger { background: var(--surface-hover); color: var(--text); }
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .1s ease, color .1s ease;
+}
+.settings-item:hover { background: var(--surface-hover); color: var(--text); }
+.settings-item:disabled { opacity: .4; cursor: default; pointer-events: none; }
+.settings-item.active { color: var(--accent); }
+.settings-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.settings-item .settings-label { flex: 1; }
+.settings-item .settings-val {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  background: var(--surface);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+/* ── Source/edit toggle (topbar) ─────────────────────────────────── */
+.edit-fab {
+  position: relative;
+}
+.edit-fab::before {
+  content: '查看 / 编辑源码\A快捷键 Ctrl+E';
+  white-space: pre;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--text);
+  color: var(--bg-elevated);
+  font-size: 12px;
+  line-height: 1.8;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s ease;
+  text-align: right;
+  z-index: 100;
+}
+.edit-fab.active::before { content: '返回预览\A快捷键 Ctrl+E'; }
+.edit-fab:hover::before { opacity: 1; }
+.settings-item.active .settings-val { color: var(--accent); background: var(--accent-soft); }

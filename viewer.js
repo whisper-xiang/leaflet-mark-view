@@ -16,6 +16,10 @@ let spyHandler = null; // scroll-spy for the outline
 let singleFileHandle = null; // held when in single-file mode, used to expand to folder
 let activeTab = 'file';      // 'folder' = sibling tree, 'file' = current file only
 let currentFileNode = null;  // the file currently open in the reading pane
+let scopeKey = '';           // identifies the current folder/file set, for per-scope memory
+let searchIndexBuilt = false; // whether every file's text has been read for full-text search
+let restoringScroll = false;  // guard so programmatic scroll restore doesn't overwrite saved pos
+let editMode = false;         // true = source editor shown, false = rendered preview
 
 // Content width presets
 const WIDTHS = ['narrow', 'medium', 'wide', 'full'];
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyStoredTheme();
   applyStoredWidth();
   applyStoredFontSize();
+  updateEditAvailability();
 
   const params = new URLSearchParams(location.search);
   const pendingKey = params.get('pending');
@@ -52,12 +57,50 @@ function bindUI() {
   // Sync search visibility to the initial tab without clobbering the welcome text.
   document.querySelector('.sidebar-search').style.display = activeTab === 'folder' ? '' : 'none';
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('editToggle').addEventListener('click', toggleSourceMode);
+  document.getElementById('saveFile').addEventListener('click', saveCurrentFile);
+  document.getElementById('sourceEditor').addEventListener('input', () => refreshDirtyState());
+  // Cmd/Ctrl+S saves while editing; Ctrl+E toggles source/preview.
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+      if (editMode) { e.preventDefault(); saveCurrentFile(); }
+    } else if (e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'e') {
+      if (currentFileNode) { e.preventDefault(); toggleSourceMode(); }
+    }
+  });
   document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
   document.getElementById('sidebarExpand').addEventListener('click', toggleSidebar);
   document.getElementById('widthToggle').addEventListener('click', cycleWidth);
   document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
   document.getElementById('searchInput').addEventListener('input', onSearch);
+  document.getElementById('homeBtn').addEventListener('click', goHome);
+
+  // Remember reading position per file (throttled; skip the programmatic restore).
+  let scrollSaveTimer;
+  document.getElementById('contentArea').addEventListener('scroll', () => {
+    if (restoringScroll || editMode || !currentFileNode) return;
+    clearTimeout(scrollSaveTimer);
+    scrollSaveTimer = setTimeout(() => {
+      if (currentFileNode) saveScroll(currentFileNode, document.getElementById('contentArea').scrollTop);
+    }, 200);
+  }, { passive: true });
+}
+
+// ── Per-scope reading memory (last file + scroll position) ──────────
+function lastFileKey() { return 'lmv-last:' + scopeKey; }
+function scrollKey(node) { return 'lmv-pos:' + scopeKey + ':' + node.path; }
+
+function saveLastFile(node) {
+  if (scopeKey) { try { localStorage.setItem(lastFileKey(), node.path); } catch (_) {} }
+}
+function saveScroll(node, top) {
+  if (scopeKey) { try { localStorage.setItem(scrollKey(node), String(Math.round(top))); } catch (_) {} }
+}
+function getSavedScroll(node) {
+  if (!scopeKey) return 0;
+  const v = localStorage.getItem(scrollKey(node));
+  return v ? Number(v) || 0 : 0;
 }
 
 // ── "Open" dropdown menus (sidebar footer + empty state) ────────────
@@ -178,13 +221,8 @@ function renderSidebarTree() {
     renderTree(currentFileNode ? [currentFileNode] : [], container);
   } else {
     const q = document.getElementById('searchInput').value.trim().toLowerCase();
-    if (q) {
-      const matched = allFiles.filter(f =>
-        f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
-      renderTree(matched, container);
-    } else {
-      renderTree(buildTree(), container);
-    }
+    if (q) renderSearchResults(q, container);
+    else renderTree(buildTree(), container);
   }
   if (currentFileNode) highlightSidebar(currentFileNode);
 }
@@ -222,6 +260,8 @@ async function selectFile() {
 async function openSingleFile(handle) {
   rootHandle = null;
   singleFileHandle = handle;
+  scopeKey = 'file:' + handle.name;
+  searchIndexBuilt = false;
   const node = { kind: 'file', name: handle.name, path: handle.name, handle };
   allFiles = [node];
   window._cachedTree = [node];
@@ -267,6 +307,9 @@ async function tryOpenPending(key, name, srcUrl) {
 async function openDirectContent(name, text, srcUrl) {
   rootHandle = null;
   singleFileHandle = null;
+  // Scope memory to the containing directory so it stays stable when siblings load.
+  scopeKey = 'dir:' + (srcUrl ? srcUrl.slice(0, srcUrl.lastIndexOf('/') + 1) : name);
+  searchIndexBuilt = false;
 
   const node = { kind: 'file', name, path: name, handle: memHandle(name, text) };
   allFiles = [node];
@@ -284,7 +327,13 @@ async function openDirectContent(name, text, srcUrl) {
       const { dirUrl, nodes } = await loadSiblingsFromUrl(srcUrl, name, text);
       allFiles = nodes;
       window._cachedTree = nodes;
+      searchIndexBuilt = false;
+      const oldNode = currentFileNode;
       currentFileNode = nodes.find(n => n.name === name) || currentFileNode;
+      // openFile() set __text on the old node; carry it over to the replacement.
+      if (currentFileNode !== oldNode && oldNode?.__text != null) {
+        currentFileNode.__text = oldNode.__text;
+      }
       const dirName = decodeURIComponent(dirUrl.replace(/\/+$/, '').split('/').pop()) || dirUrl;
       document.getElementById('folderNameText').textContent = dirName;
       document.getElementById('fileStats').textContent = `${nodes.length} 个 Markdown 文件`;
@@ -432,6 +481,9 @@ async function loadFolder(dirHandle, preferName = null) {
   document.getElementById('folderNameText').textContent = dirHandle.name;
   document.getElementById('fileStats').textContent = '';
 
+  scopeKey = 'folder:' + dirHandle.name;
+  searchIndexBuilt = false;
+
   const tree = await scanDir(dirHandle, '');
   window._cachedTree = tree;
   allFiles = flattenFiles(tree);
@@ -440,7 +492,11 @@ async function loadFolder(dirHandle, preferName = null) {
   document.getElementById('fileStats').textContent = `${allFiles.length} 个 Markdown 文件`;
 
   if (allFiles.length > 0) {
-    const target = preferName ? (allFiles.find(f => f.name === preferName) ?? allFiles[0]) : allFiles[0];
+    // Prefer an explicit request, then the file open last time in this folder.
+    const lastPath = localStorage.getItem(lastFileKey());
+    const target = (preferName && allFiles.find(f => f.name === preferName))
+      || (lastPath && allFiles.find(f => f.path === lastPath))
+      || allFiles[0];
     openFile(target);
   } else {
     clearOutline();
@@ -527,20 +583,289 @@ function createNode(node) {
   return el;
 }
 
-// ── Search ──────────────────────────────────────────────────────────
-function onSearch() {
+// ── Search (filename + full text) ───────────────────────────────────
+async function onSearch() {
   // Searching always operates on the folder listing.
-  if (activeTab !== 'folder') setActiveTab('folder');
+  if (activeTab !== 'folder') setActiveTab('folder'); // renders filename matches at once
   else renderSidebarTree();
+
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  // Filename results are instant above; load file bodies once, then add content hits.
+  if (q.length >= 2) {
+    await ensureSearchIndex();
+    if (document.getElementById('searchInput').value.trim().toLowerCase() === q) {
+      renderSidebarTree();
+    }
+  }
+}
+
+// Read every file's text once so searches can scan content. Idempotent; reset
+// to false whenever the file set changes.
+async function ensureSearchIndex() {
+  if (searchIndexBuilt) return;
+  await Promise.all(allFiles.map(async f => {
+    if (f.__text != null) return;
+    try { f.__text = await (await f.handle.getFile()).text(); }
+    catch (_) { f.__text = ''; }
+  }));
+  searchIndexBuilt = true;
+}
+
+// Build sidebar results matching on filename OR file content. Content matches
+// get a snippet preview. Uses cached __text if present; missing text just means
+// the content pass is skipped for that file until the index finishes loading.
+function renderSearchResults(q, container) {
+  const results = [];
+  for (const f of allFiles) {
+    const nameHit = f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q);
+    const text = f.__text || '';
+    const idx = text.toLowerCase().indexOf(q);
+    if (nameHit || idx >= 0) {
+      results.push({ node: f, snippet: idx >= 0 ? makeSnippet(text, idx, q.length) : '' });
+    }
+  }
+  container.innerHTML = '';
+  if (results.length === 0) {
+    container.innerHTML = '<div class="sidebar-empty">没有匹配结果</div>';
+    return;
+  }
+  results.forEach(r => container.appendChild(createSearchNode(r, q)));
+}
+
+function createSearchNode(r, q) {
+  const el = document.createElement('div');
+  el.className = 'tree-file search-result';
+  el.dataset.path = r.node.path;
+  const displayName = r.node.name.replace(/\.(md|markdown|mdown|mkd)$/i, '');
+  const head = `<div class="sr-head">${ICON.file}<span class="tree-file-name" title="${escHtml(r.node.path)}">${highlightMatch(displayName, q)}</span></div>`;
+  const snippet = r.snippet ? `<div class="sr-snippet">${highlightMatch(r.snippet, q)}</div>` : '';
+  el.innerHTML = head + snippet;
+  el.addEventListener('click', () => openFile(r.node));
+  return el;
+}
+
+// Plain-text excerpt around the match (collapsed whitespace, ellipses at edges).
+function makeSnippet(text, idx, len) {
+  const start = Math.max(0, idx - 24);
+  const end = Math.min(text.length, idx + len + 48);
+  const core = text.slice(start, end).replace(/\s+/g, ' ').trim();
+  return (start > 0 ? '…' : '') + core + (end < text.length ? '…' : '');
+}
+
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// Escape for HTML, then wrap query occurrences in <mark> (case-insensitive).
+function highlightMatch(text, q) {
+  const esc = escHtml(text);
+  if (!q) return esc;
+  return esc.replace(new RegExp(escapeRe(escHtml(q)), 'gi'), m => `<mark>${m}</mark>`);
 }
 
 function buildTree() {
   return window._cachedTree || [];
 }
 
+// Parse markdown into `body` and wire up links + heading anchors + outline.
+// Shared by file opening and the source-editor's preview toggle.
+function renderMarkdownInto(body, text) {
+  body.innerHTML = parseMarkdown(text, true);
+
+  // Open external links safely
+  body.querySelectorAll('a[target="_blank"]').forEach(a => {
+    a.setAttribute('rel', 'noopener noreferrer');
+  });
+
+  // Anchor click on headings
+  body.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
+    h.addEventListener('click', () => {
+      h.scrollIntoView({ behavior: 'smooth' });
+      history.replaceState(null, '', '#' + h.id);
+    });
+  });
+
+  buildOutline(body);
+}
+
+// ── Source editor (source ↔ preview toggle) ────────────────────────
+// A real FileSystemFileHandle exposes createWritable(); the synthetic handles
+// used for file:// direct-open (memHandle/urlHandle) do not, so those are read-only.
+function isWritable(node) {
+  return !!(node && node.handle && typeof node.handle.createWritable === 'function');
+}
+
+function isDirty() {
+  if (!editMode || !currentFileNode) return false;
+  return document.getElementById('sourceEditor').value !== (currentFileNode.__text ?? '');
+}
+
+function refreshDirtyState() {
+  document.getElementById('saveFile').classList.toggle('dirty', isDirty());
+}
+
+// Reflect whether the open file can be edited/saved on the toolbar buttons.
+function updateEditAvailability() {
+  const editBtn = document.getElementById('editToggle');
+  editBtn.disabled = !currentFileNode;
+  editBtn.classList.toggle('active', editMode);
+  // Save is always available while editing — read-only sources fall back to Save As.
+  document.getElementById('saveFile').style.display = editMode ? '' : 'none';
+  document.getElementById('readonlyHint').style.display =
+    editMode && !isWritable(currentFileNode) ? '' : 'none';
+}
+
+function toggleSourceMode() {
+  if (!currentFileNode) return;
+  if (editMode) previewFromSource();
+  else enterSourceMode();
+}
+
+function enterSourceMode() {
+  editMode = true;
+  const editor = document.getElementById('sourceEditor');
+  const ca = document.getElementById('contentArea');
+
+  // Capture preview scroll ratio before switching views.
+  const previewRatio = ca.scrollHeight > ca.clientHeight
+    ? ca.scrollTop / (ca.scrollHeight - ca.clientHeight) : 0;
+
+  editor.value = currentFileNode.__text ?? '';
+  editor.style.display = 'block';
+  document.getElementById('markdownBody').style.display = 'none';
+  updateEditAvailability();
+  refreshDirtyState();
+
+  restoringScroll = true;
+  ca.scrollTop = 0;
+  editor.focus({ preventScroll: true });
+
+  // Apply ratio to the editor after its layout is known.
+  requestAnimationFrame(() => {
+    const maxScroll = editor.scrollHeight - editor.clientHeight;
+    if (maxScroll > 0) editor.scrollTop = previewRatio * maxScroll;
+    restoringScroll = false;
+  });
+}
+
+// Render the editor's current text into the preview, then leave source mode.
+// Edits stay in memory (and the preview reflects them) until explicitly saved.
+function previewFromSource() {
+  const editor = document.getElementById('sourceEditor');
+  // Capture source scroll ratio before re-render destroys the editor's layout.
+  const sourceRatio = editor.scrollHeight > editor.clientHeight
+    ? editor.scrollTop / (editor.scrollHeight - editor.clientHeight) : 0;
+
+  renderMarkdownInto(document.getElementById('markdownBody'), editor.value);
+  exitSourceMode();
+
+  // Apply ratio to the re-rendered preview.
+  const ca = document.getElementById('contentArea');
+  requestAnimationFrame(() => {
+    const maxScroll = ca.scrollHeight - ca.clientHeight;
+    if (maxScroll > 0) {
+      restoringScroll = true;
+      ca.scrollTop = sourceRatio * maxScroll;
+      requestAnimationFrame(() => { restoringScroll = false; });
+    }
+  });
+}
+
+// Pure view switch back to the rendered preview (no re-render).
+function exitSourceMode() {
+  editMode = false;
+  document.getElementById('sourceEditor').style.display = 'none';
+  document.getElementById('markdownBody').style.display = 'block';
+  updateEditAvailability();
+}
+
+async function ensureWritable(handle) {
+  const opts = { mode: 'readwrite' };
+  if ((await handle.queryPermission(opts)) === 'granted') return true;
+  return (await handle.requestPermission(opts)) === 'granted';
+}
+
+async function saveCurrentFile() {
+  if (!editMode || !currentFileNode) return;
+  const node = currentFileNode;
+  const text = document.getElementById('sourceEditor').value;
+  try {
+    // Real handles write in place; synthetic ones (file:// direct open) can't —
+    // fall back to a Save As picker and adopt the chosen handle for later saves.
+    let handle = isWritable(node) ? node.handle : null;
+    if (!handle) {
+      if (!window.showSaveFilePicker) { toast('当前环境不支持保存'); return; }
+      handle = await window.showSaveFilePicker({
+        suggestedName: node.name,
+        types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown'] } }],
+      });
+      node.handle = handle; // subsequent saves go straight to disk
+    }
+    if (!(await ensureWritable(handle))) { toast('未获得写入权限'); return; }
+    const writable = await handle.createWritable();
+    await writable.write(text);
+    await writable.close();
+    node.__text = text; // keep search index + dirty baseline in sync
+    refreshDirtyState();
+    updateEditAvailability(); // node may have just become writable
+    toast('已保存');
+  } catch (e) {
+    if (e.name === 'AbortError') return; // user cancelled the picker
+    toast('保存失败：' + e.message);
+  }
+}
+
+// Transient bottom-center notice.
+let toastTimer = null;
+function toast(msg) {
+  let el = document.getElementById('lmvToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'lmvToast';
+    el.className = 'lmv-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// Return to the welcome home screen (clear open file, keep folder sidebar).
+function goHome() {
+  if (editMode && isDirty() && !confirm('当前文件有未保存的修改，确定放弃并返回主页？')) return;
+  exitSourceMode();
+  currentFileNode = null;
+
+  document.getElementById('emptyState').style.display = '';
+  document.getElementById('markdownBody').style.display = 'none';
+  document.getElementById('markdownBody').innerHTML = '';
+  document.getElementById('sourceEditor').style.display = 'none';
+  document.getElementById('sourceEditor').value = '';
+  document.getElementById('filePath').textContent = '未打开文件';
+  clearOutline();
+  updateEditAvailability();
+
+  if (activeEl) {
+    activeEl.classList.remove('active');
+    activeEl = null;
+  }
+  if (activeTab === 'file') renderSidebarTree();
+
+  const u = new URL(location.href);
+  u.searchParams.delete('pending');
+  u.searchParams.delete('name');
+  u.searchParams.delete('src');
+  history.replaceState(null, '', u.pathname + u.search);
+  document.getElementById('contentArea').scrollTop = 0;
+}
+
 // ── File opening ────────────────────────────────────────────────────
 async function openFile(node) {
+  // Guard against losing unsaved source edits when switching files.
+  if (editMode && isDirty() && !confirm('当前文件有未保存的修改，确定放弃并切换？')) return;
+  exitSourceMode(); // always return to preview when opening a file
+
   currentFileNode = node;
+  saveLastFile(node);
   // In file-tab view the list shows only the open file, so re-render to reflect
   // the switch; otherwise just move the highlight within the folder tree.
   if (activeTab === 'file') renderSidebarTree();
@@ -562,26 +887,14 @@ async function openFile(node) {
   try {
     const file = await node.handle.getFile();
     const text = await file.text();
-    const html = parseMarkdown(text);
+    node.__text = text; // cache for full-text search
 
-    const body = document.getElementById('markdownBody');
-    body.innerHTML = html;
-
-    // Open external links safely
-    body.querySelectorAll('a[target="_blank"]').forEach(a => {
-      a.setAttribute('rel', 'noopener noreferrer');
-    });
-
-    // Anchor click on headings
-    body.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
-      h.addEventListener('click', () => {
-        h.scrollIntoView({ behavior: 'smooth' });
-        history.replaceState(null, '', '#' + h.id);
-      });
-    });
-
-    buildOutline(body);
-    document.getElementById('contentArea').scrollTop = 0;
+    renderMarkdownInto(document.getElementById('markdownBody'), text);
+    updateEditAvailability();
+    // Restore the previous reading position for this file (default: top).
+    restoringScroll = true;
+    document.getElementById('contentArea').scrollTop = getSavedScroll(node);
+    requestAnimationFrame(() => { restoringScroll = false; });
   } catch (e) {
     clearOutline();
     setContent(`<p style="color:#e55;padding:32px">无法读取文件：${escHtml(e.message)}</p>`);

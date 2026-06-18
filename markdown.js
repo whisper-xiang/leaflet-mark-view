@@ -8,13 +8,15 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// Keep CJK (U+4E00–U+9FFF) so Chinese headings get real anchors instead of
+// collapsing to empty. MUST stay in sync with slugFromText() in viewer.js,
+// otherwise in-document links like [x](#中文标题) won't match heading ids.
 function slugify(text) {
   return text.toLowerCase()
     .replace(/<[^>]+>/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-{2,}/g, '-')
-    .trim();
+    .trim()
+    .replace(/[^\w一-鿿]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'section';
 }
 
 function parseInline(text) {
@@ -35,10 +37,12 @@ function parseInline(text) {
     return img + '>';
   });
 
-  // Links
+  // Links. In-document anchors (#…) stay in-page so they scroll to the heading;
+  // everything else opens in a new tab.
   text = text.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, (_, t, href, title) => {
     let a = `<a href="${href}"`;
     if (title) a += ` title="${title}"`;
+    if (href.startsWith('#')) return a + `>${t}</a>`;
     return a + ` target="_blank" rel="noopener noreferrer">${t}</a>`;
   });
 
@@ -62,10 +66,57 @@ function parseInline(text) {
   return text;
 }
 
-function parseMarkdown(src) {
+function parseMarkdown(src, isRoot = false) {
   src = src.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  let prefix = '';
+  // YAML front matter: only at the very top of a document (not inside blockquotes,
+  // which re-enter parseMarkdown without isRoot).
+  if (isRoot) {
+    const fm = src.match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/);
+    if (fm) {
+      prefix = renderFrontMatter(fm[1]);
+      src = src.slice(fm[0].length);
+    }
+  }
   const lines = src.split('\n');
-  return parseBlocks(lines, 0, lines.length);
+  return prefix + parseBlocks(lines, 0, lines.length);
+}
+
+// Render a leading YAML block as a compact metadata card. This is a deliberately
+// small YAML subset (key: value, plus `- item` lists and inline [a, b] arrays) —
+// enough for the front matter people actually write in notes.
+function renderFrontMatter(yaml) {
+  const rows = [];
+  let curKey = null, listVals = null;
+  const flushList = () => {
+    if (curKey && listVals && listVals.length) {
+      rows.push([curKey, listVals.join('、')]);
+    }
+    curKey = null; listVals = null;
+  };
+  const clean = (v) => v.trim().replace(/^["']|["']$/g, '');
+
+  for (const raw of yaml.split('\n')) {
+    if (raw.trim() === '') continue;
+    const item = raw.match(/^\s*-\s+(.*)$/);
+    if (item && curKey) { (listVals = listVals || []).push(clean(item[1])); continue; }
+    const kv = raw.match(/^([A-Za-z0-9_.-]+)\s*:\s*(.*)$/);
+    if (!kv) continue;
+    flushList();
+    const key = kv[1];
+    let val = kv[2].trim();
+    if (val === '') { curKey = key; listVals = []; continue; } // value on following list lines
+    const arr = val.match(/^\[(.*)\]$/);
+    val = arr ? arr[1].split(',').map(clean).filter(Boolean).join('、') : clean(val);
+    rows.push([key, val]);
+  }
+  flushList();
+  if (!rows.length) return '';
+
+  const body = rows.map(([k, v]) =>
+    `<div class="fm-row"><span class="fm-key">${escapeHtml(k)}</span><span class="fm-val">${escapeHtml(v)}</span></div>`
+  ).join('');
+  return `<div class="front-matter">${body}</div>\n`;
 }
 
 function parseBlocks(lines, start, end) {
