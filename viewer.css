@@ -263,7 +263,21 @@ svg { display: block; }
   flex-shrink: 0;
 }
 
+.sidebar-header-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-header-top .btn-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
 .sidebar-folder-name {
+  flex: 1;
+  min-width: 0;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--text);
@@ -275,6 +289,29 @@ svg { display: block; }
   align-items: center;
   gap: 7px;
 }
+
+/* Floating reopen button — only shown when the sidebar is collapsed. */
+.sidebar-expand {
+  position: absolute;
+  top: calc(var(--topbar-h) + 10px);
+  left: 10px;
+  z-index: 20;
+  width: 32px;
+  height: 32px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+.sidebar-expand svg { width: 17px; height: 17px; }
+.sidebar-expand:hover { background: var(--surface-hover); color: var(--text); }
+.sidebar.collapsed ~ .sidebar-expand { display: flex; }
 
 .sidebar-folder-name svg { width: 14px; height: 14px; color: var(--text-faint); flex-shrink: 0; }
 
@@ -567,6 +604,12 @@ svg { display: block; }
 .content-area[data-width="medium"] .markdown-body { max-width: 720px; }
 .content-area[data-width="wide"]   .markdown-body { max-width: 920px; }
 .content-area[data-width="full"]   .markdown-body { max-width: none; }
+
+/* Prose font size — headings use em units, so they scale with the base. */
+.content-area[data-fontsize="small"]  .markdown-body { font-size: 14px; }
+.content-area[data-fontsize="medium"] .markdown-body { font-size: 15.5px; }
+.content-area[data-fontsize="large"]  .markdown-body { font-size: 17.5px; }
+.content-area[data-fontsize="xlarge"] .markdown-body { font-size: 20px; }
 
 /* ── Markdown prose ── */
 .markdown-body {

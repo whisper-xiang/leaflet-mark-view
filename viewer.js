@@ -21,11 +21,16 @@ let currentFileNode = null;  // the file currently open in the reading pane
 const WIDTHS = ['narrow', 'medium', 'wide', 'full'];
 const WIDTH_LABELS = { narrow: '窄', medium: '中', wide: '宽', full: '全宽' };
 
+// Prose font-size presets
+const FONT_SIZES = ['small', 'medium', 'large', 'xlarge'];
+const FONT_SIZE_LABELS = { small: '小', medium: '中', large: '大', xlarge: '特大' };
+
 // ── Bootstrap ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   bindUI();
   applyStoredTheme();
   applyStoredWidth();
+  applyStoredFontSize();
 
   const params = new URLSearchParams(location.search);
   const pendingKey = params.get('pending');
@@ -48,7 +53,9 @@ function bindUI() {
   document.querySelector('.sidebar-search').style.display = activeTab === 'folder' ? '' : 'none';
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
   document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+  document.getElementById('sidebarExpand').addEventListener('click', toggleSidebar);
   document.getElementById('widthToggle').addEventListener('click', cycleWidth);
+  document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
   document.getElementById('searchInput').addEventListener('input', onSearch);
 }
@@ -105,6 +112,24 @@ function cycleWidth() {
   const next = WIDTHS[(WIDTHS.indexOf(cur) + 1) % WIDTHS.length];
   setWidth(next);
   localStorage.setItem('lmv-width', next);
+}
+
+// ── Prose font size ─────────────────────────────────────────────────
+function applyStoredFontSize() {
+  setFontSize(localStorage.getItem('lmv-fontsize') || 'medium');
+}
+
+function setFontSize(s) {
+  if (!FONT_SIZES.includes(s)) s = 'medium';
+  document.getElementById('contentArea').dataset.fontsize = s;
+  document.getElementById('fontSizeLabel').textContent = FONT_SIZE_LABELS[s];
+}
+
+function cycleFontSize() {
+  const cur = document.getElementById('contentArea').dataset.fontsize || 'medium';
+  const next = FONT_SIZES[(FONT_SIZES.indexOf(cur) + 1) % FONT_SIZES.length];
+  setFontSize(next);
+  localStorage.setItem('lmv-fontsize', next);
 }
 
 function toggleOutline() {

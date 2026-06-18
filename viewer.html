@@ -23,6 +23,12 @@
   <div class="topbar-file-path" id="filePath">未打开文件</div>
 
   <div class="topbar-actions">
+    <button class="btn-icon btn-text" id="fontSizeToggle" title="调整字体大小">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19V7a2 2 0 0 1 2-2h2M4 13h6M14 19v-8a2 2 0 0 1 2-2h2M14 15h6"/>
+      </svg>
+      <span class="label" id="fontSizeLabel">中</span>
+    </button>
     <button class="btn-icon btn-text" id="widthToggle" title="调整内容宽度">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 9v6M3 9v6M8 12h8M8 12l2.5-2.5M8 12l2.5 2.5M16 12l-2.5-2.5M16 12l-2.5 2.5"/>
@@ -105,6 +111,13 @@
       </div>
     </div>
   </aside>
+
+  <!-- Floating button to reopen the sidebar once it's collapsed -->
+  <button class="sidebar-expand" id="sidebarExpand" title="展开侧边栏">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
+    </svg>
+  </button>
 
   <!-- Main content -->
   <main class="content-area" id="contentArea">
