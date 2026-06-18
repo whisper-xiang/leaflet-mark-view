@@ -20,7 +20,9 @@
 
   <div class="topbar-divider"></div>
 
-  <div class="topbar-file-path" id="filePath">未打开文件</div>
+  <nav class="breadcrumb topbar-file-path" id="breadcrumb" aria-label="文件夹路径">
+    <span class="breadcrumb-empty">未打开文件</span>
+  </nav>
 
   <div class="topbar-actions">
     <!-- Contextual: only shown while editing source -->
@@ -58,9 +60,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
           <span class="settings-label">显示 / 隐藏大纲</span>
         </button>
-        <button class="settings-item" id="bgImagePick" role="menuitem">
+        <button class="settings-item" id="bgToggle" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-          <span class="settings-label">背景图</span><span class="settings-val" id="bgImageLabel">默认</span>
+          <span class="settings-label">背景图</span><span class="settings-val" id="bgToggleLabel">开</span>
         </button>
       </div>
     </div>
@@ -72,33 +74,6 @@
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-tabs" id="sidebarTabs">
-      <button class="sb-tab" type="button" data-tab="folder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-        文件夹
-      </button>
-      <button class="sb-tab active" type="button" data-tab="file">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
-        文件
-      </button>
-    </div>
-    <div class="sidebar-header">
-      <div class="sidebar-header-top">
-        <div class="sidebar-folder-name" id="folderName">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
-          </svg>
-          <span id="folderNameText">未选择文件夹</span>
-        </div>
-        <button class="btn-icon" id="sidebarToggle" title="收起侧边栏">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="sidebar-stats" id="fileStats"></div>
-    </div>
-
     <div class="sidebar-search">
       <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -106,7 +81,14 @@
         </svg>
         <input type="text" class="search-input" id="searchInput" placeholder="搜索文件">
       </div>
+      <button class="btn-icon" id="sidebarToggle" title="收起侧边栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
+        </svg>
+      </button>
     </div>
+
+    <div class="sidebar-stats" id="fileStats"></div>
 
     <div class="file-tree" id="fileTree">
       <div class="sidebar-empty">选择一个文件夹开始浏览</div>

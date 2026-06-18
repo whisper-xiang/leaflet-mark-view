@@ -30,6 +30,9 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "chrome_url_overrides": {
+    "newtab": "home.html"
+  },
   "web_accessible_resources": [
     {
       "resources": ["home.html", "home.js", "viewer.html", "viewer.css"],

@@ -6,6 +6,8 @@ const ICON = {
   folder: `<svg class="tree-dir-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`,
   file: `<svg class="tree-file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>`,
   arrowRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
+  crumbFolder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`,
+  crumbSep: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
 };
 
 // ── State ──────────────────────────────────────────────────────────
@@ -14,7 +16,9 @@ let allFiles = [];   // flat list: { name, path, handle }
 let activeEl = null; // currently highlighted sidebar item
 let spyHandler = null; // scroll-spy for the outline
 let singleFileHandle = null; // held when in single-file mode, used to expand to folder
-let activeTab = 'file';      // 'folder' = sibling tree, 'file' = current file only
+let currentDir = '';         // directory path shown in the breadcrumb/list ('' = root)
+let rootLabel = '';          // label for the root breadcrumb segment (folder/file name)
+let fileOnlyView = false;    // true right after a single file opens: list shows only it
 let currentFileNode = null;  // the file currently open in the reading pane
 let scopeKey = '';           // identifies the current folder/file set, for per-scope memory
 let searchIndexBuilt = false; // whether every file's text has been read for full-text search
@@ -52,11 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function bindUI() {
   bindOpenMenus();
-  document.querySelectorAll('.sb-tab').forEach(tab => {
-    tab.addEventListener('click', () => setActiveTab(tab.dataset.tab));
-  });
-  // Sync search visibility to the initial tab without clobbering the welcome text.
-  document.querySelector('.sidebar-search').style.display = activeTab === 'folder' ? '' : 'none';
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
   document.getElementById('editToggle').addEventListener('click', toggleSourceMode);
   document.getElementById('saveFile').addEventListener('click', saveCurrentFile);
@@ -74,7 +73,7 @@ function bindUI() {
   document.getElementById('widthToggle').addEventListener('click', cycleWidth);
   document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
-  document.getElementById('bgImagePick').addEventListener('click', pickBgImage);
+  document.getElementById('bgToggle').addEventListener('click', toggleBgImage);
   document.getElementById('searchInput').addEventListener('input', onSearch);
   document.getElementById('homeBtn').addEventListener('click', goHome);
 
@@ -203,37 +202,25 @@ function toggleTheme() {
 
 // ── Background image ────────────────────────────────────────────────
 function applyStoredBgImage() {
+  // Restore custom image (set by home.js)
   const stored = localStorage.getItem('lmv-bg');
   if (stored) {
     document.documentElement.style.setProperty('--bg-image', `url("${stored}")`);
-    document.getElementById('bgImageLabel').textContent = '已自定义';
   }
+  // Restore on/off preference
+  const show = localStorage.getItem('lmv-bg-show') !== 'off';
+  setBgVisible(show, /* save */ false);
 }
 
-async function pickBgImage() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = async () => {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      const dataUrl = e.target.result;
-      try { localStorage.setItem('lmv-bg', dataUrl); } catch (_) {}
-      document.documentElement.style.setProperty('--bg-image', `url("${dataUrl}")`);
-      document.getElementById('bgImageLabel').textContent = '已自定义';
-    };
-    reader.readAsDataURL(file);
-  };
-  // If already custom, second click resets to default
-  if (localStorage.getItem('lmv-bg')) {
-    localStorage.removeItem('lmv-bg');
-    document.documentElement.style.removeProperty('--bg-image');
-    document.getElementById('bgImageLabel').textContent = '默认';
-    return;
-  }
-  input.click();
+function setBgVisible(on, save = true) {
+  document.body.classList.toggle('bg-off', !on);
+  document.getElementById('bgToggleLabel').textContent = on ? '开' : '关';
+  if (save) localStorage.setItem('lmv-bg-show', on ? 'on' : 'off');
+}
+
+function toggleBgImage() {
+  const isOn = !document.body.classList.contains('bg-off');
+  setBgVisible(!isOn);
 }
 
 // ── Sidebar ─────────────────────────────────────────────────────────
@@ -241,26 +228,117 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
-// ── Sidebar tabs (Folder = sibling tree, File = current file only) ──
-function setActiveTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.sb-tab').forEach(b =>
-    b.classList.toggle('active', b.dataset.tab === tab));
-  // Search only applies to the folder listing.
-  document.querySelector('.sidebar-search').style.display = tab === 'folder' ? '' : 'none';
+// ── Breadcrumb navigation ───────────────────────────────────────────
+// Set the root segment label (folder or single-file name) and refresh.
+function setRootLabel(label) {
+  rootLabel = label || '';
+  renderBreadcrumb();
+}
+
+// Jump to a directory via the breadcrumb; list shows every .md under it.
+function navigateTo(dir) {
+  fileOnlyView = false;
+  currentDir = dir;
   renderSidebarTree();
 }
 
-// Render #fileTree according to the active tab and current search query.
+// Leave the single-file view (triggered by clicking the parent folder crumb):
+// reveal the discovered siblings, or pick the containing folder if we have none.
+function exitFileOnlyView() {
+  const tree = window._cachedTree || [];
+  const hasSiblings = tree.length > 1 || tree.some(n => n.kind === 'dir');
+  if (!hasSiblings && singleFileHandle) {
+    expandToFolder(singleFileHandle); // opens a folder picker, then loadFolder()
+    return;
+  }
+  fileOnlyView = false;
+  currentDir = '';
+  renderSidebarTree();
+}
+
+function stripExt(name) {
+  return name.replace(/\.(md|markdown|mdown|mkd)$/i, '');
+}
+
+// path of the directory containing `filePath` (dir paths keep trailing '/').
+function parentDir(filePath) {
+  const i = filePath.lastIndexOf('/');
+  return i >= 0 ? filePath.slice(0, i + 1) : '';
+}
+
+// Walk the cached nested tree down to `dir` and return its child nodes.
+function subtreeFor(dir) {
+  let nodes = window._cachedTree || [];
+  if (!dir) return nodes;
+  for (const part of dir.replace(/\/$/, '').split('/')) {
+    const found = nodes.find(n => n.kind === 'dir' && n.name === part);
+    if (!found) return nodes; // path no longer exists — fall back to current level
+    nodes = found.children || [];
+  }
+  return nodes;
+}
+
+function renderBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (!rootLabel) {
+    bc.innerHTML = '<span class="breadcrumb-empty">未选择文件夹</span>';
+    return;
+  }
+  // Folder segments from the current directory path.
+  const folders = [{ label: rootLabel, dir: '' }];
+  if (currentDir) {
+    let acc = '';
+    for (const part of currentDir.replace(/\/$/, '').split('/')) {
+      acc += part + '/';
+      folders.push({ label: part, dir: acc });
+    }
+  }
+  // In single-file view the deepest folder stays clickable (reveals siblings) and
+  // the open file is shown as the trailing, non-clickable segment.
+  const fileTrail = fileOnlyView && currentFileNode;
+
+  const crumbs = folders.map((f, i) => {
+    const deepest = i === folders.length - 1;
+    const isCurrent = deepest && !fileTrail;
+    return {
+      icon: ICON.crumbFolder,
+      label: f.label,
+      current: isCurrent,
+      onClick: isCurrent ? null : (deepest && fileTrail ? exitFileOnlyView : () => navigateTo(f.dir)),
+    };
+  });
+  if (fileTrail) {
+    crumbs.push({ icon: ICON.file, label: stripExt(currentFileNode.name), current: true, onClick: null });
+  }
+
+  bc.innerHTML = '';
+  crumbs.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'crumb' + (c.current ? ' current' : '');
+    btn.title = c.label;
+    btn.innerHTML = `${c.icon}<span class="crumb-label">${escHtml(c.label)}</span>`;
+    if (c.onClick) btn.addEventListener('click', c.onClick);
+    bc.appendChild(btn);
+    if (i < crumbs.length - 1) {
+      const sep = document.createElement('span');
+      sep.className = 'crumb-sep';
+      sep.innerHTML = ICON.crumbSep;
+      bc.appendChild(sep);
+    }
+  });
+  // Keep the deepest (current) segment in view when the trail overflows.
+  bc.scrollLeft = bc.scrollWidth;
+}
+
+// Render #fileTree for the current directory (or search results).
 function renderSidebarTree() {
   const container = document.getElementById('fileTree');
-  if (activeTab === 'file') {
-    renderTree(currentFileNode ? [currentFileNode] : [], container);
-  } else {
-    const q = document.getElementById('searchInput').value.trim().toLowerCase();
-    if (q) renderSearchResults(q, container);
-    else renderTree(buildTree(), container);
-  }
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  if (q) renderSearchResults(q, container);
+  else if (fileOnlyView) renderTree(currentFileNode ? [currentFileNode] : [], container);
+  else renderTree(subtreeFor(currentDir), container);
+  renderBreadcrumb();
   if (currentFileNode) highlightSidebar(currentFileNode);
 }
 
@@ -303,8 +381,10 @@ async function openSingleFile(handle, { autoOpen = true } = {}) {
   allFiles = [node];
   window._cachedTree = [node];
 
-  document.getElementById('folderNameText').textContent = handle.name;
-  setActiveTab('file');
+  currentDir = '';
+  fileOnlyView = true;
+  setRootLabel(handle.name);
+  renderSidebarTree();
   if (autoOpen) {
     showMarkdownBody();
     showExpandHint(() => expandToFolder(handle));
@@ -328,7 +408,7 @@ async function tryOpenPending(key, name, srcUrl) {
       text = await r.text();
     }
     if (text != null) {
-      await openDirectContent(name, text, srcUrl, { autoOpen: false });
+      await openDirectContent(name, text, srcUrl, { autoOpen: true });
     } else {
       await tryRestoreFolder();
     }
@@ -353,9 +433,11 @@ async function openDirectContent(name, text, srcUrl, { autoOpen = true } = {}) {
   allFiles = [node];
   window._cachedTree = [node];
 
-  document.getElementById('folderNameText').textContent = name;
+  currentDir = '';
+  fileOnlyView = true;
+  setRootLabel(name);
   document.getElementById('fileStats').textContent = '';
-  setActiveTab('file');
+  renderSidebarTree();
   if (autoOpen) {
     showMarkdownBody();
     await openFile(node);
@@ -379,9 +461,9 @@ async function openDirectContent(name, text, srcUrl, { autoOpen = true } = {}) {
         }
       }
       const dirName = decodeURIComponent(dirUrl.replace(/\/+$/, '').split('/').pop()) || dirUrl;
-      document.getElementById('folderNameText').textContent = dirName;
+      setRootLabel(dirName);
       document.getElementById('fileStats').textContent = `${nodes.length} 个 Markdown 文件`;
-      renderSidebarTree(); // stays on File tab; Folder tab now has the siblings
+      renderSidebarTree();
       return;
     } catch (e) {
       console.warn('[Leaflet Mark View] 无法列出同目录文件，回退到手动选择:', e);
@@ -524,7 +606,7 @@ async function loadFolder(dirHandle, preferName = null, { autoOpen = true } = {}
     showMarkdownBody();
     setContent(`<div class="loading"><div class="spinner"></div>正在扫描文件夹…</div>`);
   }
-  document.getElementById('folderNameText').textContent = dirHandle.name;
+  setRootLabel(dirHandle.name);
   document.getElementById('fileStats').textContent = '';
 
   scopeKey = 'folder:' + dirHandle.name;
@@ -534,7 +616,9 @@ async function loadFolder(dirHandle, preferName = null, { autoOpen = true } = {}
   window._cachedTree = tree;
   allFiles = flattenFiles(tree);
 
-  setActiveTab('folder'); // folder picker → default to the Folder tab
+  currentDir = '';
+  fileOnlyView = false;
+  renderSidebarTree();
   document.getElementById('fileStats').textContent = `${allFiles.length} 个 Markdown 文件`;
 
   if (allFiles.length > 0) {
@@ -633,9 +717,8 @@ function createNode(node) {
 
 // ── Search (filename + full text) ───────────────────────────────────
 async function onSearch() {
-  // Searching always operates on the folder listing.
-  if (activeTab !== 'folder') setActiveTab('folder'); // renders filename matches at once
-  else renderSidebarTree();
+  // Filename matches render instantly; content matches follow once indexed.
+  renderSidebarTree();
 
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   // Filename results are instant above; load file bodies once, then add content hits.
@@ -709,9 +792,6 @@ function highlightMatch(text, q) {
   return esc.replace(new RegExp(escapeRe(escHtml(q)), 'gi'), m => `<mark>${m}</mark>`);
 }
 
-function buildTree() {
-  return window._cachedTree || [];
-}
 
 // Parse markdown into `body` and wire up links + heading anchors + outline.
 // Shared by file opening and the source-editor's preview toggle.
@@ -899,10 +979,14 @@ async function openFile(node) {
 
   currentFileNode = node;
   saveLastFile(node);
-  // In file-tab view the list shows only the open file, so re-render to reflect
-  // the switch; otherwise just move the highlight within the folder tree.
-  if (activeTab === 'file') renderSidebarTree();
-  else highlightSidebar(node);
+  // While searching, keep the results list and just move the highlight; otherwise
+  // sync the breadcrumb to the file's folder and re-render the listing.
+  if (document.getElementById('searchInput').value.trim()) {
+    highlightSidebar(node);
+  } else {
+    currentDir = parentDir(node.path);
+    renderSidebarTree();
+  }
 
   // Direct (file://) mode: keep the address bar pointed at the open file so a
   // refresh reopens it instead of the file we first arrived on.
@@ -914,7 +998,6 @@ async function openFile(node) {
     history.replaceState(null, '', u);
   }
 
-  document.getElementById('filePath').textContent = node.path;
   showMarkdownBody();
   setContent(`<div class="loading"><div class="spinner"></div>加载中…</div>`);
 

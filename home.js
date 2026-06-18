@@ -106,10 +106,68 @@ async function setupResumeBtn() {
   btn.addEventListener('click', () => { location.href = 'viewer.html'; });
 }
 
+// ── Drag & drop ───────────────────────────────────────────────────────
+function bindDragDrop() {
+  const overlay = document.getElementById('dragOverlay');
+  let depth = 0; // track nested dragenter/dragleave pairs
+
+  document.addEventListener('dragenter', e => {
+    e.preventDefault();
+    depth++;
+    overlay.classList.add('visible');
+  });
+  document.addEventListener('dragleave', () => {
+    depth--;
+    if (depth <= 0) { depth = 0; overlay.classList.remove('visible'); }
+  });
+  document.addEventListener('dragover', e => e.preventDefault());
+
+  document.addEventListener('drop', async e => {
+    e.preventDefault();
+    depth = 0;
+    overlay.classList.remove('visible');
+
+    const items = [...(e.dataTransfer?.items ?? [])];
+    for (const item of items) {
+      if (item.kind !== 'file') continue;
+
+      // Prefer FileSystemHandle (preserves directory structure + re-readable)
+      if (typeof item.getAsFileSystemHandle === 'function') {
+        try {
+          const handle = await item.getAsFileSystemHandle();
+          if (!handle) continue;
+          const isDir = handle.kind === 'directory';
+          const isMd  = /\.(md|markdown|mdown|mkd)$/i.test(handle.name);
+          if (isDir || isMd) {
+            await storeHandle(handle);
+            location.href = 'viewer.html';
+            return;
+          }
+          continue; // not a supported file type, try next item
+        } catch (_) {}
+      }
+
+      // Fallback: plain File object → store content in session storage
+      const file = item.getAsFile();
+      if (!file || !/\.(md|markdown|mdown|mkd)$/i.test(file.name)) continue;
+      try {
+        const text = await file.text();
+        const key  = 'lmv-direct-' + Date.now();
+        await chrome.storage.session.set({ [key]: text });
+        location.href = 'viewer.html'
+          + '?pending=' + encodeURIComponent(key)
+          + '&name='    + encodeURIComponent(file.name);
+      } catch (_) {}
+      return;
+    }
+  });
+}
+
 // ── Bootstrap ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   applyStoredTheme();
   applyStoredBgImage();
   bindOpenMenu();
   setupResumeBtn();
+  bindDragDrop();
 });
