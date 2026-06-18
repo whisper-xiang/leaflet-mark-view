@@ -32,7 +32,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["viewer.html", "viewer.css"],
+      "resources": ["home.html", "home.js", "viewer.html", "viewer.css"],
       "matches": ["<all_urls>"]
     }
   ]

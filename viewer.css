@@ -6,6 +6,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  /* Background image (overridden by JS when user picks a custom image) */
+  --bg-image: url('public/image.png');
+
   /* Neutrals — light (cool stone, faintly warm paper) */
   --bg:            #fcfcfb;
   --bg-elevated:   #ffffff;
@@ -99,7 +102,10 @@ html, body { height: 100%; }
 
 body {
   font-family: var(--font-ui);
-  background: var(--bg);
+  background:
+    linear-gradient(rgba(242,242,237,.08), rgba(242,242,237,.08)),
+    var(--bg-image) center / cover no-repeat fixed;
+  background-color: var(--bg); /* fallback while image loads */
   color: var(--text);
   display: flex;
   flex-direction: column;
@@ -110,6 +116,29 @@ body {
 }
 
 svg { display: block; }
+
+/* Dark theme: deepen the body overlay */
+[data-theme="dark"] body {
+  background:
+    linear-gradient(rgba(10,12,10,.32), rgba(10,12,10,.32)),
+    var(--bg-image) center / cover no-repeat fixed;
+  background-color: var(--bg);
+}
+
+/* Home mode: deeper overlay to give hero contrast */
+body.is-home {
+  background:
+    linear-gradient(to bottom, rgba(12,14,12,.42), rgba(12,14,12,.72)),
+    var(--bg-image) center / cover no-repeat fixed;
+  background-color: var(--bg);
+}
+
+[data-theme="dark"] body.is-home {
+  background:
+    linear-gradient(to bottom, rgba(6,8,6,.55), rgba(6,8,6,.82)),
+    var(--bg-image) center / cover no-repeat fixed;
+  background-color: var(--bg);
+}
 
 .app-shell { display: flex; flex: 1; overflow: hidden; }
 
@@ -558,22 +587,18 @@ body.is-home .app-shell { min-height: 100vh; }
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 56px 72px 96px;
-  background: var(--bg);
+  padding: 40px 48px 80px;
+  background: transparent;
 }
 
 .content-area::-webkit-scrollbar { width: 11px; }
 .content-area::-webkit-scrollbar-track { background: transparent; }
-.content-area::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 6px; border: 3px solid var(--bg); }
+.content-area::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
 
 body.is-home .content-area {
   padding: 0;
-  background:
-    linear-gradient(to bottom, rgba(12, 14, 12, 0.42), rgba(12, 14, 12, 0.72)),
-    url('public/image.png') center / cover no-repeat;
+  overflow: hidden;
 }
-
-body.is-home .content-area::-webkit-scrollbar-thumb { border-color: transparent; }
 
 .empty-state {
   display: flex;
@@ -639,6 +664,12 @@ body.is-home .empty-mark {
 .empty-title { font-size: 19px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; }
 .empty-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.65; max-width: 360px; }
 
+/* Viewer-page empty state (no file selected, sidebar visible) */
+.viewer-no-file {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
 .empty-actions { display: flex; gap: 10px; margin-top: 6px; }
 
 .empty-btn {
@@ -686,6 +717,17 @@ body.is-home .empty-mark {
   font-size: 15.5px;
   line-height: 1.78;
   color: var(--text);
+  background: rgba(252,252,251,.88);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-radius: var(--radius-lg);
+  padding: 44px 56px;
+  box-shadow: 0 2px 24px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.05);
+}
+
+[data-theme="dark"] .markdown-body {
+  background: rgba(14,16,14,.86);
+  box-shadow: 0 4px 32px rgba(0,0,0,.40), 0 1px 6px rgba(0,0,0,.25);
 }
 
 .markdown-body h1,
@@ -991,12 +1033,16 @@ body.is-home .empty-mark {
 .source-editor {
   display: block;
   width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   min-height: calc(100vh - var(--topbar-h) - 160px);
   box-sizing: border-box;
   padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--bg-elevated);
+  background: rgba(255,255,255,.90);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 13.5px;
@@ -1006,6 +1052,7 @@ body.is-home .empty-mark {
   outline: none;
 }
 .source-editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+[data-theme="dark"] .source-editor { background: rgba(16,18,16,.90); }
 
 .btn-icon.active { background: var(--accent-soft); color: var(--accent); }
 .btn-icon:disabled { opacity: .4; cursor: default; pointer-events: none; }

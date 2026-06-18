@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyStoredTheme();
   applyStoredWidth();
   applyStoredFontSize();
+  applyStoredBgImage();
   updateEditAvailability();
 
   const params = new URLSearchParams(location.search);
@@ -73,6 +74,7 @@ function bindUI() {
   document.getElementById('widthToggle').addEventListener('click', cycleWidth);
   document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
+  document.getElementById('bgImagePick').addEventListener('click', pickBgImage);
   document.getElementById('searchInput').addEventListener('input', onSearch);
   document.getElementById('homeBtn').addEventListener('click', goHome);
 
@@ -197,6 +199,41 @@ function toggleTheme() {
   const next = current === 'dark' ? 'light' : 'dark';
   setTheme(next);
   localStorage.setItem('lmv-theme', next);
+}
+
+// ── Background image ────────────────────────────────────────────────
+function applyStoredBgImage() {
+  const stored = localStorage.getItem('lmv-bg');
+  if (stored) {
+    document.documentElement.style.setProperty('--bg-image', `url("${stored}")`);
+    document.getElementById('bgImageLabel').textContent = '已自定义';
+  }
+}
+
+async function pickBgImage() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      try { localStorage.setItem('lmv-bg', dataUrl); } catch (_) {}
+      document.documentElement.style.setProperty('--bg-image', `url("${dataUrl}")`);
+      document.getElementById('bgImageLabel').textContent = '已自定义';
+    };
+    reader.readAsDataURL(file);
+  };
+  // If already custom, second click resets to default
+  if (localStorage.getItem('lmv-bg')) {
+    localStorage.removeItem('lmv-bg');
+    document.documentElement.style.removeProperty('--bg-image');
+    document.getElementById('bgImageLabel').textContent = '默认';
+    return;
+  }
+  input.click();
 }
 
 // ── Sidebar ─────────────────────────────────────────────────────────
@@ -515,12 +552,7 @@ async function loadFolder(dirHandle, preferName = null, { autoOpen = true } = {}
   }
 }
 
-function setHomeMode(on) {
-  document.body.classList.toggle('is-home', on);
-}
-
 function showMarkdownBody() {
-  setHomeMode(false);
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('markdownBody').style.display = 'block';
 }
@@ -853,30 +885,10 @@ function clearFileUrlParams() {
   history.replaceState(null, '', u.pathname + u.search);
 }
 
-// Return to the welcome home screen (clear open file, keep folder sidebar).
+// Return to the home page.
 function goHome() {
   if (editMode && isDirty() && !confirm('当前文件有未保存的修改，确定放弃并返回主页？')) return;
-  exitSourceMode();
-  currentFileNode = null;
-
-  setHomeMode(true);
-  document.getElementById('emptyState').style.display = '';
-  document.getElementById('markdownBody').style.display = 'none';
-  document.getElementById('markdownBody').innerHTML = '';
-  document.getElementById('sourceEditor').style.display = 'none';
-  document.getElementById('sourceEditor').value = '';
-  document.getElementById('filePath').textContent = '未打开文件';
-  clearOutline();
-  updateEditAvailability();
-
-  if (activeEl) {
-    activeEl.classList.remove('active');
-    activeEl = null;
-  }
-  if (activeTab === 'file') renderSidebarTree();
-
-  clearFileUrlParams();
-  document.getElementById('contentArea').scrollTop = 0;
+  location.href = 'home.html';
 }
 
 // ── File opening ────────────────────────────────────────────────────
