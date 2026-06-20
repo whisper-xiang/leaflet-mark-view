@@ -1,3 +1,11 @@
+// ── Brand color — match reference site (VitePress green #3eaf7c) ───
+(function applyBrand() {
+  const root = document.documentElement;
+  root.style.setProperty('--accent', '#3eaf7c');
+  root.style.setProperty('--accent-hover', '#4ad9a0');
+  root.style.setProperty('--code-inline-fg', '#3eaf7c');
+})();
+
 // ── Icons (inline stroke SVG, feather-style 1.6) ────────────────────
 const ICON = {
   sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`,
@@ -6,8 +14,8 @@ const ICON = {
   folder: `<svg class="tree-dir-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`,
   file: `<svg class="tree-file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>`,
   arrowRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
-  crumbFolder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`,
-  crumbSep: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
+  copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`,
 };
 
 // ── State ──────────────────────────────────────────────────────────
@@ -25,10 +33,6 @@ let searchIndexBuilt = false; // whether every file's text has been read for ful
 let restoringScroll = false;  // guard so programmatic scroll restore doesn't overwrite saved pos
 let editMode = false;         // true = source editor shown, false = rendered preview
 
-// Content width presets
-const WIDTHS = ['narrow', 'medium', 'wide', 'full'];
-const WIDTH_LABELS = { narrow: '窄', medium: '中', wide: '宽', full: '全宽' };
-
 // Prose font-size presets
 const FONT_SIZES = ['small', 'medium', 'large', 'xlarge'];
 const FONT_SIZE_LABELS = { small: '小', medium: '中', large: '大', xlarge: '特大' };
@@ -37,7 +41,6 @@ const FONT_SIZE_LABELS = { small: '小', medium: '中', large: '大', xlarge: '�
 document.addEventListener('DOMContentLoaded', async () => {
   bindUI();
   applyStoredTheme();
-  applyStoredWidth();
   applyStoredFontSize();
   applyStoredBgImage();
   updateEditAvailability();
@@ -66,20 +69,40 @@ function bindUI() {
       if (editMode) { e.preventDefault(); saveCurrentFile(); }
     } else if (e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'e') {
       if (currentFileNode) { e.preventDefault(); toggleSourceMode(); }
+    } else if (e.key === 'Escape' && document.getElementById('searchModal').classList.contains('open')) {
+      e.preventDefault(); closeSearchModal();
     } else if (e.key === 'Escape' && document.body.classList.contains('zen')) {
       e.preventDefault(); setZen(false);
+    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      openSearchModal();
     }
   });
+  document.getElementById('upLevel').addEventListener('click', goUp);
+  document.getElementById('pagerPrev').addEventListener('click', () => navFile(-1));
+  document.getElementById('pagerNext').addEventListener('click', () => navFile(1));
+  document.getElementById('docPrev').addEventListener('click', () => navFile(-1));
+  document.getElementById('docNext').addEventListener('click', () => navFile(1));
   document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
   document.getElementById('sidebarExpand').addEventListener('click', toggleSidebar);
-  document.getElementById('widthToggle').addEventListener('click', cycleWidth);
   document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
   document.getElementById('bgToggle').addEventListener('click', toggleBgImage);
   document.getElementById('zenToggle').addEventListener('click', () => setZen(true));
   document.getElementById('zenExit').addEventListener('click', () => setZen(false));
-  document.getElementById('searchInput').addEventListener('input', onSearch);
+  bindDragDrop();
+  document.getElementById('searchTrigger').addEventListener('click', openSearchModal);
+  document.getElementById('searchModalInput').addEventListener('input', onModalSearch);
+  document.getElementById('searchModalClear').addEventListener('click', () => {
+    document.getElementById('searchModalInput').value = '';
+    document.getElementById('searchModalInput').focus();
+    onModalSearch();
+  });
+  document.getElementById('searchBackdrop').addEventListener('click', closeSearchModal);
+  document.getElementById('searchModalInput').addEventListener('keydown', onModalKey);
   document.getElementById('homeBtn').addEventListener('click', goHome);
+
+  bindSidebarScrollbarReveal();
 
   // Remember reading position per file (throttled; skip the programmatic restore).
   let scrollSaveTimer;
@@ -144,22 +167,16 @@ function closeOpenMenus() {
   });
 }
 
-// ── Content width ───────────────────────────────────────────────────
-function applyStoredWidth() {
-  setWidth(localStorage.getItem('lmv-width') || 'medium');
-}
-
-function setWidth(w) {
-  if (!WIDTHS.includes(w)) w = 'medium';
-  document.getElementById('contentArea').dataset.width = w;
-  document.getElementById('widthLabel').textContent = WIDTH_LABELS[w];
-}
-
-function cycleWidth() {
-  const cur = document.getElementById('contentArea').dataset.width || 'medium';
-  const next = WIDTHS[(WIDTHS.indexOf(cur) + 1) % WIDTHS.length];
-  setWidth(next);
-  localStorage.setItem('lmv-width', next);
+// Show sidebar scrollbar only while scrolling.
+function bindSidebarScrollbarReveal() {
+  const tree = document.getElementById('fileTree');
+  if (!tree) return;
+  let hideTimer;
+  tree.addEventListener('scroll', () => {
+    tree.classList.add('is-scrolling');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => tree.classList.remove('is-scrolling'), 700);
+  }, { passive: true });
 }
 
 // ── Prose font size ─────────────────────────────────────────────────
@@ -197,11 +214,33 @@ function setTheme(theme) {
   toggle.title = theme === 'dark' ? '切换到浅色主题' : '切换到深色主题';
 }
 
-function toggleTheme() {
+function toggleTheme(event) {
   const current = document.documentElement.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
-  setTheme(next);
-  localStorage.setItem('lmv-theme', next);
+
+  const canTransition = 'startViewTransition' in document &&
+    window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+
+  if (!canTransition) {
+    setTheme(next);
+    localStorage.setItem('lmv-theme', next);
+    return;
+  }
+
+  const x = event?.clientX ?? window.innerWidth / 2;
+  const y = event?.clientY ?? window.innerHeight / 2;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  const clipPath = [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`];
+
+  document.startViewTransition(async () => {
+    setTheme(next);
+    localStorage.setItem('lmv-theme', next);
+  }).ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: next === 'dark' ? [...clipPath].reverse() : clipPath },
+      { duration: 300, easing: 'ease-in', pseudoElement: `::view-transition-${next === 'dark' ? 'old' : 'new'}(root)` }
+    );
+  });
 }
 
 // ── Background image ────────────────────────────────────────────────
@@ -211,8 +250,8 @@ function applyStoredBgImage() {
   if (stored) {
     document.documentElement.style.setProperty('--bg-image', `url("${stored}")`);
   }
-  // Restore on/off preference
-  const show = localStorage.getItem('lmv-bg-show') !== 'off';
+  // Restore on/off preference — default OFF for the flat VitePress-style reading view.
+  const show = localStorage.getItem('lmv-bg-show') === 'on';
   setBgVisible(show, /* save */ false);
 }
 
@@ -232,37 +271,67 @@ function setZen(on) {
   document.body.classList.toggle('zen', on);
 }
 
+// ── Drag & drop (open a folder or file by dropping it anywhere) ──────
+function bindDragDrop() {
+  const overlay = document.getElementById('dragOverlay');
+  let depth = 0; // balance nested dragenter/dragleave pairs
+
+  document.addEventListener('dragenter', e => { e.preventDefault(); depth++; overlay.classList.add('visible'); });
+  document.addEventListener('dragleave', () => { depth--; if (depth <= 0) { depth = 0; overlay.classList.remove('visible'); } });
+  document.addEventListener('dragover', e => e.preventDefault());
+
+  document.addEventListener('drop', async e => {
+    e.preventDefault();
+    depth = 0;
+    overlay.classList.remove('visible');
+
+    const items = [...(e.dataTransfer?.items ?? [])];
+    for (const item of items) {
+      if (item.kind !== 'file') continue;
+
+      // Prefer FileSystemHandle: preserves folder structure and stays re-readable.
+      if (typeof item.getAsFileSystemHandle === 'function') {
+        try {
+          const handle = await item.getAsFileSystemHandle();
+          if (!handle) continue;
+          if (handle.kind === 'directory') {
+            rootHandle = handle;
+            singleFileHandle = null;
+            await storeHandle(handle);
+            await loadFolder(handle);
+            return;
+          }
+          if (isMarkdown(handle.name)) {
+            await storeHandle(handle);
+            await openSingleFile(handle);
+            return;
+          }
+          continue; // unsupported file type — try the next dropped item
+        } catch (_) {}
+      }
+
+      // Fallback: plain File → render its text directly.
+      const file = item.getAsFile();
+      if (!file || !isMarkdown(file.name)) continue;
+      try {
+        const text = await file.text();
+        await openDirectContent(file.name, text, null, { autoOpen: true });
+      } catch (_) {}
+      return;
+    }
+  });
+}
+
 // ── Sidebar ─────────────────────────────────────────────────────────
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
-// ── Breadcrumb navigation ───────────────────────────────────────────
-// Set the root segment label (folder or single-file name) and refresh.
+// ── Sidebar location + "up one level" navigation ────────────────────
+// Set the root label (folder or single-file name) and refresh the nav row.
 function setRootLabel(label) {
   rootLabel = label || '';
-  renderBreadcrumb();
-}
-
-// Jump to a directory via the breadcrumb; list shows every .md under it.
-function navigateTo(dir) {
-  fileOnlyView = false;
-  currentDir = dir;
-  renderSidebarTree();
-}
-
-// Leave the single-file view (triggered by clicking the parent folder crumb):
-// reveal the discovered siblings, or pick the containing folder if we have none.
-function exitFileOnlyView() {
-  const tree = window._cachedTree || [];
-  const hasSiblings = tree.length > 1 || tree.some(n => n.kind === 'dir');
-  if (!hasSiblings && singleFileHandle) {
-    expandToFolder(singleFileHandle); // opens a folder picker, then loadFolder()
-    return;
-  }
-  fileOnlyView = false;
-  currentDir = '';
-  renderSidebarTree();
+  renderNav();
 }
 
 function stripExt(name) {
@@ -273,6 +342,13 @@ function stripExt(name) {
 function parentDir(filePath) {
   const i = filePath.lastIndexOf('/');
   return i >= 0 ? filePath.slice(0, i + 1) : '';
+}
+
+// One directory level up: "a/b/" → "a/", "a/" → "".
+function parentDirOfDir(dir) {
+  const parts = dir.replace(/\/$/, '').split('/');
+  parts.pop();
+  return parts.length ? parts.join('/') + '/' : '';
 }
 
 // Walk the cached nested tree down to `dir` and return its child nodes.
@@ -287,67 +363,81 @@ function subtreeFor(dir) {
   return nodes;
 }
 
-function renderBreadcrumb() {
-  const bc = document.getElementById('breadcrumb');
-  if (!rootLabel) {
-    bc.innerHTML = '<span class="breadcrumb-empty">未选择文件夹</span>';
-    return;
-  }
-  // Folder segments from the current directory path.
-  const folders = [{ label: rootLabel, dir: '' }];
-  if (currentDir) {
-    let acc = '';
-    for (const part of currentDir.replace(/\/$/, '').split('/')) {
-      acc += part + '/';
-      folders.push({ label: part, dir: acc });
+// Climb one level toward the root; bounded at the opened folder's top.
+function goUp() {
+  if (fileOnlyView) {
+    // From a single file → show its containing folder (all .md under it).
+    const tree = window._cachedTree || [];
+    const hasSiblings = tree.length > 1 || tree.some(n => n.kind === 'dir');
+    if (!hasSiblings && singleFileHandle) {
+      expandToFolder(singleFileHandle); // no siblings loaded → pick the real folder
+      return;
     }
+    fileOnlyView = false;
+    currentDir = currentFileNode ? parentDir(currentFileNode.path) : '';
+    renderSidebarTree();
+  } else if (currentDir) {
+    currentDir = parentDirOfDir(currentDir);
+    renderSidebarTree();
   }
-  // In single-file view the deepest folder stays clickable (reveals siblings) and
-  // the open file is shown as the trailing, non-clickable segment.
-  const fileTrail = fileOnlyView && currentFileNode;
+}
 
-  const crumbs = folders.map((f, i) => {
-    const deepest = i === folders.length - 1;
-    const isCurrent = deepest && !fileTrail;
-    return {
-      icon: ICON.crumbFolder,
-      label: f.label,
-      current: isCurrent,
-      onClick: isCurrent ? null : (deepest && fileTrail ? exitFileOnlyView : () => navigateTo(f.dir)),
-    };
-  });
-  if (fileTrail) {
-    crumbs.push({ icon: ICON.file, label: stripExt(currentFileNode.name), current: true, onClick: null });
-  }
+// Name of the level currently listed (file name in single-file view, else folder).
+function currentLocationLabel() {
+  if (fileOnlyView && currentFileNode) return currentFileNode.name;
+  if (!currentDir) return rootLabel || '未选择';
+  return currentDir.replace(/\/$/, '').split('/').pop();
+}
 
-  bc.innerHTML = '';
-  crumbs.forEach((c, i) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'crumb' + (c.current ? ' current' : '');
-    btn.title = c.label;
-    btn.innerHTML = `${c.icon}<span class="crumb-label">${escHtml(c.label)}</span>`;
-    if (c.onClick) btn.addEventListener('click', c.onClick);
-    bc.appendChild(btn);
-    if (i < crumbs.length - 1) {
-      const sep = document.createElement('span');
-      sep.className = 'crumb-sep';
-      sep.innerHTML = ICON.crumbSep;
-      bc.appendChild(sep);
-    }
-  });
-  // Keep the deepest (current) segment in view when the trail overflows.
-  bc.scrollLeft = bc.scrollWidth;
+// Update the "up" button enabled state, location icon and label.
+function renderNav() {
+  document.getElementById('upLevel').disabled = !(fileOnlyView || !!currentDir);
+  const loc = document.getElementById('locLabel');
+  loc.querySelector('.loc-name').textContent = currentLocationLabel();
+  const showFile = fileOnlyView && currentFileNode;
+  loc.querySelector('.loc-icon').innerHTML = showFile
+    ? '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>'
+    : '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>';
+}
+
+// ── Prev/next file pager (bottom-right) ─────────────────────────────
+// Index of the open file within the flat list (drives the pager order).
+function currentFileIndex() {
+  return currentFileNode ? allFiles.findIndex(f => f.path === currentFileNode.path) : -1;
+}
+
+// Open the file `delta` positions away in the flat list, if any.
+function navFile(delta) {
+  const i = currentFileIndex();
+  if (i < 0) return;
+  const next = allFiles[i + delta];
+  if (next) openFile(next);
+}
+
+// Populate the inline doc-footer prev/next cards (VitePress-style, bottom of content).
+function renderPager() {
+  const i = currentFileIndex();
+  const footer = document.getElementById('docFooter');
+  const show = i >= 0 && allFiles.length > 1;
+  footer.style.display = show ? '' : 'none';
+  if (!show) return;
+
+  const prev = allFiles[i - 1], next = allFiles[i + 1];
+
+  const prevBtn = document.getElementById('docPrev');
+  const nextBtn = document.getElementById('docNext');
+  prevBtn.style.visibility = prev ? '' : 'hidden';
+  nextBtn.style.visibility = next ? '' : 'hidden';
+  if (prev) document.getElementById('docPrevTitle').textContent = stripExt(prev.name);
+  if (next) document.getElementById('docNextTitle').textContent = stripExt(next.name);
 }
 
 // Render #fileTree for the current directory (or search results).
 function renderSidebarTree() {
   const container = document.getElementById('fileTree');
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  if (q) renderSearchResults(q, container);
-  else if (fileOnlyView) renderTree(currentFileNode ? [currentFileNode] : [], container);
+  if (fileOnlyView) renderTree(currentFileNode ? [currentFileNode] : [], container);
   else renderTree(subtreeFor(currentDir), container);
-  renderBreadcrumb();
+  renderNav();
   if (currentFileNode) highlightSidebar(currentFileNode);
 }
 
@@ -471,7 +561,7 @@ async function openDirectContent(name, text, srcUrl, { autoOpen = true } = {}) {
       }
       const dirName = decodeURIComponent(dirUrl.replace(/\/+$/, '').split('/').pop()) || dirUrl;
       setRootLabel(dirName);
-      document.getElementById('fileStats').textContent = `${nodes.length} 个 Markdown 文件`;
+      document.getElementById('fileStats').textContent = `${nodes.length} 个文件`;
       renderSidebarTree();
       return;
     } catch (e) {
@@ -629,7 +719,7 @@ async function loadFolder(dirHandle, preferName = null, { autoOpen = true } = {}
   currentDir = '';
   fileOnlyView = false;
   renderSidebarTree();
-  document.getElementById('fileStats').textContent = `${allFiles.length} 个 Markdown 文件`;
+  document.getElementById('fileStats').textContent = `${allFiles.length} 个文件`;
 
   if (allFiles.length > 0) {
     if (autoOpen) {
@@ -705,7 +795,8 @@ function createNode(node) {
 
     const header = document.createElement('div');
     header.className = 'tree-dir-header';
-    header.innerHTML = `${ICON.chevron}${ICON.folder}<span class="tree-dir-name">${escHtml(node.name)}</span>`;
+    // VitePress style: name on left, chevron on right
+    header.innerHTML = `<span class="tree-dir-name">${escHtml(node.name)}</span>${ICON.chevron}`;
     header.addEventListener('click', () => wrap.classList.toggle('open'));
 
     const children = document.createElement('div');
@@ -721,25 +812,114 @@ function createNode(node) {
   el.className = 'tree-file';
   el.dataset.path = node.path;
   const displayName = node.name.replace(/\.(md|markdown|mdown|mkd)$/i, '');
-  el.innerHTML = `${ICON.file}<span class="tree-file-name" title="${escHtml(node.path)}">${escHtml(displayName)}</span>`;
+  // VitePress style: plain text only, no file icon
+  el.innerHTML = `<span class="tree-file-name" title="${escHtml(node.path)}">${escHtml(displayName)}</span>`;
   el.addEventListener('click', () => openFile(node));
   return el;
 }
 
-// ── Search (filename + full text) ───────────────────────────────────
-async function onSearch() {
-  // Filename matches render instantly; content matches follow once indexed.
-  renderSidebarTree();
+// ── Search modal ─────────────────────────────────────────────────────
+let smActiveIdx = -1;
 
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  // Filename results are instant above; load file bodies once, then add content hits.
+function openSearchModal() {
+  document.getElementById('searchBackdrop').classList.add('open');
+  document.getElementById('searchModal').classList.add('open');
+  const inp = document.getElementById('searchModalInput');
+  inp.value = '';
+  inp.focus();
+  smActiveIdx = -1;
+  renderModalResults('');
+}
+
+function closeSearchModal() {
+  document.getElementById('searchBackdrop').classList.remove('open');
+  document.getElementById('searchModal').classList.remove('open');
+}
+
+function onModalKey(e) {
+  const items = document.querySelectorAll('.sm-result');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    smActiveIdx = Math.min(smActiveIdx + 1, items.length - 1);
+    updateModalActive(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    smActiveIdx = Math.max(smActiveIdx - 1, 0);
+    updateModalActive(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const active = items[smActiveIdx >= 0 ? smActiveIdx : 0];
+    if (active) active.click();
+  } else if (e.key === 'Escape') {
+    closeSearchModal();
+  }
+}
+
+function updateModalActive(items) {
+  items.forEach((el, i) => el.classList.toggle('active', i === smActiveIdx));
+  if (smActiveIdx >= 0) items[smActiveIdx].scrollIntoView({ block: 'nearest' });
+}
+
+async function onModalSearch() {
+  const q = document.getElementById('searchModalInput').value.trim().toLowerCase();
+  smActiveIdx = -1;
+  renderModalResults(q);
   if (q.length >= 2) {
     await ensureSearchIndex();
-    if (document.getElementById('searchInput').value.trim().toLowerCase() === q) {
-      renderSidebarTree();
+    if (document.getElementById('searchModalInput').value.trim().toLowerCase() === q) {
+      renderModalResults(q);
     }
   }
 }
+
+function renderModalResults(q) {
+  const container = document.getElementById('searchModalResults');
+  if (!q) { container.innerHTML = ''; return; }
+
+  const results = [];
+  for (const f of allFiles) {
+    const nameHit = f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q);
+    const text = f.__text || '';
+    const idx = text.toLowerCase().indexOf(q);
+    if (nameHit || idx >= 0) {
+      results.push({ node: f, snippet: idx >= 0 ? makeSnippet(text, idx, q.length) : '' });
+    }
+  }
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="search-modal-empty">没有匹配结果</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  results.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'sm-result';
+
+    // Build breadcrumb from path segments
+    const rawName = r.node.name.replace(/\.(md|markdown|mdown|mkd)$/i, '');
+    const segs = r.node.path.split('/');
+    segs[segs.length - 1] = rawName; // strip extension from last segment
+    const crumbHtml = segs.map((s, i) => {
+      const hl = highlightMatch(escHtml(s), q);
+      return (i === 0 ? '' : '<span class="sm-crumb-sep">›</span>') + `<span>${hl}</span>`;
+    }).join('');
+
+    const snippet = r.snippet
+      ? `<div class="sm-snippet">${highlightMatch(escHtml(r.snippet), q)}</div>` : '';
+
+    el.innerHTML = `<div class="sm-result-body">
+      <div class="sm-crumb"><span class="sm-crumb-hash">#</span>${crumbHtml}</div>
+      ${snippet}
+    </div>`;
+    el.addEventListener('click', () => { closeSearchModal(); openFile(r.node); });
+    container.appendChild(el);
+  });
+}
+
+// ── Legacy sidebar search (kept for renderSidebarTree compatibility) ──
+async function onSearch() {}
 
 // Read every file's text once so searches can scan content. Idempotent; reset
 // to false whenever the file set changes.
@@ -779,7 +959,7 @@ function createSearchNode(r, q) {
   el.className = 'tree-file search-result';
   el.dataset.path = r.node.path;
   const displayName = r.node.name.replace(/\.(md|markdown|mdown|mkd)$/i, '');
-  const head = `<div class="sr-head">${ICON.file}<span class="tree-file-name" title="${escHtml(r.node.path)}">${highlightMatch(displayName, q)}</span></div>`;
+  const head = `<div class="sr-head"><span class="tree-file-name" title="${escHtml(r.node.path)}">${highlightMatch(displayName, q)}</span></div>`;
   const snippet = r.snippet ? `<div class="sr-snippet">${highlightMatch(r.snippet, q)}</div>` : '';
   el.innerHTML = head + snippet;
   el.addEventListener('click', () => openFile(r.node));
@@ -814,15 +994,65 @@ function renderMarkdownInto(body, text) {
     a.setAttribute('rel', 'noopener noreferrer');
   });
 
-  // Anchor click on headings
-  body.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
-    h.addEventListener('click', () => {
-      h.scrollIntoView({ behavior: 'smooth' });
-      history.replaceState(null, '', '#' + h.id);
+  // Permalink anchors on headings (VitePress header-anchor)
+  body.querySelectorAll('.header-anchor').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const id = decodeURIComponent(a.getAttribute('href').slice(1));
+      const h = body.querySelector('#' + CSS.escape(id));
+      if (!h) return;
+      h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + id);
     });
   });
 
+  // Code blocks: VitePress-style language label + copy button.
+  body.querySelectorAll('pre').forEach(decorateCodeBlock);
+
   buildOutline(body);
+}
+
+// Tag a <pre> with its language and add a hover copy button.
+function decorateCodeBlock(pre) {
+  const code = pre.querySelector('code');
+  if (!code) return;
+  const m = (code.className || '').match(/language-([\w-]+)/);
+  if (m) pre.dataset.lang = m[1];
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'code-copy';
+  btn.setAttribute('aria-label', '复制代码');
+  btn.innerHTML = ICON.copy;
+  btn.addEventListener('click', async () => {
+    const ok = await copyText(code.textContent);
+    if (!ok) return;
+    btn.classList.add('copied');
+    btn.innerHTML = ICON.check;
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = ICON.copy; }, 1500);
+  });
+  pre.appendChild(btn);
+}
+
+// Clipboard write with a legacy fallback for file:// / restricted contexts.
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (_) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-9999px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 // ── Source editor (source ↔ preview toggle) ────────────────────────
@@ -990,14 +1220,11 @@ async function openFile(node) {
 
   currentFileNode = node;
   saveLastFile(node);
-  // While searching, keep the results list and just move the highlight; otherwise
-  // sync the breadcrumb to the file's folder and re-render the listing.
-  if (document.getElementById('searchInput').value.trim()) {
-    highlightSidebar(node);
-  } else {
-    currentDir = parentDir(node.path);
-    renderSidebarTree();
-  }
+  // The listing (folder tree vs single file) is set by the entry action and the
+  // "up one level" button — opening a file just moves the highlight + nav label.
+  highlightSidebar(node);
+  renderNav();
+  renderPager();
 
   // Direct (file://) mode: keep the address bar pointed at the open file so a
   // refresh reopens it instead of the file we first arrived on.
@@ -1043,15 +1270,12 @@ function highlightSidebar(node) {
 // ── Outline (table of contents) ─────────────────────────────────────
 function buildOutline(body) {
   const outline = document.getElementById('outline');
-  const list = document.getElementById('outlineList');
-  list.innerHTML = '';
+  const root = document.getElementById('outlineRoot');
+  root.innerHTML = '';
 
-  const headings = [...body.querySelectorAll('h1, h2, h3, h4')];
-  // Need at least 2 headings for an outline to be worthwhile
+  const headings = [...body.querySelectorAll('h2, h3, h4')];
   if (headings.length < 2) { clearOutline(); return; }
 
-  // Assign clean, unique ids here (the markdown slugifier drops CJK, so Chinese
-  // headings would otherwise collide). This is the authoritative anchor source.
   const used = new Set();
   headings.forEach(h => {
     const base = slugFromText(h.textContent);
@@ -1059,20 +1283,48 @@ function buildOutline(body) {
     while (used.has(id)) id = `${base}-${n++}`;
     used.add(id);
     h.id = id;
+    // Keep header-anchor href in sync when ids are deduped
+    const anchor = h.querySelector('.header-anchor');
+    if (anchor) anchor.setAttribute('href', '#' + id);
+  });
 
+  let currentH2Li = null;
+
+  headings.forEach(h => {
     const level = Number(h.tagName[1]);
     const a = document.createElement('a');
-    a.className = `outline-item lvl-${level}`;
+    a.className = 'outline-link';
+    if (level >= 3) a.classList.add('nested');
     a.href = '#' + h.id;
     a.dataset.target = h.id;
-    a.textContent = h.textContent;
-    a.title = h.textContent;
+    a.textContent = h.textContent.replace(/\u200B/g, '').trim();
+    a.title = a.textContent;
     a.addEventListener('click', e => {
       e.preventDefault();
       h.scrollIntoView({ behavior: 'smooth', block: 'start' });
       history.replaceState(null, '', '#' + h.id);
     });
-    list.appendChild(a);
+
+    const li = document.createElement('li');
+
+    if (level === 2) {
+      li.appendChild(a);
+      root.appendChild(li);
+      currentH2Li = li;
+    } else if (level === 3 || level === 4) {
+      li.appendChild(a);
+      if (currentH2Li) {
+        let nested = currentH2Li.querySelector(':scope > ul.outline-nested');
+        if (!nested) {
+          nested = document.createElement('ul');
+          nested.className = 'outline-nested';
+          currentH2Li.appendChild(nested);
+        }
+        nested.appendChild(li);
+      } else {
+        root.appendChild(li);
+      }
+    }
   });
 
   outline.classList.remove('empty');
@@ -1081,7 +1333,8 @@ function buildOutline(body) {
 
 function clearOutline() {
   detachScrollSpy();
-  document.getElementById('outlineList').innerHTML = '';
+  const root = document.getElementById('outlineRoot');
+  if (root) root.innerHTML = '';
   document.getElementById('outline').classList.add('empty');
 }
 
@@ -1098,7 +1351,7 @@ function detachScrollSpy() {
 function setupScrollSpy(headings) {
   detachScrollSpy();
   const ca = document.getElementById('contentArea');
-  const list = document.getElementById('outlineList');
+  const root = document.getElementById('outlineRoot');
   let ticking = false;
 
   const update = () => {
@@ -1116,12 +1369,22 @@ function setupScrollSpy(headings) {
     }
 
     let activeItem = null;
-    list.querySelectorAll('.outline-item').forEach(a => {
+    root.querySelectorAll('.outline-link').forEach(a => {
       const on = a.dataset.target === current.id;
       a.classList.toggle('active', on);
       if (on) activeItem = a;
     });
-    if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
+    if (activeItem) {
+      activeItem.scrollIntoView({ block: 'nearest' });
+      const marker = document.getElementById('outlineMarker');
+      const content = document.querySelector('.outline-content');
+      if (marker && content) {
+        const itemRect = activeItem.getBoundingClientRect();
+        const contentRect = content.getBoundingClientRect();
+        marker.style.top = (itemRect.top - contentRect.top + 7) + 'px';
+        marker.style.opacity = '1';
+      }
+    }
   };
 
   spyHandler = () => {
