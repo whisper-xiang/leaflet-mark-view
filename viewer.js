@@ -60,12 +60,14 @@ function bindUI() {
   document.getElementById('editToggle').addEventListener('click', toggleSourceMode);
   document.getElementById('saveFile').addEventListener('click', saveCurrentFile);
   document.getElementById('sourceEditor').addEventListener('input', () => refreshDirtyState());
-  // Cmd/Ctrl+S saves while editing; Ctrl+E toggles source/preview.
+  // Cmd/Ctrl+S saves while editing; Ctrl+E toggles source/preview; Esc exits zen.
   document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
       if (editMode) { e.preventDefault(); saveCurrentFile(); }
     } else if (e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'e') {
       if (currentFileNode) { e.preventDefault(); toggleSourceMode(); }
+    } else if (e.key === 'Escape' && document.body.classList.contains('zen')) {
+      e.preventDefault(); setZen(false);
     }
   });
   document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
@@ -74,6 +76,8 @@ function bindUI() {
   document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
   document.getElementById('bgToggle').addEventListener('click', toggleBgImage);
+  document.getElementById('zenToggle').addEventListener('click', () => setZen(true));
+  document.getElementById('zenExit').addEventListener('click', () => setZen(false));
   document.getElementById('searchInput').addEventListener('input', onSearch);
   document.getElementById('homeBtn').addEventListener('click', goHome);
 
@@ -221,6 +225,11 @@ function setBgVisible(on, save = true) {
 function toggleBgImage() {
   const isOn = !document.body.classList.contains('bg-off');
   setBgVisible(!isOn);
+}
+
+// ── Zen mode (distraction-free reading) ─────────────────────────────
+function setZen(on) {
+  document.body.classList.toggle('zen', on);
 }
 
 // ── Sidebar ─────────────────────────────────────────────────────────
@@ -576,12 +585,13 @@ async function tryRestoreFolder() {
 }
 
 // Restore either a directory or a single file, depending on the handle kind.
+// autoOpen reopens the last-read file (defaulting to README) and highlights it.
 async function restoreHandle(handle) {
   if (handle.kind === 'file') {
-    await openSingleFile(handle, { autoOpen: false });
+    await openSingleFile(handle, { autoOpen: true });
   } else {
     rootHandle = handle;
-    await loadFolder(handle, null, { autoOpen: false });
+    await loadFolder(handle, null, { autoOpen: true });
   }
 }
 
@@ -623,10 +633,11 @@ async function loadFolder(dirHandle, preferName = null, { autoOpen = true } = {}
 
   if (allFiles.length > 0) {
     if (autoOpen) {
-      // Prefer an explicit request, then the file open last time in this folder.
+      // Explicit request → last-read file → README → first file.
       const lastPath = localStorage.getItem(lastFileKey());
       const target = (preferName && allFiles.find(f => f.name === preferName))
         || (lastPath && allFiles.find(f => f.path === lastPath))
+        || allFiles.find(f => /^readme\.(md|markdown|mdown|mkd)$/i.test(f.name))
         || allFiles[0];
       openFile(target);
     }

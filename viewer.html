@@ -39,6 +39,12 @@
 
     <button class="btn-icon" id="themeToggle" title="切换主题"></button>
 
+    <button class="btn-icon" id="zenToggle" title="禅模式（沉浸阅读 · Esc 退出）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+      </svg>
+    </button>
+
     <!-- Settings: hover to reveal the operation list -->
     <div class="settings-menu">
       <button class="btn-icon" id="settingsTrigger" title="设置" aria-haspopup="true">
@@ -147,6 +153,13 @@
   </aside>
 
 </div>
+
+<!-- Floating exit button, only visible in zen mode -->
+<button class="zen-exit" id="zenExit" title="退出禅模式 (Esc)">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>
+  </svg>
+</button>
 
 <script src="markdown.js"></script>
 <script src="viewer.js"></script>
