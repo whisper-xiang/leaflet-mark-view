@@ -2788,11 +2788,6 @@ body.is-home .empty-btn.ghost:hover {
   color: var(--text-muted);
 }
 
-/* Background image mode — override module backgrounds (viewer only). */
-html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar {
-  /* background: transparent; */
-}
-
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-header,
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-inner,
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-footer {
