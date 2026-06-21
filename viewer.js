@@ -63,7 +63,7 @@ function bindUI() {
   document.getElementById('editToggle').addEventListener('click', toggleSourceMode);
   document.getElementById('saveFile').addEventListener('click', saveCurrentFile);
   document.getElementById('sourceEditor').addEventListener('input', () => refreshDirtyState());
-  // Cmd/Ctrl+S saves while editing; Ctrl+E toggles source/preview; Esc exits zen.
+  // Cmd/Ctrl+S saves while editing; Ctrl+E toggles source/preview.
   document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
       if (editMode) { e.preventDefault(); saveCurrentFile(); }
@@ -71,8 +71,6 @@ function bindUI() {
       if (currentFileNode) { e.preventDefault(); toggleSourceMode(); }
     } else if (e.key === 'Escape' && document.getElementById('searchModal').classList.contains('open')) {
       e.preventDefault(); closeSearchModal();
-    } else if (e.key === 'Escape' && document.body.classList.contains('zen')) {
-      e.preventDefault(); setZen(false);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       openSearchModal();
@@ -83,13 +81,10 @@ function bindUI() {
   document.getElementById('pagerNext').addEventListener('click', () => navFile(1));
   document.getElementById('docPrev').addEventListener('click', () => navFile(-1));
   document.getElementById('docNext').addEventListener('click', () => navFile(1));
-  document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
   document.getElementById('sidebarExpand').addEventListener('click', toggleSidebar);
   document.getElementById('fontSizeToggle').addEventListener('click', cycleFontSize);
   document.getElementById('outlineToggle').addEventListener('click', toggleOutline);
   document.getElementById('bgToggle').addEventListener('click', toggleBgImage);
-  document.getElementById('zenToggle').addEventListener('click', () => setZen(true));
-  document.getElementById('zenExit').addEventListener('click', () => setZen(false));
   bindDragDrop();
   document.getElementById('searchTrigger').addEventListener('click', openSearchModal);
   document.getElementById('searchModalInput').addEventListener('input', onModalSearch);
@@ -101,8 +96,6 @@ function bindUI() {
   document.getElementById('searchBackdrop').addEventListener('click', closeSearchModal);
   document.getElementById('searchModalInput').addEventListener('keydown', onModalKey);
   document.getElementById('homeBtn').addEventListener('click', goHome);
-
-  bindSidebarScrollbarReveal();
 
   // Remember reading position per file (throttled; skip the programmatic restore).
   let scrollSaveTimer;
@@ -165,18 +158,6 @@ function closeOpenMenus() {
     menu.classList.remove('open');
     menu.querySelector('.open-trigger').setAttribute('aria-expanded', 'false');
   });
-}
-
-// Show sidebar scrollbar only while scrolling.
-function bindSidebarScrollbarReveal() {
-  const tree = document.getElementById('fileTree');
-  if (!tree) return;
-  let hideTimer;
-  tree.addEventListener('scroll', () => {
-    tree.classList.add('is-scrolling');
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => tree.classList.remove('is-scrolling'), 700);
-  }, { passive: true });
 }
 
 // ── Prose font size ─────────────────────────────────────────────────
@@ -264,11 +245,6 @@ function setBgVisible(on, save = true) {
 function toggleBgImage() {
   const isOn = !document.body.classList.contains('bg-off');
   setBgVisible(!isOn);
-}
-
-// ── Zen mode (distraction-free reading) ─────────────────────────────
-function setZen(on) {
-  document.body.classList.toggle('zen', on);
 }
 
 // ── Drag & drop (open a folder or file by dropping it anywhere) ──────

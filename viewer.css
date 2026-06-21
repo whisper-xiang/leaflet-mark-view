@@ -95,7 +95,8 @@
     ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, monospace;
 
   --topbar-h: 64px; /* --vp-nav-height */
-  --sidebar-w: 272px; /* --vp-sidebar-width; outline uses same width */
+  --vp-layout-max-width: 1440px;
+  --vp-sidebar-width: 272px;
 
   /* VitePress heading permalink */
   --vp-header-anchor-symbol: "#";
@@ -221,57 +222,6 @@ body:not(.bg-off).is-home {
   background-color: transparent;
 }
 
-/* ── Zen mode (distraction-free reading) ── */
-body.zen .topbar,
-body.zen .sidebar,
-body.zen .sidebar-expand,
-body.zen .outline {
-  display: none;
-}
-
-body.zen .doc-viewport .doc-layout {
-  padding-top: 72px;
-}
-
-/* Floating exit button — only present in zen mode, fades in on hover */
-.zen-exit {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 60;
-  width: 36px;
-  height: 36px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  color: var(--text-muted);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity 0.2s ease,
-    background 0.14s ease,
-    color 0.14s ease;
-}
-.zen-exit svg {
-  width: 18px;
-  height: 18px;
-}
-body.zen .zen-exit {
-  display: flex;
-}
-body.zen .zen-exit:hover,
-body.zen:hover .zen-exit {
-  opacity: 0.9;
-}
-.zen-exit:hover {
-  background: var(--surface-hover);
-  color: var(--text);
-}
-
 /* Floating pager (hidden — replaced by inline doc-footer) */
 .pager {
   display: none !important;
@@ -333,7 +283,13 @@ body.is-home .outline {
   display: none;
 }
 
+body.is-home {
+  overflow-x: hidden;
+}
+
 body.is-home .app-shell {
+  width: 100%;
+  height: 100vh;
   min-height: 100vh;
 }
 
@@ -452,13 +408,8 @@ body.is-home .app-shell {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px var(--sidebar-pad-right) 6px var(--sidebar-pad-left);
+  padding: 10px 0;
   flex-shrink: 0;
-}
-
-.topbar-github svg {
-  width: 18px;
-  height: 18px;
 }
 
 .topbar-actions {
@@ -542,22 +493,26 @@ body.is-home .app-shell {
 
 /* ── Sidebar ── */
 .sidebar {
-  width: var(--sidebar-w);
+  width: var(--vp-sidebar-width);
   background: transparent;
   border-right: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  box-sizing: border-box;
+  background: var(--surface);
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-pad-left: 24px;
   --sidebar-pad-right: 24px;
 }
 
 .sidebar-header,
-.sidebar-inner {
+.sidebar-inner,
+.sidebar-footer {
   background: var(--surface); /* VitePress: --vp-c-bg-alt */
   border-right: 1px solid var(--border);
+  padding-right: 20px;
 }
 
 .sidebar-inner {
@@ -567,6 +522,7 @@ body.is-home .app-shell {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  padding-right: 20px;
 }
 
 .sidebar.collapsed {
@@ -576,6 +532,7 @@ body.is-home .app-shell {
 /* ── Sidebar location + "up one level" ── */
 .sidebar-up {
   flex-shrink: 0;
+  margin-left: auto;
   width: 26px;
   height: 26px;
   display: inline-flex;
@@ -671,16 +628,16 @@ body.is-home .app-shell {
   height: 11px;
 }
 
-/* ── Sidebar header (minimal — just the collapse toggle) ── */
+/* ── Sidebar header ── */
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: var(--topbar-h);
-  padding: 0 var(--sidebar-pad-right) 0 var(--sidebar-pad-left);
+  /* padding: 0 var(--sidebar-pad-right) 0 var(--sidebar-pad-left); */
   flex-shrink: 0;
   border-bottom: none;
   position: relative;
+  padding-right: 20px;
 }
 .sidebar-header::after {
   content: "";
@@ -690,63 +647,43 @@ body.is-home .app-shell {
   bottom: 0;
   border-bottom: 1px solid var(--border);
 }
-.sidebar-toggle-btn {
-  width: 28px;
-  height: 28px;
-}
-.sidebar-toggle-btn svg {
-  width: 16px;
-  height: 16px;
-}
 
 .file-tree {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px var(--sidebar-pad-right) 24px var(--sidebar-pad-left);
+  padding: 8px 0 24px 0;
+  /* padding: 8px var(--sidebar-pad-right) 24px var(--sidebar-pad-left); */
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.file-tree.is-scrolling {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar) transparent;
+
+.file-tree::-webkit-scrollbar {
+  display: none;
 }
 
 @media (min-width: 1440px) {
-  /* Match VitePress: sidebar grows + content shifts to stay centered */
-  .doc-viewport {
-    --panel-w: calc((100vw - (1440px - 64px)) / 2 + var(--sidebar-w) - 32px);
+  .app-shell {
+    --vp-sidebar-gutter: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2);
+    --vp-sidebar-outer-width: calc(
+      var(--vp-sidebar-gutter) + var(--vp-sidebar-width) - 32px
+    );
   }
+
   .sidebar {
-    width: var(--panel-w);
+    padding-left: max(32px, var(--vp-sidebar-gutter));
+    width: var(--vp-sidebar-outer-width);
   }
+
   .outline:not(.empty):not(.collapsed) {
-    flex: 0 0 var(--panel-w);
-    width: var(--panel-w);
+    flex: 0 0 var(--vp-sidebar-outer-width);
+    width: var(--vp-sidebar-outer-width);
   }
-  .sidebar {
-    --sidebar-pad-left: max(32px, calc((100vw - (1440px - 64px)) / 2));
-  }
+
   .doc-layout {
-    padding-right: calc((100vw - 1440px) / 2);
+    padding-right: calc((100vw - var(--vp-layout-max-width)) / 2);
     padding-left: 0;
   }
-}
-.file-tree::-webkit-scrollbar {
-  width: 9px;
-}
-.file-tree::-webkit-scrollbar-track {
-  background: transparent;
-}
-.file-tree::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 5px;
-  border: 3px solid transparent;
-  background-clip: padding-box;
-  transition: background 0.2s ease;
-}
-.file-tree.is-scrolling::-webkit-scrollbar-thumb {
-  background: var(--scrollbar);
-  border-color: var(--surface);
 }
 
 /* Tree nodes */
@@ -776,8 +713,8 @@ body.is-home .app-shell {
 
 /* Chevron on the RIGHT, collapses when open */
 .tree-dir-arrow {
-  width: 12px;
-  height: 12px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   transition: transform 0.25s;
   color: var(--text-faint);
@@ -849,7 +786,7 @@ body.is-home .app-shell {
 .sidebar-footer {
   flex-shrink: 0;
   border-top: 1px solid var(--border);
-  padding: 10px;
+  padding: 10px 10px 10px 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1005,6 +942,7 @@ body.is-home .app-shell {
 /* ── Content / empty state ── */
 .content-area {
   background: transparent;
+  padding: 48px 32px;
 }
 
 /* ── VitePress doc layout: .doc-layout (container) + .doc-main (content) ── */
@@ -1012,21 +950,23 @@ body.is-home .app-shell {
   display: flex;
   justify-content: center;
   width: 100%;
-  padding: 48px 32px 0;
+
   box-sizing: border-box;
   min-height: 100%;
+  padding: 0 32px 128px;
 }
 
 .doc-main {
   flex: 1;
   min-width: 0;
-  max-width: 752px; /* VitePress: no-aside max */
+  min-width: 640px; /* VitePress: no-aside max */
   padding-bottom: 96px;
 }
 
 /* When outline is visible, shrink content to 688px (VitePress exact) */
 .doc-viewport:has(.outline:not(.empty):not(.collapsed)) .doc-main {
-  max-width: 688px;
+  /* max-width: 688px; */
+  max-width: 100%;
 }
 
 .doc-viewport::-webkit-scrollbar {
@@ -1043,6 +983,9 @@ body.is-home .app-shell {
 }
 
 body.is-home .content-area {
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
   padding: 0;
   overflow: hidden;
 }
@@ -1059,6 +1002,8 @@ body.is-home .content-area {
 }
 
 body.is-home .empty-state {
+  height: 100%;
+  min-height: 100%;
   opacity: 0;
   transform: translateY(20px) scale(0.96);
   pointer-events: none;
@@ -1685,8 +1630,8 @@ body.is-home .empty-btn.ghost:hover {
 
 /* ── Outline (right TOC) — sticky column beside content, no overlap ── */
 .outline {
-  flex: 0 0 var(--sidebar-w);
-  width: var(--sidebar-w);
+  flex: 0 0 var(--vp-sidebar-width);
+  width: var(--vp-sidebar-width);
   position: sticky;
   top: 0;
   align-self: flex-start;
@@ -2492,6 +2437,7 @@ body.is-home .empty-btn.ghost:hover {
 /* Background image mode — override module backgrounds set earlier in the file. */
 body:not(.bg-off) .sidebar-header,
 body:not(.bg-off) .sidebar-inner,
+body:not(.bg-off) .sidebar-footer,
 body:not(.bg-off) .topbar,
 body:not(.bg-off) .outline:not(.empty):not(.collapsed),
 body:not(.bg-off) .content-area,
@@ -2503,6 +2449,10 @@ body:not(.bg-off) .sb-action {
 
 body:not(.bg-off) .content-area {
   min-height: 100%;
+}
+
+body:not(.bg-off).is-home .content-area {
+  min-height: 100vh;
 }
 
 body:not(.bg-off) .source-editor {
