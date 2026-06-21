@@ -2790,17 +2790,19 @@ body.is-home .empty-btn.ghost:hover {
 
 /* Background image mode — override module backgrounds (viewer only). */
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar {
-  background: transparent;
+  /* background: transparent; */
 }
 
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-header,
+html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-inner,
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-footer {
-  background-color: transparent;
+  background: transparent;
 }
 
-html[data-theme="light"] body:not(.bg-off):not(.is-home) .sidebar-inner,
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .topbar,
-html[data-theme="light"] body:not(.bg-off):not(.is-home) .outline:not(.empty):not(.collapsed),
+html[data-theme="light"]
+  body:not(.bg-off):not(.is-home)
+  .outline:not(.empty):not(.collapsed),
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .content-area,
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .open-menu-list,
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sb-action {
@@ -2818,7 +2820,9 @@ html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar-footer {
 
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar-inner,
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .topbar,
-html[data-theme="dark"] body:not(.bg-off):not(.is-home) .outline:not(.empty):not(.collapsed),
+html[data-theme="dark"]
+  body:not(.bg-off):not(.is-home)
+  .outline:not(.empty):not(.collapsed),
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .content-area,
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .open-menu-list,
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sb-action {
