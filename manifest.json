@@ -35,7 +35,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["home.html", "home.js", "viewer.html", "viewer.css"],
+      "resources": ["home.html", "home.js", "viewer.html", "viewer.css", "lmv-db.js", "README.md", "markdown.js"],
       "matches": ["<all_urls>"]
     }
   ]

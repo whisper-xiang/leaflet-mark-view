@@ -19,19 +19,12 @@
         </svg>
       </div>
 
-      <div class="empty-title">在本地阅读你的 Markdown</div>
+      <div class="empty-title">在此闲读</div>
       <div class="empty-desc">
-        打开一个文件夹浏览全部 .md 文件，或直接打开单个 Markdown 文件。
+        文件夹、单篇，拖入亦可。
       </div>
 
       <div class="empty-actions">
-        <button class="empty-btn ghost" id="resumeBtn" style="display:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14M13 6l6 6-6 6"/>
-          </svg>
-          继续阅读
-        </button>
-
         <div class="open-menu">
           <button class="empty-btn open-trigger" type="button" aria-haspopup="true" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -50,6 +43,19 @@
             </button>
           </div>
         </div>
+
+        <div class="resume-wrap" id="resumeWrap" style="display:none">
+          <button class="empty-btn ghost" id="resumeBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+            继续阅读
+          </button>
+          <div class="favorites-popover" id="favoritesPopover" aria-hidden="true">
+            <div class="favorites-popover-title">收藏</div>
+            <ul class="favorites-list" id="favoritesList"></ul>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -64,10 +70,11 @@
       <path d="M14 2v6h6"/>
       <path d="M12 12v6M9 15l3 3 3-3"/>
     </svg>
-    <span>松开以打开</span>
+    <span>松手即开</span>
   </div>
 </div>
 
+<script src="lmv-db.js"></script>
 <script src="home.js"></script>
 </body>
 </html>

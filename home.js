@@ -1,34 +1,3 @@
-// ── IndexedDB handle storage (shared with viewer.js via same origin) ──
-function openDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open('lmv-db', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('handles', { keyPath: 'id' });
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
-  });
-}
-
-async function storeHandle(handle) {
-  try {
-    const db = await openDB();
-    const tx = db.transaction('handles', 'readwrite');
-    tx.objectStore('handles').put({ id: 'root', handle });
-    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
-  } catch (_) {}
-}
-
-async function getStoredHandle() {
-  try {
-    const db = await openDB();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('handles', 'readonly');
-      const req = tx.objectStore('handles').get('root');
-      req.onsuccess = () => res(req.result?.handle ?? null);
-      req.onerror = () => res(null);
-    });
-  } catch (_) { return null; }
-}
-
 // ── Theme & background (sync visual state with viewer) ────────────────
 function applyStoredTheme() {
   const theme = localStorage.getItem('lmv-theme') || 'light';
@@ -46,7 +15,7 @@ function applyStoredBgImage() {
 async function selectFolder() {
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
-    await storeHandle(handle);
+    await LMV.storeHandle(handle);
     location.href = 'viewer.html';
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
@@ -60,56 +29,119 @@ async function selectFile() {
       types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown', '.mdown', '.mkd'] } }],
     });
     if (!handle) return;
-    await storeHandle(handle);
+    await LMV.storeHandle(handle);
     location.href = 'viewer.html';
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
   }
 }
 
-// ── Open dropdown menu ────────────────────────────────────────────────
+// ── Open dropdown menu (hover) ────────────────────────────────────────
 function bindOpenMenu() {
   const menu = document.querySelector('.open-menu');
   const trigger = menu.querySelector('.open-trigger');
-  const list = menu.querySelector('.open-menu-list');
+  let hideTimer;
 
-  trigger.addEventListener('click', e => {
-    e.stopPropagation();
-    const open = menu.classList.toggle('open');
-    trigger.setAttribute('aria-expanded', open);
+  menu.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimer);
+    menu.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
+  });
+  menu.addEventListener('mouseleave', () => {
+    hideTimer = setTimeout(() => {
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }, 120);
   });
 
   document.getElementById('openFolderBtn').addEventListener('click', () => {
     menu.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
     selectFolder();
   });
   document.getElementById('openFileBtn').addEventListener('click', () => {
     menu.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
     selectFile();
   });
 
-  document.addEventListener('click', () => {
-    menu.classList.remove('open');
-    trigger.setAttribute('aria-expanded', false);
-  });
+  trigger.addEventListener('click', e => e.preventDefault());
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') menu.classList.remove('open');
+    if (e.key === 'Escape') {
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
   });
 }
 
-// ── Resume button (shown if a previous session exists) ───────────────
-async function setupResumeBtn() {
-  const handle = await getStoredHandle();
-  if (!handle) return;
+// ── Resume + favorites popover ────────────────────────────────────────
+async function setupResumeArea() {
+  const handle = await LMV.getStoredHandle();
+  const favorites = await LMV.listFavorites();
+  if (!handle && !favorites.length) return;
+
+  const wrap = document.getElementById('resumeWrap');
   const btn = document.getElementById('resumeBtn');
-  btn.style.display = '';
-  btn.addEventListener('click', () => { location.href = 'viewer.html'; });
+  wrap.style.display = '';
+
+  if (handle) {
+    btn.addEventListener('click', () => { location.href = 'viewer.html'; });
+  } else {
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      收藏`;
+    btn.addEventListener('click', e => e.preventDefault());
+  }
+
+  bindFavoritesPopover();
+}
+
+function bindFavoritesPopover() {
+  const wrap = document.getElementById('resumeWrap');
+  const popover = document.getElementById('favoritesPopover');
+  const list = document.getElementById('favoritesList');
+  let hideTimer;
+
+  async function refresh() {
+    await LMV.renderFavoritesList(list, {
+      onChange: updateResumeWrapVisibility,
+    });
+  }
+
+  async function updateResumeWrapVisibility() {
+    const handle = await LMV.getStoredHandle();
+    const favorites = await LMV.listFavorites();
+    wrap.style.display = handle || favorites.length ? '' : 'none';
+  }
+
+  wrap.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimer);
+    popover.classList.add('open');
+    popover.setAttribute('aria-hidden', 'false');
+    refresh();
+  });
+  wrap.addEventListener('mouseleave', () => {
+    hideTimer = setTimeout(() => {
+      popover.classList.remove('open');
+      popover.setAttribute('aria-hidden', 'true');
+    }, 120);
+  });
+  popover.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+  popover.addEventListener('mouseleave', () => {
+    hideTimer = setTimeout(() => {
+      popover.classList.remove('open');
+      popover.setAttribute('aria-hidden', 'true');
+    }, 120);
+  });
 }
 
 // ── Drag & drop ───────────────────────────────────────────────────────
 function bindDragDrop() {
   const overlay = document.getElementById('dragOverlay');
-  let depth = 0; // track nested dragenter/dragleave pairs
+  let depth = 0;
 
   document.addEventListener('dragenter', e => {
     e.preventDefault();
@@ -131,7 +163,6 @@ function bindDragDrop() {
     for (const item of items) {
       if (item.kind !== 'file') continue;
 
-      // Prefer FileSystemHandle (preserves directory structure + re-readable)
       if (typeof item.getAsFileSystemHandle === 'function') {
         try {
           const handle = await item.getAsFileSystemHandle();
@@ -139,15 +170,14 @@ function bindDragDrop() {
           const isDir = handle.kind === 'directory';
           const isMd  = /\.(md|markdown|mdown|mkd)$/i.test(handle.name);
           if (isDir || isMd) {
-            await storeHandle(handle);
+            await LMV.storeHandle(handle);
             location.href = 'viewer.html';
             return;
           }
-          continue; // not a supported file type, try next item
+          continue;
         } catch (_) {}
       }
 
-      // Fallback: plain File object → store content in session storage
       const file = item.getAsFile();
       if (!file || !/\.(md|markdown|mdown|mkd)$/i.test(file.name)) continue;
       try {
@@ -168,6 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyStoredTheme();
   applyStoredBgImage();
   bindOpenMenu();
-  setupResumeBtn();
+  setupResumeArea();
   bindDragDrop();
 });
