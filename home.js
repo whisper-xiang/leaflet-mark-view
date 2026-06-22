@@ -5,10 +5,7 @@ function applyStoredTheme() {
 }
 
 function applyStoredBgImage() {
-  const stored = localStorage.getItem('lmv-bg');
-  if (stored) {
-    document.documentElement.style.setProperty('--bg-image', `url("${stored}")`);
-  }
+  LMV.applyRandomBgImage();
 }
 
 // ── Open actions ──────────────────────────────────────────────────────

@@ -312,14 +312,7 @@ function toggleTheme(event) {
 
 // ── Background image ────────────────────────────────────────────────
 function applyStoredBgImage() {
-  // Restore custom image (set by home.js)
-  const stored = localStorage.getItem("lmv-bg");
-  if (stored) {
-    document.documentElement.style.setProperty(
-      "--bg-image",
-      `url("${stored}")`,
-    );
-  }
+  LMV.applyRandomBgImage();
   // Restore on/off preference — default OFF for the flat VitePress-style reading view.
   const show = localStorage.getItem("lmv-bg-show") === "on";
   setBgVisible(show, /* save */ false);

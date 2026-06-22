@@ -5,6 +5,13 @@ const LMV = (() => {
   const README_FAV_ID = '__readme__';
   const README_DISMISS_KEY = 'lmv-readme-fav-dismissed';
   const PROJECT_README_NAME = 'README.md';
+  const BUILTIN_BG_IMAGES = ['public/1.png', 'public/2.png', 'public/3.png'];
+
+  function applyRandomBgImage() {
+    const path = BUILTIN_BG_IMAGES[Math.floor(Math.random() * BUILTIN_BG_IMAGES.length)];
+    document.documentElement.style.setProperty('--bg-image', `url("${path}")`);
+    return path;
+  }
 
   function openDB() {
     return new Promise((res, rej) => {
@@ -216,6 +223,8 @@ const LMV = (() => {
 
   return {
     README_FAV_ID,
+    BUILTIN_BG_IMAGES,
+    applyRandomBgImage,
     storeHandle,
     getStoredHandle,
     listFavorites,

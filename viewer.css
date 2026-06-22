@@ -80,7 +80,7 @@
 
 :root {
   /* Background image (overridden by JS when user picks a custom image) */
-  --bg-image: url("public/image.png");
+  --bg-image: url("public/1.png");
 
   /* ── VitePress-exact light palette ── */
   --bg: #ffffff;
@@ -208,21 +208,6 @@ svg {
 /* Dark theme body background */
 [data-theme="dark"] body {
   background: var(--bg-image) center / cover no-repeat fixed;
-  background-color: var(--bg);
-}
-
-/* Home mode: deeper overlay to give hero contrast */
-body.is-home {
-  background:
-    linear-gradient(to bottom, rgba(12, 14, 12, 0.42), rgba(12, 14, 12, 0.72)),
-    var(--bg-image) center / cover no-repeat fixed;
-  background-color: var(--bg);
-}
-
-[data-theme="dark"] body.is-home {
-  background:
-    linear-gradient(to bottom, rgba(6, 8, 6, 0.55), rgba(6, 8, 6, 0.82)),
-    var(--bg-image) center / cover no-repeat fixed;
   background-color: var(--bg);
 }
 
