@@ -86,9 +86,10 @@ const LMV = (() => {
 
   async function listFavorites() {
     const items = await listFavoritesFromDB();
+    // Most recently added first; README builtin (addedAt:0) naturally falls last.
     items.sort((a, b) => b.addedAt - a.addedAt);
     if (!isReadmeFavoriteDismissed()) {
-      items.unshift(projectReadmeFavorite());
+      items.push(projectReadmeFavorite());
     }
     return items;
   }

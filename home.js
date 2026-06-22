@@ -74,24 +74,17 @@ function bindOpenMenu() {
 
 // ── Resume + favorites popover ────────────────────────────────────────
 async function setupResumeArea() {
-  const handle = await LMV.getStoredHandle();
   const favorites = await LMV.listFavorites();
-  if (!handle && !favorites.length) return;
+  if (!favorites.length) return;
 
   const wrap = document.getElementById('resumeWrap');
   const btn = document.getElementById('resumeBtn');
   wrap.style.display = '';
 
-  if (handle) {
-    btn.addEventListener('click', () => { location.href = 'viewer.html'; });
-  } else {
-    btn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-      </svg>
-      收藏`;
-    btn.addEventListener('click', e => e.preventDefault());
-  }
+  // Click "继续阅读" → directly open the most recently added favorite (first in list).
+  btn.addEventListener('click', async () => {
+    await LMV.openFavorite(favorites[0]);
+  });
 
   bindFavoritesPopover();
 }
