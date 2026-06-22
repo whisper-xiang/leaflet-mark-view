@@ -191,7 +191,7 @@ body {
 body {
   font-family: var(--font-ui);
   background: var(--bg-image) center / cover no-repeat fixed;
-  background-color: var(--bg); /* fallback while image loads */
+  background-color: var(--bg); 
   color: var(--text);
   display: flex;
   flex-direction: column;
@@ -534,14 +534,14 @@ body.is-home .app-shell {
 /* ── Sidebar ── */
 .sidebar {
   width: var(--vp-sidebar-width);
-  background: transparent;
+  /* background: transparent; */
   border-right: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
-  background: var(--surface);
+  background: var(--surface); 
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-pad-left: 24px;
   --sidebar-pad-right: 24px;
@@ -550,7 +550,7 @@ body.is-home .app-shell {
 .sidebar-header,
 .sidebar-inner,
 .sidebar-footer {
-  background: var(--surface); /* VitePress: --vp-c-bg-alt */
+  /* background: var(--surface);  */
   border-right: 1px solid var(--border);
   padding-right: 20px;
 }
@@ -2789,16 +2789,10 @@ html[data-theme="light"] body:not(.bg-off):not(.is-home) .sb-action {
   background-color: rgba(255, 255, 255, 0.72);
 }
 
-html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar {
-  background: transparent;
-}
 
-html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar-header,
-html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar-footer {
-  background-color: transparent;
-}
 
-html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar-inner,
+
+/* html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sidebar-inner, */
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .topbar,
 html[data-theme="dark"]
   body:not(.bg-off):not(.is-home)
@@ -2836,11 +2830,15 @@ body:not(.bg-off):not(.is-home) .source-editor {
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sb-action.primary {
   border-color: var(--border);
   color: var(--text);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 html[data-theme="dark"] body:not(.bg-off):not(.is-home) .sb-action.primary {
   border-color: var(--border);
   color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 body:not(.bg-off):not(.is-home) .sb-action.primary svg {
