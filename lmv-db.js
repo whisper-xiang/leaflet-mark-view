@@ -6,7 +6,7 @@ const LMV = (() => {
   const BUILTIN_BG_IMAGES = ['public/1.png', 'public/2.png', 'public/3.png'];
 
   function applyRandomBgImage() {
-    const path = BUILTIN_BG_IMAGES[Math.floor(Math.random() * BUILTIN_BG_IMAGES.length)];
+    const path = 'public/2.png';
     document.documentElement.style.setProperty('--bg-image', `url("${path}")`);
     return path;
   }
