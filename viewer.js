@@ -1458,9 +1458,7 @@ function renderMarkdownInto(body, text, fileUrl) {
       e.preventDefault();
       const id = decodeURIComponent(a.getAttribute("href").slice(1));
       const h = body.querySelector("#" + CSS.escape(id));
-      if (!h) return;
-      h.scrollIntoView({ behavior: "smooth", block: "start" });
-      history.replaceState(null, "", "#" + id);
+      if (h) scrollToHeading(h);
     });
   });
 
@@ -1768,6 +1766,24 @@ function highlightSidebar(node) {
   }
 }
 
+// Scroll contentArea so that heading `h` sits near the top.
+// Uses offsetTop traversal (reliable; unaffected by current scroll/viewport).
+// Defers hash update so Chrome doesn't trigger its own anchor-scroll first.
+function scrollToHeading(h) {
+  const ca = document.getElementById("contentArea");
+  let top = 0;
+  let el = h;
+  while (el && el !== ca) {
+    top += el.offsetTop;
+    el = el.offsetParent;
+  }
+  ca.scrollTo({ top: Math.max(0, top - 20), behavior: "smooth" });
+  // Defer replaceState so it doesn't race with Chrome's native anchor scroll.
+  requestAnimationFrame(() => {
+    history.replaceState(null, "", "#" + h.id);
+  });
+}
+
 // ── Outline (table of contents) ─────────────────────────────────────
 function buildOutline(body) {
   const outline = document.getElementById("outline");
@@ -1806,8 +1822,7 @@ function buildOutline(body) {
     a.title = a.textContent;
     a.addEventListener("click", (e) => {
       e.preventDefault();
-      h.scrollIntoView({ behavior: "smooth", block: "start" });
-      history.replaceState(null, "", "#" + h.id);
+      scrollToHeading(h);
     });
 
     const li = document.createElement("li");
@@ -1882,7 +1897,11 @@ function setupScrollSpy(headings) {
       if (on) activeItem = a;
     });
     if (activeItem) {
-      activeItem.scrollIntoView({ block: "nearest" });
+      // Keep the active link visible by scrolling ONLY the outline panel.
+      // Element.scrollIntoView() walks every scrollable ancestor (it can nudge
+      // the window / main pane), which fights the click-triggered smooth scroll
+      // and shows up as page jitter. Containing it to #outline avoids that.
+      revealInOutline(activeItem);
       const marker = document.getElementById("outlineMarker");
       const content = document.querySelector(".outline-content");
       if (marker && content) {
@@ -1902,6 +1921,21 @@ function setupScrollSpy(headings) {
   };
   ca.addEventListener("scroll", spyHandler, { passive: true });
   update();
+}
+
+// Scroll the outline panel (and only it) so `item` is visible. Mutating
+// panel.scrollTop directly never bubbles to ancestor scrollers.
+function revealInOutline(item) {
+  const panel = document.getElementById("outline");
+  if (!panel) return;
+  const pad = 8;
+  const pr = panel.getBoundingClientRect();
+  const ir = item.getBoundingClientRect();
+  if (ir.top < pr.top + pad) {
+    panel.scrollTop += ir.top - pr.top - pad;
+  } else if (ir.bottom > pr.bottom - pad) {
+    panel.scrollTop += ir.bottom - pr.bottom + pad;
+  }
 }
 
 function slugFromText(text) {
