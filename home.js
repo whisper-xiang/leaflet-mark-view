@@ -13,6 +13,7 @@ async function selectFolder() {
   try {
     const handle = await window.showDirectoryPicker({ mode: 'read' });
     await LMV.storeHandle(handle);
+    await LMV.addRecent(handle);
     location.href = 'viewer.html';
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
@@ -27,6 +28,7 @@ async function selectFile() {
     });
     if (!handle) return;
     await LMV.storeHandle(handle);
+    await LMV.addRecent(handle);
     location.href = 'viewer.html';
   } catch (e) {
     if (e.name !== 'AbortError') console.error(e);
@@ -72,39 +74,38 @@ function bindOpenMenu() {
   });
 }
 
-// ── Resume + favorites popover ────────────────────────────────────────
+// ── Resume + recents popover ──────────────────────────────────────────
 async function setupResumeArea() {
-  const favorites = await LMV.listFavorites();
-  if (!favorites.length) return;
+  const recents = await LMV.listRecents();
+  if (!recents.length) return;
 
   const wrap = document.getElementById('resumeWrap');
   const btn = document.getElementById('resumeBtn');
   wrap.style.display = '';
 
-  // Click "继续阅读" → directly open the most recently added favorite (first in list).
+  // Click "继续阅读" → open the most recently opened entry (first in list).
   btn.addEventListener('click', async () => {
-    await LMV.openFavorite(favorites[0]);
+    await LMV.openRecent(recents[0]);
   });
 
-  bindFavoritesPopover();
+  bindRecentsPopover();
 }
 
-function bindFavoritesPopover() {
+function bindRecentsPopover() {
   const wrap = document.getElementById('resumeWrap');
   const popover = document.getElementById('favoritesPopover');
   const list = document.getElementById('favoritesList');
   let hideTimer;
 
   async function refresh() {
-    await LMV.renderFavoritesList(list, {
+    await LMV.renderRecentsList(list, {
       onChange: updateResumeWrapVisibility,
     });
   }
 
   async function updateResumeWrapVisibility() {
-    const handle = await LMV.getStoredHandle();
-    const favorites = await LMV.listFavorites();
-    wrap.style.display = handle || favorites.length ? '' : 'none';
+    const recents = await LMV.listRecents();
+    wrap.style.display = recents.length ? '' : 'none';
   }
 
   wrap.addEventListener('mouseenter', () => {
@@ -161,6 +162,7 @@ function bindDragDrop() {
           const isMd  = /\.(md|markdown|mdown|mkd)$/i.test(handle.name);
           if (isDir || isMd) {
             await LMV.storeHandle(handle);
+            await LMV.addRecent(handle);
             location.href = 'viewer.html';
             return;
           }

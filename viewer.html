@@ -38,13 +38,6 @@
             <span class="loc-name">未选择</span>
           </span>
           <span class="sidebar-stats" id="fileStats"></span>
-          <button class="sidebar-fav" id="addFavoriteBtn" type="button" title="收藏" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
-              stroke-linejoin="round">
-              <path
-                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-          </button>
           <button class="sidebar-up" id="upLevel" type="button" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
               stroke-linejoin="round">
@@ -123,22 +116,6 @@
         <div class="topbar-fill"></div>
 
         <div class="topbar-actions">
-          <button class="btn-icon" id="saveFile" title="保存 (⌘/Ctrl+S)" style="display:none">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-              stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
-              <path d="M17 21v-8H7v8M7 3v5h8" />
-            </svg>
-          </button>
-          <span class="readonly-hint" id="readonlyHint" style="display:none"
-            title="此来源（file:// 直接打开）无法原地写回，保存时将弹出「另存为」">只读 · 另存</span>
-
-          <button class="btn-icon edit-fab" id="editToggle" aria-label="源码 / 编辑">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-              stroke-linejoin="round">
-              <path d="m16 18 6-6-6-6M8 6l-6 6 6 6" />
-            </svg>
-          </button>
 
           <button class="btn-icon" id="themeToggle" title="切换主题"></button>
 
@@ -195,9 +172,6 @@
 
                   <!-- Markdown output -->
                   <article class="markdown-body vp-doc" id="markdownBody" style="display:none"></article>
-
-                  <!-- Raw source editor -->
-                  <textarea class="source-editor" id="sourceEditor" spellcheck="false" style="display:none"></textarea>
 
                   <!-- Prev/next navigation -->
                   <nav class="doc-footer" id="docFooter" style="display:none">

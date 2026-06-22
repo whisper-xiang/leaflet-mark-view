@@ -2,6 +2,9 @@
 <html lang="zh" data-theme="light">
 <head>
   <meta charset="UTF-8">
+  <!-- New-tab takeover gate. Must be the first script and external (MV3 CSP
+       blocks inline). Render-blocking in <head>, so it runs before any paint. -->
+  <script src="newtab-gate.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leaflet Mark View</title>
   <link rel="stylesheet" href="viewer.css">
@@ -52,7 +55,7 @@
             继续阅读
           </button>
           <div class="favorites-popover" id="favoritesPopover" aria-hidden="true">
-            <div class="favorites-popover-title">收藏</div>
+            <div class="favorites-popover-title">最近阅读</div>
             <ul class="favorites-list" id="favoritesList"></ul>
           </div>
         </div>

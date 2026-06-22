@@ -2296,35 +2296,6 @@ body.is-home .empty-btn.ghost:hover {
   margin-bottom: 8px;
 }
 
-/* ── Source editor (source ↔ preview) ────────────────────────────────── */
-.source-editor {
-  display: block;
-  width: 100%;
-  /* min-height: topbar + doc-layout padding */
-  min-height: calc(100vh - var(--topbar-h) - 96px);
-  box-sizing: border-box;
-  padding: 44px 56px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 13.5px;
-  line-height: 1.7;
-  tab-size: 2;
-  resize: none;
-  outline: none;
-}
-.source-editor:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-[data-theme="dark"] .source-editor {
-  background: rgba(16, 18, 16, 0.9);
-}
-
-/* source-editor fills doc-main */
-
 .btn-icon.active {
   background: var(--accent-soft);
   color: var(--accent);
@@ -2333,37 +2304,6 @@ body.is-home .empty-btn.ghost:hover {
   opacity: 0.4;
   cursor: default;
   pointer-events: none;
-}
-
-/* Unsaved-changes dot on the save button */
-#saveFile {
-  position: relative;
-}
-#saveFile.dirty {
-  color: var(--accent);
-}
-#saveFile.dirty::after {
-  content: "";
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-.readonly-hint {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  font-size: 11px;
-  color: var(--text-faint);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  cursor: help;
-  user-select: none;
 }
 
 /* Transient toast */
@@ -2481,34 +2421,6 @@ body.is-home .empty-btn.ghost:hover {
   border-radius: 999px;
 }
 
-/* ── Source/edit toggle (topbar) ─────────────────────────────────── */
-.edit-fab {
-  position: relative;
-}
-.edit-fab::before {
-  content: "查看 / 编辑源码\A快捷键 Ctrl+E";
-  white-space: pre;
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: var(--text);
-  color: var(--bg-elevated);
-  font-size: 12px;
-  line-height: 1.8;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  text-align: right;
-  z-index: 100;
-}
-.edit-fab.active::before {
-  content: "返回预览\A快捷键 Ctrl+E";
-}
-.edit-fab:hover::before {
-  opacity: 1;
-}
 .settings-item.active .settings-val {
   color: var(--accent);
   background: var(--accent-soft);
@@ -2818,13 +2730,6 @@ html[data-theme="dark"] body:not(.bg-off):not(.is-home) .settings-list {
 
 body:not(.bg-off):not(.is-home) .content-area {
   min-height: 100%;
-}
-
-body:not(.bg-off):not(.is-home) .source-editor {
-  background: transparent;
-  border-color: transparent;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 html[data-theme="light"] body:not(.bg-off):not(.is-home) .sb-action.primary {

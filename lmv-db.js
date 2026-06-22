@@ -1,10 +1,8 @@
-// Shared IndexedDB: last-open handle + favorites (FileSystemHandle).
+// Shared IndexedDB: last-open handle + recents (recently opened FileSystemHandles).
 const LMV = (() => {
   const DB_NAME = 'lmv-db';
-  const DB_VERSION = 2;
-  const README_FAV_ID = '__readme__';
-  const README_DISMISS_KEY = 'lmv-readme-fav-dismissed';
-  const PROJECT_README_NAME = 'README.md';
+  const DB_VERSION = 3;
+  const MAX_RECENTS = 20;
   const BUILTIN_BG_IMAGES = ['public/1.png', 'public/2.png', 'public/3.png'];
 
   function applyRandomBgImage() {
@@ -21,8 +19,8 @@ const LMV = (() => {
         if (!db.objectStoreNames.contains('handles')) {
           db.createObjectStore('handles', { keyPath: 'id' });
         }
-        if (!db.objectStoreNames.contains('favorites')) {
-          db.createObjectStore('favorites', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('recents')) {
+          db.createObjectStore('recents', { keyPath: 'id' });
         }
       };
       req.onsuccess = () => res(req.result);
@@ -30,26 +28,7 @@ const LMV = (() => {
     });
   }
 
-  function isReadmeFavoriteDismissed() {
-    return localStorage.getItem(README_DISMISS_KEY) === '1';
-  }
-
-  function getProjectReadmeUrl() {
-    if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
-      return chrome.runtime.getURL(PROJECT_README_NAME);
-    }
-    return new URL(PROJECT_README_NAME, location.href).href;
-  }
-
-  function projectReadmeFavorite() {
-    return {
-      id: README_FAV_ID,
-      name: PROJECT_README_NAME,
-      kind: 'builtin',
-      pinned: true,
-      addedAt: 0,
-    };
-  }
+  // ── Last-opened handle (used by reconnect banner) ───────────────────
 
   async function storeHandle(handle) {
     try {
@@ -72,68 +51,54 @@ const LMV = (() => {
     } catch (_) { return null; }
   }
 
-  async function listFavoritesFromDB() {
+  // ── Recents ────────────────────────────────────────────────────────
+
+  // Upsert a handle into recents; bump its openedAt timestamp.
+  async function addRecent(handle) {
+    if (!handle) return;
     try {
       const db = await openDB();
-      return new Promise(res => {
-        const tx = db.transaction('favorites', 'readonly');
-        const req = tx.objectStore('favorites').getAll();
+      const id = handle.name + ':' + handle.kind;
+      const entry = { id, name: handle.name, kind: handle.kind, handle, openedAt: Date.now() };
+      const tx = db.transaction('recents', 'readwrite');
+      tx.objectStore('recents').put(entry);
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+
+      // Trim to MAX_RECENTS by removing oldest entries.
+      const all = await listRecents();
+      if (all.length > MAX_RECENTS) {
+        const toDelete = all.slice(MAX_RECENTS);
+        const tx2 = db.transaction('recents', 'readwrite');
+        toDelete.forEach(r => tx2.objectStore('recents').delete(r.id));
+        await new Promise((res, rej) => { tx2.oncomplete = res; tx2.onerror = rej; });
+      }
+    } catch (_) {}
+  }
+
+  async function listRecents() {
+    try {
+      const db = await openDB();
+      const items = await new Promise(res => {
+        const tx = db.transaction('recents', 'readonly');
+        const req = tx.objectStore('recents').getAll();
         req.onsuccess = () => res(req.result ?? []);
         req.onerror = () => res([]);
       });
+      items.sort((a, b) => b.openedAt - a.openedAt);
+      return items;
     } catch (_) { return []; }
   }
 
-  async function listFavorites() {
-    const items = await listFavoritesFromDB();
-    // Most recently added first; README builtin (addedAt:0) naturally falls last.
-    items.sort((a, b) => b.addedAt - a.addedAt);
-    if (!isReadmeFavoriteDismissed()) {
-      items.push(projectReadmeFavorite());
-    }
-    return items;
-  }
-
-  async function upsertFavorite(entry) {
-    const db = await openDB();
-    const tx = db.transaction('favorites', 'readwrite');
-    tx.objectStore('favorites').put(entry);
-    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
-  }
-
-  async function addFavorite(handle) {
-    const favorites = await listFavoritesFromDB();
-    if (favorites.some(f => f.name === handle.name && f.kind === handle.kind)) {
-      return { added: false, reason: 'duplicate' };
-    }
-    const entry = {
-      id: crypto.randomUUID(),
-      name: handle.name,
-      kind: handle.kind,
-      handle,
-      pinned: false,
-      addedAt: Date.now(),
-    };
-    try {
-      await upsertFavorite(entry);
-      return { added: true, entry };
-    } catch (_) {
-      return { added: false, reason: 'error' };
-    }
-  }
-
-  async function removeFavorite(id) {
-    if (id === README_FAV_ID) {
-      localStorage.setItem(README_DISMISS_KEY, '1');
-      return;
-    }
+  async function removeRecent(id) {
     try {
       const db = await openDB();
-      const tx = db.transaction('favorites', 'readwrite');
-      tx.objectStore('favorites').delete(id);
+      const tx = db.transaction('recents', 'readwrite');
+      tx.objectStore('recents').delete(id);
       await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
     } catch (_) {}
   }
+
+  // ── Navigation helpers ─────────────────────────────────────────────
 
   function isProjectReadmeUrl(url) {
     if (!url) return false;
@@ -145,14 +110,13 @@ const LMV = (() => {
     }
   }
 
-  function restoreProjectReadmeFavorite() {
-    localStorage.removeItem(README_DISMISS_KEY);
-  }
-
   function openProjectReadmeInViewer() {
-    const src = getProjectReadmeUrl();
+    const name = 'README.md';
+    const src = (typeof chrome !== 'undefined' && chrome.runtime?.getURL)
+      ? chrome.runtime.getURL(name)
+      : new URL(name, location.href).href;
     location.href = 'viewer.html'
-      + '?name=' + encodeURIComponent(PROJECT_README_NAME)
+      + '?name=' + encodeURIComponent(name)
       + '&src=' + encodeURIComponent(src)
       + '&builtin=readme';
   }
@@ -162,16 +126,14 @@ const LMV = (() => {
     location.href = 'viewer.html';
   }
 
-  async function openFavorite(fav) {
-    if (!fav) return;
-    if (fav.kind === 'builtin') {
-      openProjectReadmeInViewer();
-      return;
-    }
-    if (fav.handle) await openHandleInViewer(fav.handle);
+  async function openRecent(recent) {
+    if (!recent?.handle) return;
+    await openHandleInViewer(recent.handle);
   }
 
-  function favoriteIcon(kind) {
+  // ── UI helpers ────────────────────────────────────────────────────
+
+  function entryIcon(kind) {
     if (kind === 'directory') {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>';
     }
@@ -184,20 +146,20 @@ const LMV = (() => {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  async function renderFavoritesList(container, { onChange } = {}) {
-    const favorites = await listFavorites();
-    if (!favorites.length) {
-      container.innerHTML = '<li class="favorites-empty">暂无收藏</li>';
+  async function renderRecentsList(container, { onChange } = {}) {
+    const recents = await listRecents();
+    if (!recents.length) {
+      container.innerHTML = '<li class="favorites-empty">暂无最近打开记录</li>';
       return;
     }
 
-    container.innerHTML = favorites.map(f => `
-      <li class="favorites-row${f.pinned ? ' is-pinned' : ''}">
-        <button type="button" class="favorites-item" data-id="${escHtml(f.id)}">
-          <span class="favorites-item-icon">${favoriteIcon(f.kind === 'directory' ? 'directory' : 'file')}</span>
-          <span class="favorites-item-name">${escHtml(f.name)}</span>
+    container.innerHTML = recents.map(r => `
+      <li class="favorites-row">
+        <button type="button" class="favorites-item" data-id="${escHtml(r.id)}">
+          <span class="favorites-item-icon">${entryIcon(r.kind)}</span>
+          <span class="favorites-item-name">${escHtml(r.name)}</span>
         </button>
-        <button type="button" class="favorites-remove" data-id="${escHtml(f.id)}" aria-label="取消收藏" title="取消收藏">
+        <button type="button" class="favorites-remove" data-id="${escHtml(r.id)}" aria-label="从列表移除" title="从列表移除">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
@@ -207,36 +169,34 @@ const LMV = (() => {
 
     container.querySelectorAll('.favorites-item').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const fav = favorites.find(x => x.id === btn.dataset.id);
-        await openFavorite(fav);
+        const recent = recents.find(x => x.id === btn.dataset.id);
+        await openRecent(recent);
       });
     });
 
     container.querySelectorAll('.favorites-remove').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation();
-        await removeFavorite(btn.dataset.id);
-        await renderFavoritesList(container, { onChange });
+        await removeRecent(btn.dataset.id);
+        await renderRecentsList(container, { onChange });
         onChange?.();
       });
     });
   }
 
   return {
-    README_FAV_ID,
     BUILTIN_BG_IMAGES,
     applyRandomBgImage,
     storeHandle,
     getStoredHandle,
-    listFavorites,
-    addFavorite,
-    removeFavorite,
-    isReadmeFavoriteDismissed,
+    addRecent,
+    listRecents,
+    removeRecent,
+    openRecent,
     isProjectReadmeUrl,
-    restoreProjectReadmeFavorite,
     openProjectReadmeInViewer,
     openHandleInViewer,
-    openFavorite,
-    renderFavoritesList,
+    renderRecentsList,
+    escHtml,
   };
 })();
