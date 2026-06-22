@@ -43,9 +43,9 @@ function parseInline(text) {
   // Escape HTML in the non-code parts
   text = escapeHtml(text);
 
-  // Images (before links)
+  // Images (before links) — allow optional whitespace around the URL
   text = text.replace(
-    /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+    /!\[([^\]]*)\]\(\s*([^)\s"]+)\s*(?:"([^"]*)")?\s*\)/g,
     (_, alt, src, title) => {
       let img = `<img src="${src}" alt="${alt}"`;
       if (title) img += ` title="${title}"`;

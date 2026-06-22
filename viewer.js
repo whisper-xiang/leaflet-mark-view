@@ -1405,10 +1405,47 @@ function highlightMatch(text, q) {
   );
 }
 
+// Resolve image src values so local paths display correctly.
+// chrome-extension:// pages cannot render file:// img srcs directly,
+// so we fetch each local URL and swap in a blob URL instead.
+function fixImageSrcs(body, fileUrl) {
+  const dirUrl = fileUrl
+    ? fileUrl.slice(0, fileUrl.lastIndexOf("/") + 1)
+    : null;
+
+  body.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src");
+    if (!src) return;
+    // Already a safe URL (http/https/data/blob)
+    if (/^(https?:|data:|blob:)/.test(src)) return;
+    if (src.startsWith("//")) return;
+
+    let fileHref = null;
+    if (/^file:\/\//.test(src)) {
+      fileHref = src;
+    } else if (src.startsWith("/")) {
+      fileHref = "file://" + src;
+    } else if (dirUrl) {
+      try { fileHref = new URL(src, dirUrl).href; } catch (_) {}
+      if (fileHref && !fileHref.startsWith("file://")) fileHref = null;
+    }
+
+    if (!fileHref) return;
+
+    // Fetch the local file and replace src with a blob URL so Chrome renders it.
+    fetch(fileHref)
+      .then(r => r.ok || r.status === 0 ? r.blob() : Promise.reject(r.status))
+      .then(blob => { img.src = URL.createObjectURL(blob); })
+      .catch(() => { img.alt += " (无法加载)"; });
+  });
+}
+
 // Parse markdown into `body` and wire up links + heading anchors + outline.
 // Shared by file opening and the source-editor's preview toggle.
-function renderMarkdownInto(body, text) {
+function renderMarkdownInto(body, text, fileUrl) {
   body.innerHTML = parseMarkdown(text, true);
+
+  fixImageSrcs(body, fileUrl);
 
   // Open external links safely
   body.querySelectorAll('a[target="_blank"]').forEach((a) => {
@@ -1558,7 +1595,7 @@ function previewFromSource() {
       ? editor.scrollTop / (editor.scrollHeight - editor.clientHeight)
       : 0;
 
-  renderMarkdownInto(document.getElementById("markdownBody"), editor.value);
+  renderMarkdownInto(document.getElementById("markdownBody"), editor.value, currentFileNode?.url);
   exitSourceMode();
 
   // Apply ratio to the re-rendered preview.
@@ -1702,7 +1739,7 @@ async function openFile(node) {
     const text = await file.text();
     node.__text = text; // cache for full-text search
 
-    renderMarkdownInto(document.getElementById("markdownBody"), text);
+    renderMarkdownInto(document.getElementById("markdownBody"), text, node.url);
     updateEditAvailability();
     // Restore the previous reading position for this file (default: top).
     restoringScroll = true;
