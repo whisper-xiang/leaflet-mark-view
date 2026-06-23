@@ -3,12 +3,17 @@
   "name": "Leaflet Mark View",
   "version": "1.0.0",
   "author": "轻语",
-  "description": "Browse and preview Markdown files from local folders",
+  "description": "Browse and preview Markdown files from local folders and remote URLs",
   "background": {
     "service_worker": "background.js"
   },
   "permissions": ["storage", "tabs"],
-  "host_permissions": ["file:///*"],
+  "host_permissions": [
+    "file:///*",
+    "https://raw.githubusercontent.com/*",
+    "https://api.github.com/*",
+    "https://*/*"
+  ],
   "content_scripts": [
     {
       "matches": ["file:///*"],
@@ -35,7 +40,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["home.html", "home.js", "newtab-gate.js", "viewer.html", "viewer.css", "lmv-db.js", "README.md", "markdown.js"],
+      "resources": ["home.html", "home.js", "newtab-gate.js", "viewer.html", "viewer.css", "lmv-db.js", "remote-md.js", "README.md", "markdown.js"],
       "matches": ["<all_urls>"]
     }
   ]

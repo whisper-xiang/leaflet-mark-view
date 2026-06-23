@@ -186,10 +186,17 @@ function bindDragDrop() {
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────
+let urlModalApi = { openUrlModal() {}, closeUrlModal() {} };
+
 document.addEventListener('DOMContentLoaded', () => {
   applyStoredTheme();
   applyStoredBgImage();
   bindOpenMenu();
+  urlModalApi = RemoteMD.bindUrlModal();
+  document.getElementById('openUrlBtn').addEventListener('click', () => {
+    document.querySelector('.open-menu').classList.remove('open');
+    urlModalApi.openUrlModal();
+  });
   setupResumeArea();
   bindDragDrop();
 });

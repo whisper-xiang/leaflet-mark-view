@@ -26,6 +26,7 @@ let scopeKey = ""; // identifies the current folder/file set, for per-scope memo
 let searchIndexBuilt = false; // whether every file's text has been read for full-text search
 let restoringScroll = false; // guard so programmatic scroll restore doesn't overwrite saved pos
 let viewingBuiltinReadme = false; // extension-bundled README.md (no FS handle)
+let urlModalApi = { openUrlModal() {}, closeUrlModal() {} };
 
 // Prose font-size presets
 const FONT_SIZES = ["small", "medium", "large", "xlarge"];
@@ -42,10 +43,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyStoredTheme();
   applyStoredFontSize();
   applyStoredBgImage();
+  urlModalApi = RemoteMD.bindUrlModal();
 
   const params = new URLSearchParams(location.search);
   const pendingKey = params.get("pending");
   const src = params.get("src") || "";
+  const filePath = params.get("path") || "";
   const builtinReadme =
     params.get("builtin") === "readme" || LMV.isProjectReadmeUrl(src);
   // `pending` is a one-shot key (consumed on first open); `src` is the durable
@@ -55,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       pendingKey,
       params.get("name") || "untitled.md",
       src,
-      { builtinReadme },
+      { builtinReadme, filePath },
     );
   } else {
     await tryRestoreFolder();
@@ -66,12 +69,16 @@ function bindUI() {
   bindOpenMenus();
   document.getElementById("themeToggle").addEventListener("click", toggleTheme);
   document.addEventListener("keydown", (e) => {
-    if (
-      e.key === "Escape" &&
-      document.getElementById("searchModal").classList.contains("open")
-    ) {
-      e.preventDefault();
-      closeSearchModal();
+    if (e.key === "Escape") {
+      if (document.getElementById("urlModal")?.classList.contains("open")) {
+        e.preventDefault();
+        urlModalApi.closeUrlModal();
+      } else if (
+        document.getElementById("searchModal").classList.contains("open")
+      ) {
+        e.preventDefault();
+        closeSearchModal();
+      }
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       openSearchModal();
@@ -190,6 +197,7 @@ function bindOpenMenus() {
       e.stopPropagation();
       closeOpenMenus();
       if (item.dataset.action === "folder") selectFolder();
+      else if (item.dataset.action === "url") urlModalApi.openUrlModal();
       else selectFile();
     });
   });
@@ -577,7 +585,7 @@ async function tryOpenPending(
   key,
   name,
   srcUrl,
-  { builtinReadme = false } = {},
+  { builtinReadme = false, filePath = "" } = {},
 ) {
   try {
     let text = null;
@@ -587,14 +595,22 @@ async function tryOpenPending(
       await chrome.storage.session.remove(key);
     }
     if (text == null && srcUrl) {
-      const r = await fetch(srcUrl); // status 0 on file://, body still readable
+      const r = await fetch(srcUrl);
+      if (!r.ok && r.status !== 0) {
+        throw new Error(`无法获取文件 (${r.status})`);
+      }
       text = await r.text();
     }
     if (text != null) {
+      const path = filePath || name;
       await openDirectContent(name, text, srcUrl, {
         autoOpen: true,
         builtinReadme: builtinReadme || LMV.isProjectReadmeUrl(srcUrl),
+        filePath: path,
       });
+      if (/^https?:/.test(srcUrl)) {
+        LMV.addRecentRemote(srcUrl, name);
+      }
     } else if (!builtinReadme) {
       await tryRestoreFolder();
     }
@@ -614,20 +630,25 @@ async function openDirectContent(
   name,
   text,
   srcUrl,
-  { autoOpen = true, builtinReadme = false } = {},
+  { autoOpen = true, builtinReadme = false, filePath = "" } = {},
 ) {
   viewingBuiltinReadme = builtinReadme;
   rootHandle = null;
   singleFileHandle = null;
+  const path = filePath || name;
+  const isRemote = /^https?:/.test(srcUrl || "");
   scopeKey = builtinReadme
     ? "builtin:readme"
-    : "dir:" + (srcUrl ? srcUrl.slice(0, srcUrl.lastIndexOf("/") + 1) : name);
+    : isRemote
+      ? "remote:" + srcUrl
+      : "dir:" + (srcUrl ? srcUrl.slice(0, srcUrl.lastIndexOf("/") + 1) : name);
   searchIndexBuilt = false;
 
   const node = {
     kind: "file",
     name,
-    path: name,
+    path,
+    url: srcUrl || null,
     handle: memHandle(name, text),
     __text: text,
   };
@@ -649,8 +670,40 @@ async function openDirectContent(
 
   if (builtinReadme) return;
 
+  if (isRemote && srcUrl.includes("raw.githubusercontent.com")) {
+    try {
+      const { label, nodes } = await RemoteMD.loadGithubSiblings(
+        srcUrl,
+        path,
+        text,
+        memHandle,
+        urlHandle,
+      );
+      allFiles = flattenFiles(nodes);
+      window._cachedTree = nodes;
+      searchIndexBuilt = false;
+      fileOnlyView = false;
+      if (autoOpen) {
+        const oldNode = currentFileNode;
+        currentFileNode =
+          allFiles.find((n) => n.path === path) ||
+          allFiles.find((n) => n.name === name) ||
+          currentFileNode;
+        if (currentFileNode !== oldNode && oldNode?.__text != null) {
+          currentFileNode.__text = oldNode.__text;
+        }
+      }
+      setRootLabel(label);
+      document.getElementById("fileStats").textContent = `${allFiles.length} `;
+      renderSidebarTree();
+      return;
+    } catch (e) {
+      console.warn("[Leaflet Mark View] 无法列出 GitHub 仓库文件:", e);
+    }
+  }
+
   // Discover the other .md files sitting next to this one (fills the Folder tab).
-  if (srcUrl) {
+  if (srcUrl && !isRemote) {
     try {
       const { dirUrl, nodes } = await loadSiblingsFromUrl(srcUrl, name, text);
       allFiles = nodes;
@@ -678,7 +731,7 @@ async function openDirectContent(
       );
     }
   }
-  if (autoOpen) showExpandHint(() => selectFolder());
+  if (autoOpen && !isRemote) showExpandHint(() => selectFolder());
 }
 
 // Synthetic handle backed by in-memory text (the file we already have).
@@ -1348,15 +1401,26 @@ function fixImageSrcs(body, fileUrl) {
     if (src.startsWith("//")) return;
 
     let fileHref = null;
+    let httpHref = null;
     if (/^file:\/\//.test(src)) {
       fileHref = src;
     } else if (src.startsWith("/")) {
       fileHref = "file://" + src;
     } else if (dirUrl) {
-      try { fileHref = new URL(src, dirUrl).href; } catch (_) {}
-      if (fileHref && !fileHref.startsWith("file://")) fileHref = null;
+      try {
+        const resolved = new URL(src, dirUrl).href;
+        if (/^https?:/.test(resolved)) {
+          httpHref = resolved;
+        } else if (resolved.startsWith("file://")) {
+          fileHref = resolved;
+        }
+      } catch (_) {}
     }
 
+    if (httpHref) {
+      img.src = httpHref;
+      return;
+    }
     if (!fileHref) return;
 
     // Fetch the local file and replace src with a blob URL so Chrome renders it.
@@ -1461,6 +1525,7 @@ function clearFileUrlParams() {
   u.searchParams.delete("pending");
   u.searchParams.delete("name");
   u.searchParams.delete("src");
+  u.searchParams.delete("path");
   history.replaceState(null, "", u.pathname + u.search);
 }
 
@@ -1486,7 +1551,15 @@ async function openFile(node) {
     u.searchParams.delete("pending");
     u.searchParams.set("name", node.name);
     u.searchParams.set("src", node.url);
+    if (node.path && node.path !== node.name) {
+      u.searchParams.set("path", node.path);
+    } else {
+      u.searchParams.delete("path");
+    }
     history.replaceState(null, "", u);
+    if (/^https?:/.test(node.url)) {
+      LMV.addRecentRemote(node.url, node.path || node.name);
+    }
   }
 
   showMarkdownBody();

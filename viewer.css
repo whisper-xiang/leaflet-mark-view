@@ -2655,7 +2655,16 @@ body.is-home .empty-btn.ghost:hover {
 }
 
 /* Footer hints */
-.search-modal-footer {
+.url-modal-error {
+  padding: 10px 16px 0;
+  color: #e55;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.url-modal-error[hidden] {
+  display: none;
+}
+
   display: flex;
   align-items: center;
   gap: 16px;

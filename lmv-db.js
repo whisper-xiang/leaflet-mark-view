@@ -64,15 +64,32 @@ const LMV = (() => {
       tx.objectStore('recents').put(entry);
       await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
 
-      // Trim to MAX_RECENTS by removing oldest entries.
-      const all = await listRecents();
-      if (all.length > MAX_RECENTS) {
-        const toDelete = all.slice(MAX_RECENTS);
-        const tx2 = db.transaction('recents', 'readwrite');
-        toDelete.forEach(r => tx2.objectStore('recents').delete(r.id));
-        await new Promise((res, rej) => { tx2.oncomplete = res; tx2.onerror = rej; });
-      }
+      await trimRecents();
     } catch (_) {}
+  }
+
+  async function addRecentRemote(url, name) {
+    if (!url) return;
+    try {
+      const db = await openDB();
+      const id = 'remote:' + url;
+      const entry = { id, name: name || url, kind: 'remote', url, openedAt: Date.now() };
+      const tx = db.transaction('recents', 'readwrite');
+      tx.objectStore('recents').put(entry);
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+
+      await trimRecents();
+    } catch (_) {}
+  }
+
+  async function trimRecents() {
+    const all = await listRecents();
+    if (all.length <= MAX_RECENTS) return;
+    const db = await openDB();
+    const toDelete = all.slice(MAX_RECENTS);
+    const tx = db.transaction('recents', 'readwrite');
+    toDelete.forEach(r => tx.objectStore('recents').delete(r.id));
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
   }
 
   async function listRecents() {
@@ -127,8 +144,14 @@ const LMV = (() => {
   }
 
   async function openRecent(recent) {
-    if (!recent?.handle) return;
-    await openHandleInViewer(recent.handle);
+    if (!recent) return;
+    if (recent.kind === 'remote' && recent.url) {
+      location.href = 'viewer.html'
+        + '?src=' + encodeURIComponent(recent.url)
+        + '&name=' + encodeURIComponent(recent.name);
+      return;
+    }
+    if (recent.handle) await openHandleInViewer(recent.handle);
   }
 
   // ── UI helpers ────────────────────────────────────────────────────
@@ -136,6 +159,9 @@ const LMV = (() => {
   function entryIcon(kind) {
     if (kind === 'directory') {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>';
+    }
+    if (kind === 'remote') {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
     }
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>';
   }
@@ -190,6 +216,7 @@ const LMV = (() => {
     storeHandle,
     getStoredHandle,
     addRecent,
+    addRecentRemote,
     listRecents,
     removeRecent,
     openRecent,

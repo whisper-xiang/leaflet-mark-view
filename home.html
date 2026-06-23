@@ -44,6 +44,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
               Open File
             </button>
+            <button type="button" id="openUrlBtn" role="menuitem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Open URL
+            </button>
           </div>
         </div>
 
@@ -77,7 +81,36 @@
   </div>
 </div>
 
+<!-- ── Remote URL modal ── -->
+<div class="search-backdrop" id="urlModalBackdrop"></div>
+<div class="search-modal" id="urlModal" role="dialog" aria-modal="true" aria-label="打开远程链接">
+  <div class="search-modal-box">
+    <div class="search-modal-head">
+      <svg class="search-modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+      <input class="search-modal-input" id="urlModalInput" placeholder="粘贴 GitHub 仓库或 .md 链接…" autocomplete="off"
+        spellcheck="false">
+      <button class="search-modal-clear" id="urlModalClear" title="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="url-modal-error" id="urlModalError" hidden></div>
+    <div class="search-modal-footer">
+      <span class="sm-hint">支持 GitHub 仓库、文件页、raw 直链</span>
+      <span class="sm-hint"><kbd>↵</kbd> 打开</span>
+      <span class="sm-hint"><kbd>esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
 <script src="lmv-db.js"></script>
+<script src="remote-md.js"></script>
 <script src="home.js"></script>
 </body>
 </html>
