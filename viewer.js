@@ -1455,7 +1455,93 @@ function renderMarkdownInto(body, text, fileUrl) {
   // Code blocks: VitePress-style language label + copy button.
   body.querySelectorAll("pre").forEach(decorateCodeBlock);
 
+  // Tables: draggable column widths.
+  body.querySelectorAll("table").forEach(setupResizableTable);
+
   buildOutline(body);
+}
+
+// Make a rendered table's columns drag-resizable. Wraps the table in a
+// horizontal-scroll container, locks it to a fixed layout sized from the
+// current column widths, and adds a grip on each header cell's right edge.
+// Double-clicking a grip auto-fits all columns back to their content width.
+const MIN_COL_W = 48;
+function setupResizableTable(table) {
+  if (table.dataset.resizable) return;
+
+  const headRow = (table.tHead && table.tHead.rows[0]) || table.rows[0];
+  if (!headRow) return;
+  const cells = Array.from(headRow.cells);
+  if (cells.length < 2) return; // single column: nothing to resize
+
+  table.dataset.resizable = "1";
+
+  // Wrap for horizontal overflow once columns exceed the content width.
+  const wrap = document.createElement("div");
+  wrap.className = "table-wrap";
+  table.parentNode.insertBefore(wrap, table);
+  wrap.appendChild(table);
+
+  // Snapshot current widths, then lock the layout so <col> widths take effect.
+  const colW = cells.map((c) => c.getBoundingClientRect().width);
+  const colgroup = document.createElement("colgroup");
+  colW.forEach((w) => {
+    const col = document.createElement("col");
+    col.style.width = w + "px";
+    colgroup.appendChild(col);
+  });
+  table.insertBefore(colgroup, table.firstChild);
+  const cols = Array.from(colgroup.children);
+
+  const applyWidths = () => {
+    cols.forEach((c, i) => (c.style.width = colW[i] + "px"));
+    table.style.width = colW.reduce((a, b) => a + b, 0) + "px";
+  };
+  table.style.tableLayout = "fixed";
+  applyWidths();
+
+  // Last column has no grip: resizing the others grows the scroll area.
+  cells.forEach((cell, i) => {
+    if (i === cells.length - 1) return;
+    cell.style.position = "relative";
+
+    const grip = document.createElement("span");
+    grip.className = "col-resizer";
+    cell.appendChild(grip);
+
+    grip.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startW = colW[i];
+      grip.setPointerCapture(e.pointerId);
+      grip.classList.add("dragging");
+
+      const onMove = (ev) => {
+        colW[i] = Math.max(MIN_COL_W, startW + (ev.clientX - startX));
+        applyWidths();
+      };
+      const onUp = () => {
+        grip.classList.remove("dragging");
+        grip.removeEventListener("pointermove", onMove);
+        grip.removeEventListener("pointerup", onUp);
+      };
+      grip.addEventListener("pointermove", onMove);
+      grip.addEventListener("pointerup", onUp);
+    });
+
+    // Double-click: re-fit every column to its content.
+    grip.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      table.style.tableLayout = "auto";
+      table.style.width = "";
+      cols.forEach((c) => (c.style.width = ""));
+      cells.forEach((c, j) => (colW[j] = c.getBoundingClientRect().width));
+      table.style.tableLayout = "fixed";
+      applyWidths();
+    });
+  });
 }
 
 // Tag a <pre> with its language and add a hover copy button.

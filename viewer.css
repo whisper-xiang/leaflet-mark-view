@@ -1894,6 +1894,42 @@ body.is-home .empty-btn.ghost:hover {
   background: var(--surface-hover);
 }
 
+/* Draggable table columns (added by setupResizableTable). */
+.markdown-body .table-wrap {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+.markdown-body .table-wrap table {
+  margin: 0;
+  width: auto;
+  max-width: none;
+}
+.markdown-body .col-resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 1;
+}
+.markdown-body .col-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 4px;
+  width: 2px;
+  height: 100%;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+.markdown-body .col-resizer:hover::before,
+.markdown-body .col-resizer.dragging::before {
+  background: var(--accent);
+}
+
 .markdown-body img {
   max-width: 100%;
   border-radius: var(--radius-sm);
