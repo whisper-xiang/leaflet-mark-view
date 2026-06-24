@@ -247,6 +247,14 @@ function parseBlocks(lines, start, end) {
       continue;
     }
 
+    // Raw HTML blocks (GFM allows block-level HTML; READMEs often use <table>).
+    const htmlBlock = tryParseHtmlBlock(lines, i, end);
+    if (htmlBlock) {
+      html += htmlBlock.html;
+      i = htmlBlock.next;
+      continue;
+    }
+
     // Blockquote
     if (line.startsWith(">")) {
       const quoteLines = [];
@@ -313,6 +321,49 @@ function parseBlocks(lines, start, end) {
   }
 
   return html;
+}
+
+// Pass through common block-level HTML (tables, anchor targets, etc.).
+function tryParseHtmlBlock(lines, startI, endI) {
+  const trimmed = lines[startI].trim();
+  if (!trimmed.startsWith("<")) return null;
+
+  // Single-line anchor: <a id="..."></a>
+  if (/^<a\s[\s\S]*>\s*<\/a>\s*$/i.test(trimmed)) {
+    return { html: trimmed + "\n", next: startI + 1 };
+  }
+
+  const openM = trimmed.match(/^<([a-z][\w-]*)\b/i);
+  if (!openM) return null;
+
+  const rootTag = openM[1].toLowerCase();
+  const blockTags = new Set([
+    "table",
+    "div",
+    "section",
+    "article",
+    "details",
+    "figure",
+  ]);
+  if (!blockTags.has(rootTag)) return null;
+
+  let html = "";
+  let depth = 0;
+  let i = startI;
+  const openRe = new RegExp(`<${rootTag}(?:\\s[^>]*)?>`, "gi");
+  const closeRe = new RegExp(`</${rootTag}>`, "gi");
+
+  while (i < endI) {
+    const ln = lines[i];
+    html += ln + "\n";
+    depth += [...ln.matchAll(openRe)].length;
+    depth -= [...ln.matchAll(closeRe)].length;
+    i++;
+    if (depth <= 0) break;
+  }
+
+  if (depth > 0) return null;
+  return { html, next: i };
 }
 
 function parseList(lines, startI, endI) {

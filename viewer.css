@@ -1859,12 +1859,13 @@ body.is-home .empty-btn.ghost:hover {
 }
 
 .markdown-body table {
-  display: block;
+  display: table;
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin: 20px 0;
-  overflow-x: auto;
   font-size: 14px;
+  table-layout: auto;
 }
 .markdown-body thead {
   background: transparent;
