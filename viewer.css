@@ -1681,8 +1681,6 @@ body.is-home .empty-btn.ghost:hover {
   letter-spacing: -0.02em;
   font-weight: 600;
   margin: 48px 0 16px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
 }
 .markdown-body h3,
 .vp-doc h3 {
