@@ -1156,6 +1156,115 @@ body.is-home .content-area {
   overflow: hidden;
 }
 
+/* ── Home tools (top-right) ── */
+.home-tools {
+  display: none;
+}
+body.is-home .home-tools {
+  display: block;
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 60;
+}
+
+.home-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.home-tool-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.home-tool-btn:hover {
+  color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.bg-menu {
+  position: relative;
+}
+.bg-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+  padding: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 61;
+}
+.bg-menu.open .bg-menu-list {
+  display: flex;
+}
+/* Hover bridge between trigger and dropdown */
+.bg-menu-list::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+.bg-menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 11px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.bg-menu-list button svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.bg-menu-list button:hover {
+  background: var(--surface-hover);
+}
+
+/* Match the immersive home fade: dim until the page is hovered. */
+@media (hover: hover) {
+  body.is-home .home-tools {
+    opacity: 0;
+    transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  body.is-home:hover .home-tools,
+  body.is-home .home-tools:focus-within,
+  body.is-home .home-tools:has(.bg-menu.open) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -2239,6 +2348,38 @@ body.is-home .empty-btn.ghost:hover {
   flex: 1;
   color: var(--text);
   word-break: break-word;
+}
+
+/* ── Footnotes ── */
+.markdown-body .footnote-ref {
+  font-size: 0.75em;
+  line-height: 0;
+  vertical-align: super;
+}
+.markdown-body .footnote-ref a {
+  text-decoration: none;
+  padding: 0 1px;
+}
+.markdown-body .footnotes-sep {
+  margin-top: 48px;
+}
+.markdown-body .footnotes {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.markdown-body .footnotes ol {
+  padding-left: 20px;
+}
+.markdown-body .footnotes li {
+  margin: 6px 0;
+}
+.markdown-body .footnotes li:target {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: var(--radius-sm);
+}
+.markdown-body .footnote-backref {
+  text-decoration: none;
+  margin-left: 4px;
 }
 
 /* ── VitePress-exact custom containers ── */

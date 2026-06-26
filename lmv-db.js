@@ -1,14 +1,24 @@
 // Shared IndexedDB: last-open handle + recents (recently opened FileSystemHandles).
 const LMV = (() => {
   const DB_NAME = 'lmv-db';
-  const DB_VERSION = 3;
+  const DB_VERSION = 4;
   const MAX_RECENTS = 20;
   const BUILTIN_BG_IMAGES = ['public/1.png', 'public/2.png', 'public/3.png'];
+  const DEFAULT_BG = 'public/2.png';
 
-  function applyRandomBgImage() {
-    const path = 'public/2.png';
-    document.documentElement.style.setProperty('--bg-image', `url("${path}")`);
-    return path;
+  function setBgVar(value) {
+    document.documentElement.style.setProperty('--bg-image', value);
+  }
+
+  // Apply the background image. Sets the built-in default synchronously (so the
+  // page never flashes a blank background), then swaps in the user's custom
+  // image if one is stored. Used by both the home page and the viewer.
+  function applyBgImage() {
+    setBgVar(`url("${DEFAULT_BG}")`);
+    getCustomBg()
+      .then(blob => { if (blob) setBgVar(`url("${URL.createObjectURL(blob)}")`); })
+      .catch(() => {});
+    return DEFAULT_BG;
   }
 
   function openDB() {
@@ -22,10 +32,45 @@ const LMV = (() => {
         if (!db.objectStoreNames.contains('recents')) {
           db.createObjectStore('recents', { keyPath: 'id' });
         }
+        if (!db.objectStoreNames.contains('prefs')) {
+          db.createObjectStore('prefs', { keyPath: 'id' });
+        }
       };
       req.onsuccess = () => res(req.result);
       req.onerror = () => rej(req.error);
     });
+  }
+
+  // ── Custom background image (stored as a Blob) ──────────────────────
+
+  async function setCustomBg(blob) {
+    try {
+      const db = await openDB();
+      const tx = db.transaction('prefs', 'readwrite');
+      tx.objectStore('prefs').put({ id: 'custom-bg', blob });
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
+  }
+
+  async function getCustomBg() {
+    try {
+      const db = await openDB();
+      return new Promise(res => {
+        const tx = db.transaction('prefs', 'readonly');
+        const req = tx.objectStore('prefs').get('custom-bg');
+        req.onsuccess = () => res(req.result?.blob ?? null);
+        req.onerror = () => res(null);
+      });
+    } catch (_) { return null; }
+  }
+
+  async function clearCustomBg() {
+    try {
+      const db = await openDB();
+      const tx = db.transaction('prefs', 'readwrite');
+      tx.objectStore('prefs').delete('custom-bg');
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
   }
 
   // ── Last-opened handle (used by reconnect banner) ───────────────────
@@ -212,7 +257,10 @@ const LMV = (() => {
 
   return {
     BUILTIN_BG_IMAGES,
-    applyRandomBgImage,
+    applyBgImage,
+    setCustomBg,
+    getCustomBg,
+    clearCustomBg,
     storeHandle,
     getStoredHandle,
     addRecent,

@@ -5,7 +5,7 @@ function applyStoredTheme() {
 }
 
 function applyStoredBgImage() {
-  LMV.applyRandomBgImage();
+  LMV.applyBgImage();
 }
 
 // ── Open actions ──────────────────────────────────────────────────────
@@ -71,6 +71,54 @@ function bindOpenMenu() {
       menu.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
     }
+  });
+}
+
+// ── Background image customisation (top-right tools) ──────────────────
+function bindBgTools() {
+  const menu = document.getElementById('bgMenu');
+  const trigger = document.getElementById('bgTriggerBtn');
+  const chooseBtn = document.getElementById('bgChooseBtn');
+  const resetBtn = document.getElementById('bgResetBtn');
+  const fileInput = document.getElementById('bgFileInput');
+  let hideTimer;
+
+  const close = () => {
+    menu.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+  };
+
+  menu.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimer);
+    menu.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
+  });
+  menu.addEventListener('mouseleave', () => {
+    hideTimer = setTimeout(close, 120);
+  });
+  trigger.addEventListener('click', e => e.preventDefault());
+
+  chooseBtn.addEventListener('click', () => {
+    close();
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = ''; // allow re-picking the same file later
+    if (!file || !file.type.startsWith('image/')) return;
+    await LMV.setCustomBg(file);
+    LMV.applyBgImage();
+  });
+
+  resetBtn.addEventListener('click', async () => {
+    close();
+    await LMV.clearCustomBg();
+    LMV.applyBgImage();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') close();
   });
 }
 
@@ -192,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyStoredTheme();
   applyStoredBgImage();
   bindOpenMenu();
+  bindBgTools();
   urlModalApi = RemoteMD.bindUrlModal();
   document.getElementById('openUrlBtn').addEventListener('click', () => {
     document.querySelector('.open-menu').classList.remove('open');

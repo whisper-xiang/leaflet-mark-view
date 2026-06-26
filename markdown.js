@@ -1,5 +1,11 @@
 // Markdown to HTML parser — GFM compatible
 
+// Footnote state for the current top-level parse: id → definition text, plus
+// the order ids are first referenced (drives numbering). Set on the root call,
+// torn down when it returns, so nested parses (blockquotes, list items) share it.
+let _footnoteDefs = null;
+let _footnoteOrder = null;
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -43,9 +49,22 @@ function parseInline(text) {
   // Escape HTML in the non-code parts
   text = escapeHtml(text);
 
-  // Images (before links) — allow optional whitespace around the URL
+  // Footnote references: [^id] → superscript link (only for ids that have a
+  // matching definition; unknown ones are left as literal text).
+  if (_footnoteDefs) {
+    text = text.replace(/\[\^([^\]]+)\]/g, (m, id) => {
+      if (!(id in _footnoteDefs)) return m;
+      let idx = _footnoteOrder.indexOf(id);
+      if (idx === -1) idx = _footnoteOrder.push(id) - 1;
+      const s = slugify(id);
+      return `<sup class="footnote-ref"><a href="#fn-${s}" id="fnref-${s}">${idx + 1}</a></sup>`;
+    });
+  }
+
+  // Images (before links) — allow optional whitespace around the URL.
+  // The URL may contain balanced parentheses (e.g. Wikipedia links).
   text = text.replace(
-    /!\[([^\]]*)\]\(\s*([^)\s"]+)\s*(?:"([^"]*)")?\s*\)/g,
+    /!\[([^\]]*)\]\(\s*((?:\([^()]*\)|[^()\s"])+)\s*(?:"([^"]*)")?\s*\)/g,
     (_, alt, src, title) => {
       let img = `<img src="${src}" alt="${alt}"`;
       if (title) img += ` title="${title}"`;
@@ -56,7 +75,7 @@ function parseInline(text) {
   // Links. In-document anchors (#…) stay in-page so they scroll to the heading;
   // everything else opens in a new tab.
   text = text.replace(
-    /\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+    /\[([^\]]+)\]\(((?:\([^()]*\)|[^()\s])+)(?:\s+"([^"]*)")?\)/g,
     (_, t, href, title) => {
       let a = `<a href="${href}"`;
       if (title) a += ` title="${title}"`;
@@ -66,12 +85,15 @@ function parseInline(text) {
   );
 
   // Bold + italic (order matters: longest first)
+  // Asterisk emphasis works anywhere; underscore emphasis only at word
+  // boundaries, so identifiers like snake_case_var and underscores inside
+  // URLs are left intact (GFM behavior).
   text = text.replace(/\*{3}(.+?)\*{3}/gs, "<strong><em>$1</em></strong>");
-  text = text.replace(/_{3}(.+?)_{3}/gs, "<strong><em>$1</em></strong>");
+  text = text.replace(/(?<!\w)_{3}(.+?)_{3}(?!\w)/gs, "<strong><em>$1</em></strong>");
   text = text.replace(/\*{2}(.+?)\*{2}/gs, "<strong>$1</strong>");
-  text = text.replace(/_{2}(.+?)_{2}/gs, "<strong>$1</strong>");
+  text = text.replace(/(?<!\w)_{2}(.+?)_{2}(?!\w)/gs, "<strong>$1</strong>");
   text = text.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
-  text = text.replace(/_([^_\n]+)_/g, "<em>$1</em>");
+  text = text.replace(/(?<!\w)_([^_\n]+)_(?!\w)/g, "<em>$1</em>");
 
   // Strikethrough
   text = text.replace(/~~(.+?)~~/g, "<del>$1</del>");
@@ -96,9 +118,36 @@ function parseMarkdown(src, isRoot = false) {
       prefix = renderFrontMatter(fm[1]);
       src = src.slice(fm[0].length);
     }
+    // Pull footnote definitions (`[^id]: text`) out of the body up front so
+    // references can resolve regardless of where the definition sits.
+    _footnoteDefs = {};
+    _footnoteOrder = [];
+    src = src.replace(/^\[\^([^\]]+)\]:[ \t]*(.*)$/gm, (_, id, text) => {
+      _footnoteDefs[id] = text;
+      return "";
+    });
   }
   const lines = src.split("\n");
-  return prefix + parseBlocks(lines, 0, lines.length);
+  let out = prefix + parseBlocks(lines, 0, lines.length);
+  if (isRoot) {
+    out += renderFootnotes();
+    _footnoteDefs = null;
+    _footnoteOrder = null;
+  }
+  return out;
+}
+
+// Render the footnote list (in reference order) once the body is parsed.
+function renderFootnotes() {
+  if (!_footnoteOrder || !_footnoteOrder.length) return "";
+  const items = _footnoteOrder
+    .map((id) => {
+      const s = slugify(id);
+      const body = parseInline(_footnoteDefs[id] || "");
+      return `<li id="fn-${s}">${body} <a href="#fnref-${s}" class="footnote-backref" aria-label="返回正文">↩</a></li>`;
+    })
+    .join("\n");
+  return `<hr class="footnotes-sep">\n<section class="footnotes"><ol>\n${items}\n</ol></section>\n`;
 }
 
 // Render a leading YAML block as a compact metadata card. This is a deliberately
@@ -372,7 +421,14 @@ function parseList(lines, startI, endI) {
   const isOrdered = /^\s*\d+\.\s/.test(firstLine);
   const tag = isOrdered ? "ol" : "ul";
 
-  let html = `<${tag}>\n`;
+  // Honour a non-1 starting number on ordered lists (e.g. `3.` → <ol start="3">).
+  let openTag = `<${tag}>`;
+  if (isOrdered) {
+    const startNum = parseInt(firstLine.match(/^\s*(\d+)\.\s/)[1], 10);
+    if (startNum !== 1) openTag = `<ol start="${startNum}">`;
+  }
+
+  let html = `${openTag}\n`;
   let i = startI;
 
   while (i < endI) {
@@ -423,28 +479,39 @@ function parseList(lines, startI, endI) {
         } else break;
       }
 
-      // Split inline content vs nested lists
-      let nestedStart = -1;
-      for (let k = 1; k < itemLines.length; k++) {
-        if (
-          /^\s*[-*+]\s/.test(itemLines[k]) ||
-          /^\s*\d+\.\s/.test(itemLines[k])
-        ) {
-          nestedStart = k;
-          break;
-        }
-      }
-
+      // Render the item body. A bare single-line item is just inline content;
+      // anything with continuation lines (nested lists, fenced code, …) is
+      // dedented and run through the block parser so structure survives.
       let itemHtml;
-      if (nestedStart > 0) {
-        const textPart = parseInline(
-          itemLines.slice(0, nestedStart).join(" ").trim(),
-        );
-        const nestedLines = itemLines.slice(nestedStart);
-        const nr = parseList(nestedLines, 0, nestedLines.length);
-        itemHtml = textPart + "\n" + nr.html;
+      const rest = itemLines.slice(1);
+      if (!rest.some((l) => l.trim() !== "")) {
+        itemHtml = parseInline(itemLines[0].trim());
       } else {
-        itemHtml = parseInline(itemLines.join(" ").trim());
+        const cut = Math.min(
+          ...rest
+            .filter((l) => l.trim() !== "")
+            .map((l) => (l.match(/^(\s*)/) || ["", ""])[1].length),
+        );
+        const dedented = rest.map((l) =>
+          l.length >= cut ? l.slice(cut) : l.replace(/^\s+/, ""),
+        );
+        const src = itemLines[0].trim() + "\n" + dedented.join("\n");
+        itemHtml = parseMarkdown(src).trim();
+
+        // Keep tight-list rendering: drop the paragraph wrapper around the
+        // item's leading text so simple items don't gain block spacing.
+        if (
+          itemHtml.startsWith("<p>") &&
+          itemHtml.endsWith("</p>") &&
+          itemHtml.indexOf("</p>") === itemHtml.length - 4 &&
+          itemHtml.indexOf("<p>", 3) === -1
+        ) {
+          itemHtml = itemHtml.slice(3, -4);
+        } else if (itemHtml.startsWith("<p>")) {
+          const end = itemHtml.indexOf("</p>");
+          itemHtml =
+            itemHtml.slice(3, end) + "\n" + itemHtml.slice(end + 4).replace(/^\s+/, "");
+        }
       }
 
       if (taskM) {
@@ -498,11 +565,12 @@ function parseTable(lines, startI, endI) {
 }
 
 function splitTableRow(line) {
+  // Split on unescaped pipes only; a `\|` is a literal pipe inside a cell.
   return line
     .trim()
     .replace(/^\||\|$/g, "")
-    .split("|")
-    .map((c) => c.trim());
+    .split(/(?<!\\)\|/)
+    .map((c) => c.trim().replace(/\\\|/g, "|"));
 }
 
 // Basic syntax highlighting for common languages

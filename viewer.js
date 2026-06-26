@@ -303,7 +303,7 @@ function toggleTheme(event) {
 
 // ── Background image ────────────────────────────────────────────────
 function applyStoredBgImage() {
-  LMV.applyRandomBgImage();
+  LMV.applyBgImage();
   // Restore on/off preference — default OFF for the flat VitePress-style reading view.
   const show = localStorage.getItem("lmv-bg-show") === "on";
   setBgVisible(show, /* save */ false);
@@ -1043,6 +1043,66 @@ function findNodeByPath(path) {
   return walk(window._cachedTree || []);
 }
 
+// ── Intra-document links (relative .md links open inside the viewer) ──
+
+// Resolve a relative path against a base file path (POSIX-style, handles . / ..).
+function resolveRelPath(basePath, rel) {
+  const baseDir = basePath.includes("/")
+    ? basePath.slice(0, basePath.lastIndexOf("/"))
+    : "";
+  const stack = rel.startsWith("/") ? [] : baseDir ? baseDir.split("/") : [];
+  for (const seg of rel.split("/")) {
+    if (seg === "" || seg === ".") continue;
+    if (seg === "..") stack.pop();
+    else stack.push(seg);
+  }
+  return stack.join("/");
+}
+
+// Given a raw (un-DOM-resolved) href, return { node, hash } when it points at a
+// known local .md file or an in-page anchor; otherwise null (leave it external).
+function resolveMdLinkTarget(rawHref) {
+  if (!rawHref) return null;
+  // Any explicit scheme other than file: (http, https, mailto, …) is external.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(rawHref) && !/^file:/i.test(rawHref)) return null;
+  if (rawHref.startsWith("//")) return null;
+
+  const hashIdx = rawHref.indexOf("#");
+  const pathPart = hashIdx >= 0 ? rawHref.slice(0, hashIdx) : rawHref;
+  const hash = hashIdx >= 0 ? rawHref.slice(hashIdx + 1) : "";
+
+  // Pure in-page anchor → scroll within the current document.
+  if (!pathPart) return hash ? { node: currentFileNode, hash } : null;
+
+  const cleanPath = pathPart.split("?")[0];
+  if (!/\.(md|markdown|mdown|mkd)$/i.test(cleanPath)) return null;
+  if (!currentFileNode) return null;
+
+  let node = null;
+  if (currentFileNode.url) {
+    try {
+      const resolved = new URL(decodeURIComponent(cleanPath), currentFileNode.url).href;
+      node = allFiles.find((f) => f.url === resolved) || null;
+    } catch (_) {}
+  } else {
+    const resolved = resolveRelPath(currentFileNode.path, decodeURIComponent(cleanPath));
+    node = allFiles.find((f) => f.path === resolved) || null;
+  }
+  return node ? { node, hash } : null;
+}
+
+// Open the linked .md (if different) and scroll to its anchor (if any).
+async function navigateToMdTarget({ node, hash }) {
+  if (node && node !== currentFileNode) await openFile(node);
+  if (!hash) return;
+  const body = document.getElementById("markdownBody");
+  const id = decodeURIComponent(hash);
+  const h =
+    body.querySelector("#" + CSS.escape(id)) ||
+    body.querySelector("#" + CSS.escape(slugify(id)));
+  if (h) scrollToHeading(h);
+}
+
 async function resolveDirHandle(node) {
   if (node.kind === "dir") {
     return node.handle?.kind === "directory" ? node.handle : null;
@@ -1437,7 +1497,20 @@ function renderMarkdownInto(body, text, fileUrl) {
 
   fixImageSrcs(body, fileUrl);
 
-  // Open external links safely
+  // Relative .md links (and in-page anchors) navigate inside the viewer instead
+  // of opening a new file:// tab. Read the raw href, not the DOM-resolved one.
+  body.querySelectorAll("a[href]").forEach((a) => {
+    const target = resolveMdLinkTarget(a.getAttribute("href"));
+    if (!target) return;
+    a.classList.add("internal-link");
+    a.removeAttribute("target");
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      navigateToMdTarget(target);
+    });
+  });
+
+  // Open remaining external links safely
   body.querySelectorAll('a[target="_blank"]').forEach((a) => {
     a.setAttribute("rel", "noopener noreferrer");
   });
