@@ -1,8 +1,12 @@
 # Leaflet Mark View
 
+[![Release](https://img.shields.io/github/v/release/whisper-xiang/leaflet-mark-view?label=release)](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)
+
 在 Chrome 里，安静地读你的 Markdown。
 
 > 本地文件夹、单篇文章，拖进来就能读。无服务器、零网络请求、不上传任何文件。
+
+**[下载 v1.0.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/tag/v1.0.0)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。
 
 
 ## 截图
@@ -37,6 +41,16 @@ Mermaid 流程图、LaTeX 公式均在本地渲染，无需联网。
 ## 快速开始
 
 ### 安装（开发者模式）
+
+**方式 A：下载 Release（推荐）**
+
+1. 打开 [Releases](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)，下载 `leaflet-mark-view.zip`
+2. 解压到任意目录
+3. Chrome 打开 `chrome://extensions/`
+4. 右上角开启 **开发者模式**
+5. 点击 **加载已解压的扩展程序**，选择解压后的目录
+
+**方式 B：克隆源码**
 
 1. 下载 / 克隆本仓库
 2. Chrome 打开 `chrome://extensions/`
@@ -125,4 +139,4 @@ Mermaid 流程图、LaTeX 公式均在本地渲染，无需联网。
 
 ---
 
-作者：轻语 · v1.0.0
+作者：轻语 · [v1.0.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/tag/v1.0.0)
