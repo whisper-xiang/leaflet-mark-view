@@ -107,6 +107,7 @@ function bindUI() {
     .getElementById("outlineToggle")
     .addEventListener("click", toggleOutline);
   document.getElementById("bgToggle").addEventListener("click", toggleBgImage);
+  bindConfluenceModal();
   bindDragDrop();
   document
     .getElementById("searchTrigger")
@@ -1491,6 +1492,72 @@ function fixImageSrcs(body, fileUrl) {
   });
 }
 
+// ── Lazy asset loading (KaTeX / Mermaid are vendored & loaded on demand) ──
+const _assetPromises = {};
+function loadScriptOnce(src) {
+  if (_assetPromises[src]) return _assetPromises[src];
+  _assetPromises[src] = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = res;
+    s.onerror = () => rej(new Error("failed to load " + src));
+    document.head.appendChild(s);
+  });
+  return _assetPromises[src];
+}
+function loadCssOnce(href) {
+  if (_assetPromises[href]) return;
+  _assetPromises[href] = true;
+  const l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = href;
+  document.head.appendChild(l);
+}
+
+// Render TeX math via KaTeX. Inline spans + block divs carry the raw TeX in
+// data-tex; we only pull in the library/stylesheet when a document uses math.
+async function renderMath(body) {
+  const els = body.querySelectorAll(".math-inline, .math-block");
+  if (!els.length) return;
+  loadCssOnce("vendor/katex/katex.min.css");
+  try {
+    await loadScriptOnce("vendor/katex/katex.min.js");
+  } catch (_) {
+    return;
+  }
+  els.forEach((el) => {
+    const tex = el.getAttribute("data-tex") || "";
+    try {
+      window.katex.render(tex, el, {
+        displayMode: el.classList.contains("math-block"),
+        throwOnError: false,
+      });
+    } catch (_) {
+      el.textContent = tex;
+    }
+  });
+}
+
+// Render Mermaid diagrams from <pre class="mermaid"> blocks, theme-aware.
+async function renderMermaid(body) {
+  const els = [...body.querySelectorAll("pre.mermaid")];
+  if (!els.length) return;
+  try {
+    await loadScriptOnce("vendor/mermaid.min.js");
+  } catch (_) {
+    return;
+  }
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  try {
+    window.mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: dark ? "dark" : "default",
+    });
+    await window.mermaid.run({ nodes: els });
+  } catch (_) {}
+}
+
 // Parse markdown into `body` and wire up links + heading anchors + outline.
 function renderMarkdownInto(body, text, fileUrl) {
   body.innerHTML = parseMarkdown(text, true);
@@ -1532,6 +1599,10 @@ function renderMarkdownInto(body, text, fileUrl) {
   body.querySelectorAll("table").forEach(setupResizableTable);
 
   buildOutline(body);
+
+  // Math + diagrams — vendored libraries, lazy-loaded only when present.
+  renderMath(body);
+  renderMermaid(body);
 }
 
 // Make a rendered table's columns drag-resizable. Wraps the table in a
@@ -1640,6 +1711,68 @@ function decorateCodeBlock(pre) {
     }, 1500);
   });
   pre.appendChild(btn);
+}
+
+// ── Confluence export ────────────────────────────────────────────────
+function openConfluenceModal() {
+  const text = currentFileNode?.__text;
+  if (text == null) {
+    toast("请先打开一个文档");
+    return;
+  }
+  let markup;
+  try {
+    markup = mdToConfluence(text);
+  } catch (_) {
+    toast("转换失败");
+    return;
+  }
+  document.getElementById("cfText").value = markup;
+  document.getElementById("cfBackdrop").classList.add("open");
+  document.getElementById("cfModal").classList.add("open");
+}
+
+function closeConfluenceModal() {
+  document.getElementById("cfBackdrop").classList.remove("open");
+  document.getElementById("cfModal").classList.remove("open");
+}
+
+function bindConfluenceModal() {
+  document
+    .getElementById("confluenceExport")
+    .addEventListener("click", openConfluenceModal);
+  document.getElementById("cfClose").addEventListener("click", closeConfluenceModal);
+  document
+    .getElementById("cfBackdrop")
+    .addEventListener("click", closeConfluenceModal);
+
+  document.getElementById("cfCopy").addEventListener("click", async () => {
+    const ok = await copyText(document.getElementById("cfText").value);
+    toast(ok ? "已复制 Confluence 标记" : "复制失败");
+  });
+
+  document.getElementById("cfDownload").addEventListener("click", () => {
+    const text = document.getElementById("cfText").value;
+    const base = (currentFileNode?.name || "document").replace(
+      /\.(md|markdown|mdown|mkd)$/i,
+      "",
+    );
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + ".confluence.txt";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "Escape" &&
+      document.getElementById("cfModal").classList.contains("open")
+    ) {
+      closeConfluenceModal();
+    }
+  });
 }
 
 // Clipboard write with a legacy fallback for file:// / restricted contexts.

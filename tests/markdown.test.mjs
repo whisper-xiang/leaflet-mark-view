@@ -121,6 +121,40 @@ t("document without footnotes has no footnotes section",
   "# Hi\n\nplain text",
   "<p>plain text</p>", ["footnotes"]);
 
+// ── Emoji shortnames ────────────────────────────────────────────────
+t("known emoji shortnames are substituted",
+  "I :heart: this :rocket: :+1:",
+  "I ❤️ this 🚀 👍");
+t("unknown emoji shortname is left literal",
+  "hello :notarealemoji: world",
+  ":notarealemoji:");
+t("emoji shortname inside code span is untouched",
+  "`:heart:` vs :heart:",
+  ["<code>:heart:</code>", "❤️"]);
+
+// ── Math (KaTeX placeholders) ───────────────────────────────────────
+t("inline math becomes a katex placeholder carrying raw TeX",
+  "mass is $E=mc^2$ ok",
+  '<span class="math-inline" data-tex="E=mc^2">');
+t("inline math leaves underscores intact",
+  "$a_b_c$",
+  'data-tex="a_b_c"');
+t("dollar amounts are not treated as math",
+  "it costs $5 and $10 total",
+  ["$5", "$10"], ["math-inline"]);
+t("single-line block math",
+  "$$E = mc^2$$",
+  '<div class="math-block" data-tex="E = mc^2">');
+t("fenced block math across lines",
+  "$$\n\\int_0^1 x\\,dx\n$$",
+  'data-tex="\\int_0^1 x\\,dx"');
+
+// ── Mermaid ─────────────────────────────────────────────────────────
+t("mermaid fence yields a raw mermaid pre (no highlighting)",
+  "```mermaid\ngraph TD\nA-->B\n```",
+  '<pre class="mermaid">graph TD\nA--&gt;B</pre>',
+  ["language-mermaid", "tok-"]);
+
 // ── Regression: core blocks ─────────────────────────────────────────
 t("heading and bold",
   "# Title\n\nhello **world**",

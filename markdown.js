@@ -6,6 +6,32 @@
 let _footnoteDefs = null;
 let _footnoteOrder = null;
 
+// Common emoji shortnames (:smile: → 😄). Intentionally a curated subset of the
+// shortnames people actually type in notes — unknown ones are left as literal text.
+const EMOJI = {
+  smile: "😄", smiley: "😃", grin: "😁", laughing: "😆", joy: "😂", rofl: "🤣",
+  wink: "😉", blush: "😊", heart_eyes: "😍", thinking: "🤔", neutral_face: "😐",
+  smirk: "😏", unamused: "😒", sob: "😭", cry: "😢", angry: "😠", rage: "😡",
+  sunglasses: "😎", confused: "😕", sweat_smile: "😅", scream: "😱", fearful: "😨",
+  yum: "😋", relieved: "😌", sleeping: "😴", mask: "😷", innocent: "😇",
+  heart: "❤️", broken_heart: "💔", sparkling_heart: "💖", "+1": "👍", thumbsup: "👍",
+  "-1": "👎", thumbsdown: "👎", ok_hand: "👌", clap: "👏", pray: "🙏", muscle: "💪",
+  wave: "👋", point_right: "👉", point_left: "👈", point_up: "☝️", point_down: "👇",
+  raised_hands: "🙌", handshake: "🤝", fire: "🔥", star: "⭐", star2: "🌟",
+  sparkles: "✨", zap: "⚡", boom: "💥", tada: "🎉", confetti_ball: "🎊",
+  rocket: "🚀", bulb: "💡", warning: "⚠️", x: "❌", o: "⭕", heavy_check_mark: "✔️",
+  white_check_mark: "✅", question: "❓", exclamation: "❗", bangbang: "‼️",
+  100: "💯", eyes: "👀", brain: "🧠", skull: "💀", ghost: "👻", robot: "🤖",
+  poop: "💩", thought_balloon: "💭", speech_balloon: "💬", lock: "🔒", key: "🔑",
+  gear: "⚙️", wrench: "🔧", hammer: "🔨", bug: "🐛", package: "📦", memo: "📝",
+  pencil: "✏️", book: "📖", books: "📚", bookmark: "🔖", clipboard: "📋",
+  calendar: "📅", chart_with_upwards_trend: "📈", computer: "💻", iphone: "📱",
+  email: "📧", link: "🔗", pushpin: "📌", paperclip: "📎", mag: "🔍", hourglass: "⏳",
+  alarm_clock: "⏰", coffee: "☕", beer: "🍺", pizza: "🍕", check: "✅", cross: "❌",
+  sun: "☀️", cloud: "☁️", rainbow: "🌈", snowflake: "❄️", earth_asia: "🌏",
+  seedling: "🌱", herb: "🌿", four_leaf_clover: "🍀", maple_leaf: "🍁",
+};
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -46,6 +72,18 @@ function parseInline(text) {
     return `\x02C${codes.length - 1}\x02`;
   });
 
+  // Protect inline math ($…$) next, so its TeX isn't mangled by escaping or
+  // emphasis. Guarded to avoid currency: no space just inside the delimiters,
+  // and a closing $ can't be followed by a digit (so "$5 and $10" is left alone).
+  const maths = [];
+  text = text.replace(
+    /(?<![\\$\d])\$(?!\s)((?:\\.|[^$\\])+?)(?<![\s\\])\$(?![\d$])/g,
+    (_, tex) => {
+      maths.push(`<span class="math-inline" data-tex="${escapeHtml(tex)}"></span>`);
+      return `\x02M${maths.length - 1}\x02`;
+    },
+  );
+
   // Escape HTML in the non-code parts
   text = escapeHtml(text);
 
@@ -60,6 +98,11 @@ function parseInline(text) {
       return `<sup class="footnote-ref"><a href="#fn-${s}" id="fnref-${s}">${idx + 1}</a></sup>`;
     });
   }
+
+  // Emoji shortnames: :smile: → 😄 (unknown names left as literal text).
+  text = text.replace(/:([a-z0-9_+-]+):/g, (m, name) =>
+    Object.prototype.hasOwnProperty.call(EMOJI, name) ? EMOJI[name] : m,
+  );
 
   // Images (before links) — allow optional whitespace around the URL.
   // The URL may contain balanced parentheses (e.g. Wikipedia links).
@@ -101,7 +144,8 @@ function parseInline(text) {
   // Line break (two trailing spaces)
   text = text.replace(/  \n/g, "<br>\n");
 
-  // Restore code spans
+  // Restore protected inline math, then code spans
+  text = text.replace(/\x02M(\d+)\x02/g, (_, i) => maths[+i]);
   text = text.replace(/\x02C(\d+)\x02/g, (_, i) => codes[+i]);
 
   return text;
@@ -226,12 +270,40 @@ function parseBlocks(lines, start, end) {
         i++;
       }
       i++; // closing fence
+      const body = code.replace(/\n$/, "");
+      // Mermaid diagrams: keep the raw source for the renderer (no highlighting).
+      if (lang.toLowerCase() === "mermaid") {
+        html += `<pre class="mermaid">${escapeHtml(body)}</pre>\n`;
+        continue;
+      }
       const cls = lang ? ` class="language-${lang}"` : "";
       const highlighted = lang
-        ? syntaxHighlight(escapeHtml(code.replace(/\n$/, "")), lang)
-        : escapeHtml(code.replace(/\n$/, ""));
+        ? syntaxHighlight(escapeHtml(body), lang)
+        : escapeHtml(body);
       html += `<pre><code${cls}>${highlighted}</code></pre>\n`;
       continue;
+    }
+
+    // Block math: $$ … $$ (single line or fenced across lines).
+    if (line.trim().startsWith("$$")) {
+      const t = line.trim();
+      const single = t.match(/^\$\$([\s\S]+?)\$\$$/);
+      if (single) {
+        html += `<div class="math-block" data-tex="${escapeHtml(single[1].trim())}"></div>\n`;
+        i++;
+        continue;
+      }
+      if (t === "$$") {
+        let tex = "";
+        i++;
+        while (i < end && lines[i].trim() !== "$$") {
+          tex += lines[i] + "\n";
+          i++;
+        }
+        i++; // closing $$
+        html += `<div class="math-block" data-tex="${escapeHtml(tex.replace(/\n$/, ""))}"></div>\n`;
+        continue;
+      }
     }
 
     // Custom container (VitePress style): ::: tip / info / warning / danger / details

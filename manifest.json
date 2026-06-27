@@ -11,9 +11,9 @@
   "host_permissions": [
     "file:///*",
     "https://raw.githubusercontent.com/*",
-    "https://api.github.com/*",
-    "https://*/*"
+    "https://api.github.com/*"
   ],
+  "optional_host_permissions": ["https://*/*"],
   "content_scripts": [
     {
       "matches": ["file:///*"],

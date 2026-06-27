@@ -114,6 +114,23 @@ const RemoteMD = (() => {
     return res.text();
   }
 
+  // GitHub origins are granted at install time; any other https origin is
+  // requested on demand ("secure by design" — no blanket host access). Must run
+  // inside a user gesture, so it's called straight from the Open-URL action.
+  async function ensureOriginPermission(url) {
+    if (typeof chrome === "undefined" || !chrome.permissions) return;
+    let origin;
+    try {
+      origin = new URL(url).origin + "/*";
+    } catch (_) {
+      return;
+    }
+    const has = await chrome.permissions.contains({ origins: [origin] });
+    if (has) return;
+    const granted = await chrome.permissions.request({ origins: [origin] });
+    if (!granted) throw new Error("未授权访问该网站，已取消打开");
+  }
+
   async function fetchReadme(owner, repo) {
     const data = await githubApi(`/repos/${owner}/${repo}/readme`);
     const text = decodeBase64Utf8(data.content);
@@ -157,6 +174,8 @@ const RemoteMD = (() => {
       if (!isMarkdownPath(u.pathname)) {
         throw new Error("仅支持 Markdown 直链，或 GitHub 仓库/文件链接");
       }
+      // Arbitrary origin → request access on demand (kept out of install perms).
+      await ensureOriginPermission(u.href);
       const name = decodeURIComponent(u.pathname.split("/").pop());
       return {
         kind: "file",

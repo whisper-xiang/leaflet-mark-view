@@ -160,6 +160,15 @@
                 </svg>
                 <span class="settings-label">背景图</span><span class="settings-val" id="bgToggleLabel">开</span>
               </button>
+              <button class="settings-item" id="confluenceExport" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" />
+                  <path d="M9 20h6M12 4v16" />
+                  <path d="m16 11 3 3-3 3" />
+                </svg>
+                <span class="settings-label">转换为 Confluence</span>
+              </button>
             </div>
           </div>
         </div>
@@ -304,9 +313,32 @@
     <button type="button" class="tree-context-item" id="treeContextReveal" role="menuitem"></button>
   </div>
 
+  <!-- ── Confluence export modal ── -->
+  <div class="search-backdrop" id="cfBackdrop"></div>
+  <div class="cf-modal" id="cfModal" role="dialog" aria-modal="true" aria-label="转换为 Confluence">
+    <div class="cf-modal-box">
+      <div class="cf-modal-head">
+        <span class="cf-modal-title">Confluence Wiki Markup</span>
+        <span class="cf-modal-sub">在 Confluence 编辑器 <kbd>+ Insert</kbd> → <kbd>Markup</kbd> 中粘贴</span>
+        <button class="cf-modal-close" id="cfClose" title="关闭 (esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <textarea class="cf-modal-text" id="cfText" readonly spellcheck="false"></textarea>
+      <div class="cf-modal-foot">
+        <button class="cf-btn cf-btn-primary" id="cfCopy">复制</button>
+        <button class="cf-btn" id="cfDownload">导出 .txt</button>
+      </div>
+    </div>
+  </div>
+
   <script src="lmv-db.js"></script>
   <script src="remote-md.js"></script>
   <script src="markdown.js"></script>
+  <script src="md-to-confluence.js"></script>
   <script src="viewer.js"></script>
 </body>
 
