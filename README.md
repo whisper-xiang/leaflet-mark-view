@@ -5,6 +5,35 @@
 > 本地文件夹、单篇文章，拖进来就能读。无服务器、零网络请求、不上传任何文件。
 
 
+## 截图
+
+### 阅读器
+
+浅色 / 深色主题，侧边栏树形目录、全文搜索、大纲导航、KaTeX 公式、代码高亮、任务清单一应俱全。
+
+<p align="center">
+  <img src="public/image-1782547092964.jpg" alt="阅读器浅色主题" width="720">
+  <br><br>
+  <img src="public/image-1782547131784.jpg" alt="阅读器深色主题" width="720">
+</p>
+
+### 数学公式与流程图
+
+Mermaid 流程图、LaTeX 公式均在本地渲染，无需联网。
+
+<p align="center">
+  <img src="public/image-1782547105837.jpg" alt="流程图与数学公式" width="720">
+</p>
+
+### 转 Confluence
+
+设置 → **转换为 Confluence**，左侧可编辑 Markdown，右侧实时生成 Wiki Markup，支持复制与导出。
+
+<p align="center">
+  <img src="public/image-1782547099281.jpg" alt="Markdown 转 Confluence 弹框" width="720">
+</p>
+
+
 ## 快速开始
 
 ### 安装（开发者模式）
