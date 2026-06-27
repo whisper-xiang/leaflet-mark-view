@@ -353,6 +353,11 @@ body.is-home {
   overflow-x: hidden;
   --home-ink: #2a3828;
   --home-ink-muted: rgba(42, 56, 40, 0.72);
+  --home-mark-bg: rgba(74, 103, 65, 0.12);
+  --home-mark-border: rgba(74, 103, 65, 0.22);
+  --home-mark-color: #4a6741;
+  --home-mark-hover-bg: rgba(74, 103, 65, 0.18);
+  --home-mark-hover-border: rgba(74, 103, 65, 0.32);
 }
 
 body.is-home .app-shell {
@@ -1182,7 +1187,7 @@ body.is-home .content-area {
   width: 100%;
   height: 100vh;
   min-height: 100vh;
-  padding: 0;
+  padding: 0 clamp(0px, 0vw, 96px) 0 clamp(240px, 40vw, 820px);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -1201,7 +1206,7 @@ body.is-home .home-tools {
   z-index: 60;
 }
 
-/* Settings button: a square, icon-only variant of the "继续阅读" ghost button. */
+/* Settings button: square icon-only variant of the ghost / empty-mark style. */
 .home-tool-btn {
   width: 38px;
   padding: 0;
@@ -1339,11 +1344,11 @@ body.is-home .empty-desc {
   color: var(--home-ink-muted);
 }
 body.is-home .empty-mark {
-  background: rgba(74, 103, 65, 0.12);
-  border: 1px solid rgba(74, 103, 65, 0.22);
+  background: var(--home-mark-bg);
+  border: 1px solid var(--home-mark-border);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: #4a6741;
+  color: var(--home-mark-color);
 }
 
 .empty-mark {
@@ -1533,31 +1538,7 @@ body.is-home .empty-mark {
 }
 
 body.is-home .favorites-popover {
-  background: rgba(18, 20, 18, 0.92);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-body.is-home .favorites-popover-title,
-body.is-home .favorites-empty {
-  color: rgba(255, 255, 255, 0.55);
-}
-body.is-home .favorites-item {
-  color: #fff;
-}
-body.is-home .favorites-row:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-body.is-home .favorites-item:hover {
-  background: transparent;
-}
-body.is-home .favorites-remove:hover {
-  background: rgba(244, 63, 94, 0.22);
-  color: #ffb4ab;
-}
-body.is-home .favorites-item-icon {
-  color: rgba(255, 255, 255, 0.65);
+  border-radius: var(--radius-sm);
 }
 
 .empty-btn {
@@ -1601,18 +1582,19 @@ body.is-home .favorites-item-icon {
   border-color: var(--text-faint);
 }
 
-/* Home hero: light ink-wash bg — dark text on a soft glass card */
+/* Home: ghost buttons share the empty-mark glass treatment */
 body.is-home .empty-btn.ghost {
-  color: var(--home-ink);
-  background: rgba(255, 255, 255, 0.72);
-  border-color: rgba(42, 56, 40, 0.14);
+  color: var(--home-mark-color);
+  background: var(--home-mark-bg);
+  border-color: var(--home-mark-border);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   text-shadow: none;
 }
 body.is-home .empty-btn.ghost:hover {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(42, 56, 40, 0.24);
+  color: var(--home-mark-color);
+  background: var(--home-mark-hover-bg);
+  border-color: var(--home-mark-hover-border);
 }
 
 .content-area[data-fontsize="small"] .markdown-body,
