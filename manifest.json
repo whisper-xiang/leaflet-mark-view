@@ -1,13 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Leaflet Mark View",
+  "short_name": "Leaflet MV",
   "version": "1.0.0",
   "author": "轻语",
-  "description": "Browse and preview Markdown files from local folders and remote URLs",
+  "description": "Read local & remote Markdown — folder browsing, math, Mermaid, syntax highlighting, Confluence export. Fully local, no uploads.",
+  "homepage_url": "https://github.com/whisper-xiang/leaflet-mark-view",
+  "minimum_chrome_version": "116",
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage"],
   "host_permissions": [
     "file:///*",
     "https://raw.githubusercontent.com/*",

@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyStoredTheme();
   applyStoredFontSize();
   applyStoredBgImage();
+  syncOutlineToggleLabel();
   urlModalApi = RemoteMD.bindUrlModal();
 
   const params = new URLSearchParams(location.search);
@@ -243,8 +244,14 @@ function cycleFontSize() {
   localStorage.setItem("lmv-fontsize", next);
 }
 
+function syncOutlineToggleLabel() {
+  const on = !document.getElementById("outline").classList.contains("collapsed");
+  document.getElementById("outlineToggleLabel").textContent = on ? "开" : "关";
+}
+
 function toggleOutline() {
   document.getElementById("outline").classList.toggle("collapsed");
+  syncOutlineToggleLabel();
 }
 
 // ── Theme ──────────────────────────────────────────────────────────
@@ -1714,14 +1721,46 @@ function decorateCodeBlock(pre) {
 }
 
 // ── Confluence export ────────────────────────────────────────────────
+let cfScrollLock = false;
+
+// Proportional scroll sync — MD and Wiki markup differ in length.
+function syncCfPaneScroll(fromEl, toEl) {
+  if (cfScrollLock || !fromEl || !toEl) return;
+  cfScrollLock = true;
+
+  const maxFromY = Math.max(0, fromEl.scrollHeight - fromEl.clientHeight);
+  const maxToY = Math.max(0, toEl.scrollHeight - toEl.clientHeight);
+  const maxFromX = Math.max(0, fromEl.scrollWidth - fromEl.clientWidth);
+  const maxToX = Math.max(0, toEl.scrollWidth - toEl.clientWidth);
+
+  toEl.scrollTop = maxFromY ? (fromEl.scrollTop / maxFromY) * maxToY : 0;
+  toEl.scrollLeft = maxFromX ? (fromEl.scrollLeft / maxFromX) * maxToX : 0;
+
+  cfScrollLock = false;
+}
+
+function bindCfScrollSync() {
+  const source = document.getElementById("cfSource");
+  const target = document.getElementById("cfText");
+  source.addEventListener("scroll", () => syncCfPaneScroll(source, target), {
+    passive: true,
+  });
+  target.addEventListener("scroll", () => syncCfPaneScroll(target, source), {
+    passive: true,
+  });
+}
+
 // Re-convert the (editable) source pane into the Confluence pane.
 function renderConfluence() {
-  const src = document.getElementById("cfSource").value;
+  const srcEl = document.getElementById("cfSource");
+  const cfEl = document.getElementById("cfText");
+  const src = srcEl.value;
   try {
-    document.getElementById("cfText").value = mdToConfluence(src);
+    cfEl.value = mdToConfluence(src);
   } catch (_) {
-    document.getElementById("cfText").value = "";
+    cfEl.value = "";
   }
+  requestAnimationFrame(() => syncCfPaneScroll(srcEl, cfEl));
 }
 
 function openConfluenceModal() {
@@ -1732,6 +1771,10 @@ function openConfluenceModal() {
   }
   document.getElementById("cfSource").value = text;
   renderConfluence();
+  const srcEl = document.getElementById("cfSource");
+  const cfEl = document.getElementById("cfText");
+  srcEl.scrollTop = cfEl.scrollTop = 0;
+  srcEl.scrollLeft = cfEl.scrollLeft = 0;
   document.getElementById("cfBackdrop").classList.add("open");
   document.getElementById("cfModal").classList.add("open");
 }
@@ -1752,6 +1795,7 @@ function bindConfluenceModal() {
 
   // Live re-render as the source pane is edited.
   document.getElementById("cfSource").addEventListener("input", renderConfluence);
+  bindCfScrollSync();
 
   document.getElementById("cfCopy").addEventListener("click", async () => {
     const ok = await copyText(document.getElementById("cfText").value);

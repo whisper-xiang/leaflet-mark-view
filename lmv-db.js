@@ -3,8 +3,8 @@ const LMV = (() => {
   const DB_NAME = 'lmv-db';
   const DB_VERSION = 4;
   const MAX_RECENTS = 20;
-  const BUILTIN_BG_IMAGES = ['public/1.png', 'public/2.png', 'public/3.png'];
-  const DEFAULT_BG = 'public/2.png';
+  const BUILTIN_BG_IMAGES = ['public/bg.png'];
+  const DEFAULT_BG = 'public/bg.png';
 
   function setBgVar(value) {
     document.documentElement.style.setProperty('--bg-image', value);

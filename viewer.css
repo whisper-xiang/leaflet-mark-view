@@ -80,7 +80,7 @@
 
 :root {
   /* Background image (overridden by JS when user picks a custom image) */
-  --bg-image: url("public/1.png");
+  --bg-image: url("public/bg.png");
 
   /* ── VitePress-exact light palette ── */
   --bg: #ffffff;
@@ -351,6 +351,8 @@ body.is-home .outline {
 
 body.is-home {
   overflow-x: hidden;
+  --home-ink: #2a3828;
+  --home-ink-muted: rgba(42, 56, 40, 0.72);
 }
 
 body.is-home .app-shell {
@@ -1182,6 +1184,9 @@ body.is-home .content-area {
   min-height: 100vh;
   padding: 0;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── Home tools (top-right) ── */
@@ -1196,30 +1201,16 @@ body.is-home .home-tools {
   z-index: 60;
 }
 
+/* Settings button: a square, icon-only variant of the "继续阅读" ghost button. */
 .home-tool-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 38px;
-  height: 38px;
   padding: 0;
-  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  justify-content: center;
 }
 .home-tool-btn svg {
   width: 18px;
   height: 18px;
-}
-.home-tool-btn:hover {
-  color: var(--accent);
-  background: var(--surface-hover);
+  flex-shrink: 0;
 }
 
 .bg-menu {
@@ -1342,18 +1333,17 @@ body.is-home .empty-state:focus-within {
 }
 
 body.is-home .empty-title {
-  color: #f2f2ec;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  color: var(--home-ink);
 }
 body.is-home .empty-desc {
-  color: rgba(242, 242, 236, 0.78);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  color: var(--home-ink-muted);
 }
 body.is-home .empty-mark {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(10px);
-  color: #b8dcc8;
+  background: rgba(74, 103, 65, 0.12);
+  border: 1px solid rgba(74, 103, 65, 0.22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #4a6741;
 }
 
 .empty-mark {
@@ -1611,18 +1601,18 @@ body.is-home .favorites-item-icon {
   border-color: var(--text-faint);
 }
 
-/* On the hero background the ghost button needs light text + a translucent fill */
+/* Home hero: light ink-wash bg — dark text on a soft glass card */
 body.is-home .empty-btn.ghost {
-  color: #f2f2ec;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  color: var(--home-ink);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(42, 56, 40, 0.14);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-shadow: none;
 }
 body.is-home .empty-btn.ghost:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(42, 56, 40, 0.24);
 }
 
 .content-area[data-fontsize="small"] .markdown-body,
