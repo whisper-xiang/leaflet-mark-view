@@ -191,7 +191,7 @@ body {
 body {
   font-family: var(--font-ui);
   background: var(--bg-image) center / cover no-repeat fixed;
-  background-color: var(--bg); 
+  background-color: var(--bg);
   color: var(--text);
   display: flex;
   flex-direction: column;
@@ -199,6 +199,32 @@ body {
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Hoist the doc scroller's timeline so the fixed progress bar can use it. */
+  timeline-scope: --doc-scroll;
+}
+
+/* ── Reading progress bar (pure CSS, scroll-driven) ── */
+.read-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 300;
+  background: color-mix(in srgb, var(--accent) 65%, transparent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  animation: lmv-read-progress linear both;
+  animation-timeline: --doc-scroll;
+}
+@keyframes lmv-read-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+/* Hide on the home page (no document to track). */
+body.is-home .read-progress {
+  display: none;
 }
 
 svg {
@@ -1090,6 +1116,8 @@ body.is-home .open-menu-list::before {
   overflow-x: hidden;
   position: relative;
   background: transparent;
+  /* Named timeline consumed by .read-progress (hoisted via body timeline-scope). */
+  scroll-timeline: --doc-scroll block;
 }
 
 .doc-viewport-row {
@@ -1175,7 +1203,9 @@ body.is-home .home-tools {
   width: 38px;
   height: 38px;
   padding: 0;
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
@@ -1204,7 +1234,9 @@ body.is-home .home-tools {
   gap: 2px;
   min-width: 150px;
   padding: 5px;
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
@@ -2714,8 +2746,9 @@ body.is-home .empty-btn.ghost:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 760px;
-  max-height: 80vh;
+  max-width: 1040px;
+  height: 78vh;
+  max-height: 78vh;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -2767,9 +2800,42 @@ body.is-home .empty-btn.ghost:hover {
   color: var(--text);
   background: var(--surface-hover);
 }
-.cf-modal-text {
+.cf-modal-body {
   flex: 1;
-  min-height: 240px;
+  display: flex;
+  min-height: 0;
+}
+.cf-pane {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.cf-pane + .cf-pane {
+  border-left: 1px solid var(--border);
+}
+.cf-pane-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.cf-pane-tag {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+}
+.cf-pane-text {
+  flex: 1;
   margin: 0;
   padding: 16px 18px;
   border: none;
@@ -2782,6 +2848,10 @@ body.is-home .empty-btn.ghost:hover {
   line-height: 1.6;
   white-space: pre;
   overflow: auto;
+  tab-size: 2;
+}
+#cfText {
+  background: var(--surface);
 }
 .cf-modal-foot {
   display: flex;

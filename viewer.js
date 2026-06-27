@@ -1714,20 +1714,24 @@ function decorateCodeBlock(pre) {
 }
 
 // ── Confluence export ────────────────────────────────────────────────
+// Re-convert the (editable) source pane into the Confluence pane.
+function renderConfluence() {
+  const src = document.getElementById("cfSource").value;
+  try {
+    document.getElementById("cfText").value = mdToConfluence(src);
+  } catch (_) {
+    document.getElementById("cfText").value = "";
+  }
+}
+
 function openConfluenceModal() {
   const text = currentFileNode?.__text;
   if (text == null) {
     toast("请先打开一个文档");
     return;
   }
-  let markup;
-  try {
-    markup = mdToConfluence(text);
-  } catch (_) {
-    toast("转换失败");
-    return;
-  }
-  document.getElementById("cfText").value = markup;
+  document.getElementById("cfSource").value = text;
+  renderConfluence();
   document.getElementById("cfBackdrop").classList.add("open");
   document.getElementById("cfModal").classList.add("open");
 }
@@ -1745,6 +1749,9 @@ function bindConfluenceModal() {
   document
     .getElementById("cfBackdrop")
     .addEventListener("click", closeConfluenceModal);
+
+  // Live re-render as the source pane is edited.
+  document.getElementById("cfSource").addEventListener("input", renderConfluence);
 
   document.getElementById("cfCopy").addEventListener("click", async () => {
     const ok = await copyText(document.getElementById("cfText").value);

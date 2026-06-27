@@ -10,6 +10,9 @@
 
 <body class="bg-off">
 
+  <!-- Reading progress bar — pure CSS, driven by #contentArea scroll position. -->
+  <div class="read-progress" id="readProgress"></div>
+
   <!-- App shell: sidebar (left) | main-col (topbar + content, right) -->
   <div class="app-shell">
 
@@ -318,8 +321,8 @@
   <div class="cf-modal" id="cfModal" role="dialog" aria-modal="true" aria-label="转换为 Confluence">
     <div class="cf-modal-box">
       <div class="cf-modal-head">
-        <span class="cf-modal-title">Confluence Wiki Markup</span>
-        <span class="cf-modal-sub">在 Confluence 编辑器 <kbd>+ Insert</kbd> → <kbd>Markup</kbd> 中粘贴</span>
+        <span class="cf-modal-title">Markdown → Confluence</span>
+        <span class="cf-modal-sub">左侧可编辑，右侧实时生成 Wiki Markup，在 Confluence <kbd>+ Insert</kbd> → <kbd>Markup</kbd> 中粘贴</span>
         <button class="cf-modal-close" id="cfClose" title="关闭 (esc)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
@@ -327,9 +330,18 @@
           </svg>
         </button>
       </div>
-      <textarea class="cf-modal-text" id="cfText" readonly spellcheck="false"></textarea>
+      <div class="cf-modal-body">
+        <div class="cf-pane">
+          <div class="cf-pane-label">Markdown<span class="cf-pane-tag">可编辑</span></div>
+          <textarea class="cf-pane-text" id="cfSource" spellcheck="false"></textarea>
+        </div>
+        <div class="cf-pane">
+          <div class="cf-pane-label">Confluence Wiki Markup</div>
+          <textarea class="cf-pane-text" id="cfText" readonly spellcheck="false"></textarea>
+        </div>
+      </div>
       <div class="cf-modal-foot">
-        <button class="cf-btn cf-btn-primary" id="cfCopy">复制</button>
+        <button class="cf-btn cf-btn-primary" id="cfCopy">复制 Confluence</button>
         <button class="cf-btn" id="cfDownload">导出 .txt</button>
       </div>
     </div>
