@@ -108,6 +108,7 @@ function bindUI() {
     .getElementById("outlineToggle")
     .addEventListener("click", toggleOutline);
   document.getElementById("bgToggle").addEventListener("click", toggleBgImage);
+  bindBrowserRender();
   bindConfluenceModal();
   bindDragDrop();
   document
@@ -1782,6 +1783,19 @@ function openConfluenceModal() {
 function closeConfluenceModal() {
   document.getElementById("cfBackdrop").classList.remove("open");
   document.getElementById("cfModal").classList.remove("open");
+}
+
+function bindBrowserRender() {
+  document.getElementById("browserRender").addEventListener("click", () => {
+    const text = currentFileNode?.__text;
+    if (text == null) {
+      toast("请先打开一个文档");
+      return;
+    }
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    chrome.tabs.create({ url });
+  });
 }
 
 function bindConfluenceModal() {
