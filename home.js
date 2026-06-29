@@ -219,7 +219,13 @@ function bindDragDrop() {
       }
 
       const file = item.getAsFile();
-      if (!file || !/\.(md|markdown|mdown|mkd)$/i.test(file.name)) continue;
+      if (!file) continue;
+      if (/\.html?$/i.test(file.name)) {
+        const url = URL.createObjectURL(file);
+        chrome.tabs.create({ url });
+        return;
+      }
+      if (!/\.(md|markdown|mdown|mkd)$/i.test(file.name)) continue;
       try {
         const text = await file.text();
         const key  = 'lmv-direct-' + Date.now();
