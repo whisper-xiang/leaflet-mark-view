@@ -643,7 +643,7 @@ body.is-home .app-shell {
   fill: currentColor;
 }
 
-.sidebar-up {
+.sidebar-pin {
   position: relative;
   flex-shrink: 0;
   width: 26px;
@@ -661,47 +661,18 @@ body.is-home .app-shell {
     color 0.12s ease,
     border-color 0.12s ease;
 }
-.sidebar-up[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  padding: 5px 9px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
-  font-family: var(--font-ui);
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.35;
-  color: var(--text);
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.08s ease,
-    visibility 0.08s ease;
-  z-index: 100;
-}
-.sidebar-up:hover:not(:disabled)::after,
-.sidebar-up:focus-visible:not(:disabled)::after {
-  opacity: 1;
-  visibility: visible;
-}
-.sidebar-up svg {
+.sidebar-pin svg {
   width: 14px;
   height: 14px;
 }
-.sidebar-up:hover:not(:disabled) {
+.sidebar-pin:hover {
   background: var(--surface-hover);
   color: var(--text);
   border-color: var(--border-strong);
 }
-.sidebar-up:disabled {
-  opacity: 0.4;
-  cursor: default;
+.sidebar-pin.pinned {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .sidebar-loc {
@@ -725,6 +696,12 @@ body.is-home .app-shell {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: default;
+}
+.sidebar-loc .loc-name:hover {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-all;
 }
 
 /* Reopen sidebar — in topbar, left of search; visible when sidebar collapsed */
@@ -2116,9 +2093,27 @@ body.is-home .empty-btn.ghost:hover {
 }
 
 /* ── Outline (right TOC) — sticky column beside content, no overlap ── */
+.outline-resizer {
+  flex-shrink: 0;
+  width: 6px;
+  min-height: 100%;
+  cursor: col-resize;
+  z-index: 50;
+  transition: background 0.1s;
+}
+.outline-resizer:hover,
+.outline-resizer.dragging {
+  background: var(--accent);
+  opacity: 0.4;
+}
+.doc-viewport-row:has(.outline.empty) .outline-resizer,
+.doc-viewport-row:has(.outline.collapsed) .outline-resizer {
+  display: none;
+}
+
 .outline {
-  flex: 0 0 var(--vp-sidebar-width);
-  width: var(--vp-sidebar-width);
+  flex: 0 0 var(--vp-outline-width, var(--vp-sidebar-width));
+  width: var(--vp-outline-width, var(--vp-sidebar-width));
   position: sticky;
   top: 0;
   align-self: flex-start;
@@ -3097,4 +3092,184 @@ body:not(.bg-off):not(.is-home) .sb-action.primary svg {
 body:not(.bg-off):not(.is-home) .sb-action.primary:hover {
   background-color: var(--surface-hover);
   border-color: var(--border-strong);
+}
+
+/* ── Feed Tabs (header 快捷分类 dropdown) ──────────────────────────── */
+
+.topbar-feed-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+}
+
+.feed-menu {
+  position: relative;
+}
+
+.feed-trigger {
+  height: 32px;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.feed-trigger::after {
+  content: " ▾";
+  font-size: 10px;
+  opacity: 0.6;
+}
+.feed-menu.open .feed-trigger,
+.feed-trigger:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* flat trigger: no dropdown arrow, link style */
+.feed-trigger--flat::after {
+  content: none;
+}
+.feed-trigger--flat:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* Inline rename input — width set via JS to match trigger */
+.feed-rename-input {
+  height: 28px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent, #7c6af7);
+  border-radius: 0;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  min-width: 80px;
+}
+
+.feed-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s;
+  z-index: 200;
+}
+/* Bridge gap so menu stays open while moving cursor from trigger to list */
+.feed-list::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+.feed-menu.open .feed-list {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.feed-empty {
+  padding: 10px 12px;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.feed-file-btn {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.feed-file-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* Context menu (右键菜单) */
+.feed-ctx-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 130px;
+  padding: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.96);
+  transform-origin: top left;
+  transition: opacity 0.1s ease, transform 0.1s ease, visibility 0.1s;
+}
+.feed-ctx-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+.feed-ctx-item {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.feed-ctx-item:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.feed-ctx-item[data-action="remove"]:hover {
+  background: rgba(220, 60, 60, 0.1);
+  color: #dc3c3c;
+}
+
+/* Glassmorphism support (same as settings-list) */
+html[data-theme="light"] body:not(.bg-off):not(.is-home) .feed-list {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+html[data-theme="dark"] body:not(.bg-off):not(.is-home) .feed-list {
+  background: rgba(30, 30, 36, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }

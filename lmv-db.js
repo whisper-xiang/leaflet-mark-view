@@ -1,7 +1,7 @@
 // Shared IndexedDB: last-open handle + recents (recently opened FileSystemHandles).
 const LMV = (() => {
   const DB_NAME = 'lmv-db';
-  const DB_VERSION = 4;
+  const DB_VERSION = 5;
   const MAX_RECENTS = 20;
   const BUILTIN_BG_IMAGES = ['public/bg.png'];
   const DEFAULT_BG = 'public/bg.png';
@@ -34,6 +34,9 @@ const LMV = (() => {
         }
         if (!db.objectStoreNames.contains('prefs')) {
           db.createObjectStore('prefs', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('pins')) {
+          db.createObjectStore('pins', { keyPath: 'id' });
         }
       };
       req.onsuccess = () => res(req.result);
@@ -160,6 +163,64 @@ const LMV = (() => {
     } catch (_) {}
   }
 
+  // ── Pins (快捷文件夹) ──────────────────────────────────────────────
+
+  async function addPin(handle) {
+    if (!handle) return;
+    try {
+      const db = await openDB();
+      const id = 'pin:' + handle.name;
+      const entry = { id, name: handle.name, kind: handle.kind, handle, addedAt: Date.now() };
+      const tx = db.transaction('pins', 'readwrite');
+      tx.objectStore('pins').put(entry);
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
+  }
+
+  async function listPins() {
+    try {
+      const db = await openDB();
+      const items = await new Promise(res => {
+        const tx = db.transaction('pins', 'readonly');
+        const req = tx.objectStore('pins').getAll();
+        req.onsuccess = () => res(req.result ?? []);
+        req.onerror = () => res([]);
+      });
+      items.sort((a, b) => a.addedAt - b.addedAt);
+      return items;
+    } catch (_) { return []; }
+  }
+
+  async function removePin(id) {
+    try {
+      const db = await openDB();
+      const tx = db.transaction('pins', 'readwrite');
+      tx.objectStore('pins').delete(id);
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
+  }
+
+  async function getPinByName(name) {
+    const pins = await listPins();
+    return pins.find(p => p.name === name) ?? null;
+  }
+
+  async function updatePinLabel(id, label) {
+    try {
+      const db = await openDB();
+      const existing = await new Promise(res => {
+        const tx = db.transaction('pins', 'readonly');
+        const req = tx.objectStore('pins').get(id);
+        req.onsuccess = () => res(req.result ?? null);
+        req.onerror = () => res(null);
+      });
+      if (!existing) return;
+      const tx = db.transaction('pins', 'readwrite');
+      tx.objectStore('pins').put({ ...existing, label });
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
+  }
+
   // ── Navigation helpers ─────────────────────────────────────────────
 
   function isProjectReadmeUrl(url) {
@@ -257,6 +318,11 @@ const LMV = (() => {
 
   return {
     BUILTIN_BG_IMAGES,
+    addPin,
+    listPins,
+    removePin,
+    getPinByName,
+    updatePinLabel,
     applyBgImage,
     setCustomBg,
     getCustomBg,

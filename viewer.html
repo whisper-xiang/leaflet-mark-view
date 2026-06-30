@@ -40,11 +40,10 @@
             </svg>
             <span class="loc-name">未选择</span>
           </span>
-          <span class="sidebar-stats" id="fileStats"></span>
-          <button class="sidebar-up" id="upLevel" type="button" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          <button class="sidebar-pin" id="pinFolderToggle" title="固定为快捷入口" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
               stroke-linejoin="round">
-              <path d="M12 19V5M5 12l7-7 7 7" />
+              <path d="M12 17v5M9 9V4M15 9V4M9 4h6M6 9h12l-1.5 8h-9L6 9z"/>
             </svg>
           </button>
         </div>
@@ -126,6 +125,9 @@
 
         <div class="topbar-fill"></div>
 
+        <!-- Feed tabs: dynamically populated from pinned folder's subdirs -->
+        <nav class="topbar-feed-tabs" id="feedTabs" aria-label="快捷文件夹"></nav>
+
         <div class="topbar-actions">
 
           <button class="btn-icon" id="themeToggle" title="切换主题"></button>
@@ -163,6 +165,7 @@
                 </svg>
                 <span class="settings-label">背景图</span><span class="settings-val" id="bgToggleLabel">开</span>
               </button>
+
               <button class="settings-item" id="browserRender" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                   stroke-linejoin="round">
@@ -219,6 +222,7 @@
             </main>
           </div><!-- /.doc-scroll-body -->
 
+          <div class="outline-resizer" id="outlineResizer"></div>
           <aside class="outline empty" id="outline">
             <nav class="outline-nav" aria-label="页面目录">
               <div class="outline-content">

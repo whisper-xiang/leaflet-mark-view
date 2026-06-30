@@ -64,6 +64,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     await tryRestoreFolder();
   }
+
+  await buildFeedTabs();
 });
 
 function bindUI() {
@@ -85,7 +87,6 @@ function bindUI() {
       openSearchModal();
     }
   });
-  document.getElementById("upLevel").addEventListener("click", goUp);
   document
     .getElementById("pagerPrev")
     .addEventListener("click", () => navFile(-1));
@@ -109,8 +110,10 @@ function bindUI() {
     .addEventListener("click", toggleOutline);
   document.getElementById("bgToggle").addEventListener("click", toggleBgImage);
   bindBrowserRender();
+  bindPinFolder();
   bindConfluenceModal();
   bindDragDrop();
+  bindOutlineResize();
   document
     .getElementById("searchTrigger")
     .addEventListener("click", openSearchModal);
@@ -371,7 +374,9 @@ function bindDragDrop() {
           }
           if (isMarkdown(handle.name)) {
             await LMV.storeHandle(handle);
+            const entry = item.webkitGetAsEntry?.();
             await openSingleFile(handle);
+            if (entry) tryLoadSiblingsFromEntry(entry, handle.name);
             return;
           }
           continue; // unsupported file type — try the next dropped item
@@ -393,6 +398,50 @@ function bindDragDrop() {
 // ── Sidebar ─────────────────────────────────────────────────────────
 function toggleSidebar() {
   document.getElementById("sidebar").classList.toggle("collapsed");
+}
+
+function bindOutlineResize() {
+  const resizer = document.getElementById("outlineResizer");
+  const MIN = 160;
+  const MAX = 480;
+  const STORAGE_KEY = "lmv-outline-width";
+
+  const outline = document.getElementById("outline");
+
+  const setWidth = (w) => {
+    outline.style.width = w + "px";
+    outline.style.flexBasis = w + "px";
+  };
+
+  const saved = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+  if (saved && saved >= MIN && saved <= MAX) setWidth(saved);
+
+  resizer.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    resizer.classList.add("dragging");
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const startX = e.clientX;
+    const startW = outline.getBoundingClientRect().width || 272;
+
+    const onMove = (e) => {
+      const w = Math.min(MAX, Math.max(MIN, startW + (startX - e.clientX)));
+      setWidth(w);
+    };
+
+    const onUp = () => {
+      resizer.classList.remove("dragging");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      try { localStorage.setItem(STORAGE_KEY, Math.round(outline.getBoundingClientRect().width)); } catch (_) {}
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
 }
 
 // ── Sidebar location + "up one level" navigation ────────────────────
@@ -432,24 +481,6 @@ function subtreeFor(dir) {
 }
 
 // Climb one level toward the root; bounded at the opened folder's top.
-function goUp() {
-  if (fileOnlyView) {
-    // From a single file → show its containing folder (all .md under it).
-    const tree = window._cachedTree || [];
-    const hasSiblings = tree.length > 1 || tree.some((n) => n.kind === "dir");
-    if (!hasSiblings && singleFileHandle) {
-      expandToFolder(singleFileHandle); // no siblings loaded → pick the real folder
-      return;
-    }
-    fileOnlyView = false;
-    currentDir = currentFileNode ? parentDir(currentFileNode.path) : "";
-    renderSidebarTree();
-  } else if (currentDir) {
-    currentDir = parentDirOfDir(currentDir);
-    renderSidebarTree();
-  }
-}
-
 // Name of the level currently listed (file name in single-file view, else folder).
 function currentLocationLabel() {
   if (fileOnlyView && currentFileNode) return currentFileNode.name;
@@ -457,24 +488,8 @@ function currentLocationLabel() {
   return currentDir.replace(/\/$/, "").split("/").pop();
 }
 
-// Tooltip for the sidebar "up" button — reflects what goUp() will do next.
-function upLevelTooltip() {
-  if (fileOnlyView) {
-    return "查看所在文件夹的全部 .md 文件";
-  }
-  if (currentDir) {
-    return "返回上一级目录";
-  }
-  return "已在根目录";
-}
-
-// Update the "up" button enabled state, location icon and label.
+// Update location icon and label.
 function renderNav() {
-  const upBtn = document.getElementById("upLevel");
-  upBtn.disabled = !(fileOnlyView || !!currentDir);
-  const tip = upLevelTooltip();
-  upBtn.dataset.tooltip = tip;
-  upBtn.setAttribute("aria-label", tip);
   const loc = document.getElementById("locLabel");
   loc.querySelector(".loc-name").textContent = currentLocationLabel();
   const showFile = fileOnlyView && currentFileNode;
@@ -582,9 +597,44 @@ async function openSingleFile(handle, { autoOpen = true } = {}) {
   if (autoOpen) {
     LMV.addRecent(handle);
     showMarkdownBody();
-    showExpandHint(() => expandToFolder(handle));
     await openFile(node);
   }
+}
+
+// After dropping a single .md file, use the legacy FileEntry API to enumerate
+// sibling .md files in the same directory so the doc-footer pager can work.
+async function tryLoadSiblingsFromEntry(entry, currentName) {
+  try {
+    const parent = await new Promise((res, rej) => entry.getParent(res, rej));
+    const reader = parent.createReader();
+    // readEntries returns up to 100 entries per call; one batch is enough for
+    // typical daily-feed folders.
+    const entries = await new Promise((res, rej) => reader.readEntries(res, rej));
+    const mdEntries = entries
+      .filter((e) => e.isFile && isMarkdown(e.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (mdEntries.length <= 1) return; // no siblings worth showing
+
+    // Build lazy nodes: read each file's text only when actually opened.
+    const nodes = mdEntries.map((e) => ({
+      kind: "file",
+      name: e.name,
+      path: e.name,
+      handle: {
+        kind: "file",
+        name: e.name,
+        getFile: () => new Promise((res, rej) => e.file(res, rej)),
+      },
+    }));
+
+    allFiles = nodes;
+    window._cachedTree = nodes;
+    // Re-point currentFileNode at the matching node in the new list.
+    currentFileNode = nodes.find((n) => n.name === currentName) ?? currentFileNode;
+    fileOnlyView = false;
+    renderSidebarTree();
+    renderPager();
+  } catch (_) {}
 }
 
 // Retrieve content stored by the content script redirect and open it.
@@ -667,7 +717,6 @@ async function openDirectContent(
   currentDir = "";
   fileOnlyView = true;
   setRootLabel(builtinReadme ? "Leaflet Mark View" : name);
-  document.getElementById("fileStats").textContent = "";
   if (autoOpen) currentFileNode = node;
   renderSidebarTree();
   if (autoOpen) {
@@ -703,7 +752,6 @@ async function openDirectContent(
         }
       }
       setRootLabel(label);
-      document.getElementById("fileStats").textContent = `${allFiles.length} `;
       renderSidebarTree();
       return;
     } catch (e) {
@@ -730,7 +778,6 @@ async function openDirectContent(
         decodeURIComponent(dirUrl.replace(/\/+$/, "").split("/").pop()) ||
         dirUrl;
       setRootLabel(dirName);
-      // document.getElementById("fileStats").textContent = `${nodes.length} `;
       renderSidebarTree();
       return;
     } catch (e) {
@@ -740,7 +787,6 @@ async function openDirectContent(
       );
     }
   }
-  if (autoOpen && !isRemote) showExpandHint(() => selectFolder());
 }
 
 // Synthetic handle backed by in-memory text (the file we already have).
@@ -825,35 +871,6 @@ function decodeJsString(s) {
     .replace(/\\(.)/g, "$1");
 }
 
-// Footer button that opens a manual directory picker (fallback).
-function showExpandHint(onClick) {
-  const statsEl = document.getElementById("fileStats");
-  statsEl.innerHTML = "";
-  const hint = document.createElement("button");
-  hint.className = "expand-folder-hint";
-  hint.title = "打开所在文件夹查看其他 .md 文件";
-  // hint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>查看所在文件夹22`;
-  hint.addEventListener("click", onClick);
-  statsEl.appendChild(hint);
-}
-
-// Upgrade from single-file mode: open a directory picker starting in the same
-// directory, then load the full folder and re-select the file we had open.
-async function expandToFolder(fileHandle) {
-  try {
-    const dirHandle = await window.showDirectoryPicker({
-      startIn: fileHandle,
-      mode: "read",
-    });
-    singleFileHandle = null;
-    rootHandle = dirHandle;
-    await LMV.storeHandle(dirHandle);
-    // After scanning, auto-open the file that was already rendered
-    await loadFolder(dirHandle, fileHandle.name);
-  } catch (e) {
-    if (e.name !== "AbortError") console.error(e);
-  }
-}
 
 async function tryRestoreFolder() {
   try {
@@ -911,7 +928,6 @@ async function loadFolder(
     );
   }
   setRootLabel(dirHandle.name);
-  document.getElementById("fileStats").textContent = "";
 
   scopeKey = "folder:" + dirHandle.name;
   searchIndexBuilt = false;
@@ -923,7 +939,6 @@ async function loadFolder(
   currentDir = "";
   fileOnlyView = false;
   renderSidebarTree();
-  document.getElementById("fileStats").textContent = `${allFiles.length} `;
 
   if (allFiles.length > 0) {
     if (autoOpen) {
@@ -942,6 +957,8 @@ async function loadFolder(
     clearOutline();
     setContent('<div class="loading">未找到 Markdown 文件</div>');
   }
+
+  updatePinLabel();
 }
 
 function showMarkdownBody() {
@@ -1013,7 +1030,7 @@ function createNode(node) {
     const header = document.createElement("div");
     header.className = "tree-dir-header";
     // VitePress style: name on left, chevron on right
-    header.innerHTML = `<span class="tree-dir-name">${escHtml(node.name)}</span>${ICON.chevron}`;
+    header.innerHTML = `<span class="tree-dir-name" title="${escHtml(node.path || node.name)}">${escHtml(node.name)}</span>${ICON.chevron}`;
     header.addEventListener("click", () => wrap.classList.toggle("open"));
 
     const children = document.createElement("div");
@@ -1796,6 +1813,218 @@ function bindBrowserRender() {
     const url = URL.createObjectURL(blob);
     chrome.tabs.create({ url });
   });
+}
+
+// ── Pin folder (快捷入口) ──────────────────────────────────────────────
+
+async function updatePinLabel() {
+  if (!rootHandle) return;
+  const existing = await LMV.getPinByName(rootHandle.name);
+  const btn = document.getElementById("pinFolderToggle");
+  if (btn) btn.classList.toggle("pinned", !!existing);
+}
+
+function bindPinFolder() {
+  document.getElementById("pinFolderToggle").addEventListener("click", async () => {
+    if (!rootHandle) {
+      toast("请先打开一个文件夹");
+      return;
+    }
+    const id = "pin:" + rootHandle.name;
+    const existing = await LMV.getPinByName(rootHandle.name);
+    if (existing) {
+      await LMV.removePin(id);
+      toast("已取消固定「" + rootHandle.name + "」");
+    } else {
+      await LMV.addPin(rootHandle);
+      toast("已固定「" + rootHandle.name + "」为快捷入口");
+    }
+    await updatePinLabel();
+    await buildFeedTabs();
+  });
+}
+
+// ── Feed tabs (header 快捷分类 dropdown) ──────────────────────────────
+
+async function buildFeedTabs() {
+  const container = document.getElementById("feedTabs");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const pins = await LMV.listPins();
+  if (!pins.length) return;
+
+  for (const pin of pins) {
+    // Permission check — silently skip if folder is unavailable on this machine
+    try {
+      const perm = await pin.handle.queryPermission({ mode: "read" });
+      if (perm !== "granted") continue;
+    } catch (_) { continue; }
+
+    // Scan first-level subdirectories
+    const subdirs = [];
+    try {
+      for await (const [name, handle] of pin.handle.entries()) {
+        if (handle.kind === "directory" && !name.startsWith(".")) {
+          subdirs.push({ name, handle });
+        }
+      }
+    } catch (_) { continue; }
+
+    subdirs.sort((a, b) => a.name.localeCompare(b.name));
+
+    const tab = buildFeedTab(pin, subdirs);
+    container.appendChild(tab);
+  }
+}
+
+function buildFeedTab(pin, subdirs) {
+  const hasSubdirs = subdirs.length > 0;
+  const wrap = document.createElement("div");
+  wrap.className = "feed-menu";
+
+  // ── Trigger button ──
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "feed-trigger" + (hasSubdirs ? "" : " feed-trigger--flat");
+  trigger.textContent = pin.label || pin.name;
+  wrap.appendChild(trigger);
+
+  // ── Rename input (hidden, shown via context menu) ──
+  const renameInput = document.createElement("input");
+  renameInput.type = "text";
+  renameInput.className = "feed-rename-input";
+  renameInput.style.display = "none";
+  wrap.appendChild(renameInput);
+
+  // ── Context menu ──
+  const ctxMenu = document.createElement("div");
+  ctxMenu.className = "feed-ctx-menu";
+  ctxMenu.innerHTML = `
+    <button class="feed-ctx-item" data-action="rename">重命名</button>
+    <button class="feed-ctx-item" data-action="remove">移除固定</button>
+  `;
+  document.body.appendChild(ctxMenu);
+
+  const closeCtx = () => ctxMenu.classList.remove("open");
+
+  trigger.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    ctxMenu.style.left = e.clientX + "px";
+    ctxMenu.style.top = e.clientY + "px";
+    ctxMenu.classList.add("open");
+  });
+
+  ctxMenu.addEventListener("click", async (e) => {
+    const action = e.target.closest("[data-action]")?.dataset.action;
+    closeCtx();
+    if (action === "rename") {
+      trigger.style.display = "none";
+      renameInput.value = pin.label || pin.name;
+      renameInput.style.display = "";
+      renameInput.style.width = Math.max(80, trigger.offsetWidth) + "px";
+      renameInput.focus();
+      renameInput.select();
+    } else if (action === "remove") {
+      await LMV.removePin(pin.id);
+      wrap.remove();
+      ctxMenu.remove();
+    }
+  });
+
+  document.addEventListener("click", closeCtx, { capture: true });
+  document.addEventListener("contextmenu", (e) => {
+    if (!trigger.contains(e.target)) closeCtx();
+  }, { capture: true });
+
+  const commitRename = async () => {
+    const newLabel = renameInput.value.trim() || pin.name;
+    pin.label = newLabel;
+    await LMV.updatePinLabel(pin.id, newLabel);
+    trigger.textContent = newLabel;
+    renameInput.style.display = "none";
+    trigger.style.display = "";
+  };
+
+  renameInput.addEventListener("blur", commitRename);
+  renameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); renameInput.blur(); }
+    if (e.key === "Escape") {
+      renameInput.value = pin.label || pin.name;
+      renameInput.blur();
+    }
+  });
+
+  // ── No subdirs: plain button that loads latest .md directly ──
+  if (!hasSubdirs) {
+    trigger.addEventListener("click", async () => {
+      const files = [];
+      try {
+        for await (const [name, handle] of pin.handle.entries()) {
+          if (handle.kind === "file" && /\.(md|markdown|mdown|mkd)$/i.test(name)) {
+            files.push({ name, handle });
+          }
+        }
+      } catch (_) {}
+      files.sort((a, b) => b.name.localeCompare(a.name));
+      if (!files.length) { toast("该文件夹暂无 Markdown 文件"); return; }
+      const latest = files[0];
+      await openFile({ kind: "file", name: latest.name, path: latest.name, handle: latest.handle });
+    });
+    return wrap;
+  }
+
+  // ── Has subdirs: dropdown ──
+  const list = document.createElement("div");
+  list.className = "feed-list";
+  list.setAttribute("role", "menu");
+
+  for (const subdir of subdirs) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "feed-file-btn";
+    btn.setAttribute("role", "menuitem");
+    btn.textContent = subdir.name;
+    btn.addEventListener("click", async () => {
+      closeFeedMenus();
+      const files = [];
+      try {
+        for await (const [name, handle] of subdir.handle.entries()) {
+          if (handle.kind === "file" && /\.(md|markdown|mdown|mkd)$/i.test(name)) {
+            files.push({ name, handle });
+          }
+        }
+      } catch (_) {}
+      files.sort((a, b) => b.name.localeCompare(a.name));
+      if (!files.length) { toast("该文件夹暂无 Markdown 文件"); return; }
+      const latest = files[0];
+      await openFile({
+        kind: "file",
+        name: latest.name,
+        path: subdir.name + "/" + latest.name,
+        handle: latest.handle,
+      });
+    });
+    list.appendChild(btn);
+  }
+
+  wrap.appendChild(list);
+
+  let hideTimer;
+  wrap.addEventListener("mouseenter", () => {
+    clearTimeout(hideTimer);
+    wrap.classList.add("open");
+  });
+  wrap.addEventListener("mouseleave", () => {
+    hideTimer = setTimeout(() => wrap.classList.remove("open"), 150);
+  });
+
+  return wrap;
+}
+
+function closeFeedMenus() {
+  document.querySelectorAll(".feed-menu.open").forEach(m => m.classList.remove("open"));
 }
 
 function bindConfluenceModal() {
