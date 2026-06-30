@@ -2096,7 +2096,7 @@ body.is-home .empty-btn.ghost:hover {
 .outline-resizer {
   flex-shrink: 0;
   width: 6px;
-  min-height: 100%;
+  align-self: stretch;
   cursor: col-resize;
   z-index: 50;
   transition: background 0.1s;
@@ -2267,6 +2267,9 @@ body.is-home .empty-btn.ghost:hover {
 @media (max-width: 1279px) {
   /* Hide outline below 1280px (matches VitePress @media min-width: 1280px) */
   .outline:not(.collapsed) {
+    display: none;
+  }
+  .outline-resizer {
     display: none;
   }
 }
