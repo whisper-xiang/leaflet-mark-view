@@ -1969,8 +1969,9 @@ function buildFeedTab(pin, subdirs) {
       } catch (_) {}
       files.sort((a, b) => b.name.localeCompare(a.name));
       if (!files.length) { toast("该文件夹暂无 Markdown 文件"); return; }
-      const latest = files[0];
-      await openFile({ kind: "file", name: latest.name, path: latest.name, handle: latest.handle });
+      rootHandle = pin.handle;
+      await LMV.storeHandle(pin.handle);
+      await loadFolder(pin.handle, files[0].name);
     });
     return wrap;
   }
@@ -1998,13 +1999,15 @@ function buildFeedTab(pin, subdirs) {
       } catch (_) {}
       files.sort((a, b) => b.name.localeCompare(a.name));
       if (!files.length) { toast("该文件夹暂无 Markdown 文件"); return; }
-      const latest = files[0];
-      await openFile({
-        kind: "file",
-        name: latest.name,
-        path: subdir.name + "/" + latest.name,
-        handle: latest.handle,
-      });
+      const targetPath = subdir.name + "/" + files[0].name;
+      rootHandle = pin.handle;
+      await LMV.storeHandle(pin.handle);
+      await LMV.addRecent(pin.handle);
+      // Load pin root (rebuilds sidebar), then open the specific file by path
+      await loadFolder(pin.handle, null, { autoOpen: false });
+      const targetNode = allFiles.find(f => f.path === targetPath)
+        || allFiles.find(f => f.name === files[0].name);
+      if (targetNode) { showMarkdownBody(); await openFile(targetNode); }
     });
     list.appendChild(btn);
   }
