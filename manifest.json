@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Leaflet Mark View",
   "short_name": "Leaflet MV",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "轻语",
   "description": "Read local & remote Markdown — folder browsing, math, Mermaid, syntax highlighting, Confluence export. Fully local, no uploads.",
   "homepage_url": "https://github.com/whisper-xiang/leaflet-mark-view",
