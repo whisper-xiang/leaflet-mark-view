@@ -10,6 +10,8 @@ const ICON = {
   arrowRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
   copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`,
+  code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>`,
+  eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
 };
 
 // ── State ──────────────────────────────────────────────────────────
@@ -70,10 +72,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function bindUI() {
   bindOpenMenus();
+  bindLightbox();
   document.getElementById("themeToggle").addEventListener("click", toggleTheme);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      if (document.getElementById("urlModal")?.classList.contains("open")) {
+      if (isLightboxOpen()) {
+        e.preventDefault();
+        closeLightbox();
+      } else if (document.getElementById("urlModal")?.classList.contains("open")) {
         e.preventDefault();
         urlModalApi.closeUrlModal();
       } else if (
@@ -1563,6 +1569,90 @@ async function renderMath(body) {
   });
 }
 
+// Shared shell for Mermaid / PlantUML: preview ↔ source toggle + copy.
+function createDiagramBlock(kind, source, label) {
+  const block = document.createElement("div");
+  block.className = "diagram-block";
+  block.dataset.kind = kind;
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "diagram-toolbar";
+
+  const kindTag = document.createElement("span");
+  kindTag.className = "diagram-kind";
+  kindTag.textContent = label || kind;
+
+  const actions = document.createElement("div");
+  actions.className = "diagram-actions";
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "diagram-tool-btn diagram-toggle";
+  toggle.innerHTML = ICON.code;
+  toggle.title = "查看源码";
+  toggle.setAttribute("aria-label", "查看源码");
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "diagram-tool-btn diagram-copy";
+  copyBtn.innerHTML = ICON.copy;
+  copyBtn.title = "复制源码";
+  copyBtn.setAttribute("aria-label", "复制源码");
+
+  const preview = document.createElement("div");
+  preview.className = "diagram-preview";
+
+  const sourcePre = document.createElement("pre");
+  sourcePre.className = "diagram-source";
+  sourcePre.hidden = true;
+  const code = document.createElement("code");
+  code.textContent = source;
+  sourcePre.appendChild(code);
+
+  const setMode = (mode) => {
+    const showSource = mode === "source";
+    block.classList.toggle("show-source", showSource);
+    sourcePre.hidden = !showSource;
+    preview.hidden = showSource;
+    toggle.innerHTML = showSource ? ICON.eye : ICON.code;
+    toggle.title = showSource ? "查看预览" : "查看源码";
+    toggle.setAttribute("aria-label", toggle.title);
+  };
+
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMode(block.classList.contains("show-source") ? "preview" : "source");
+  });
+  copyBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const ok = await copyText(source);
+    if (!ok) return;
+    copyBtn.classList.add("copied");
+    copyBtn.innerHTML = ICON.check;
+    setTimeout(() => {
+      copyBtn.classList.remove("copied");
+      copyBtn.innerHTML = ICON.copy;
+    }, 1500);
+  });
+  toolbar.addEventListener("click", (e) => e.stopPropagation());
+
+  actions.append(toggle, copyBtn);
+  toolbar.append(kindTag, actions);
+  block.append(toolbar, preview, sourcePre);
+  return { block, preview, sourcePre, setMode };
+}
+
+function markDiagramZoomable(preview) {
+  if (!preview) return;
+  preview.classList.add("diagram-zoomable");
+  preview.setAttribute("role", "button");
+  preview.setAttribute("tabindex", "0");
+  preview.setAttribute("aria-label", "点击放大预览");
+  preview.title = "点击放大预览";
+}
+
 // Render Mermaid diagrams from <pre class="mermaid"> blocks, theme-aware.
 async function renderMermaid(body) {
   const els = [...body.querySelectorAll("pre.mermaid")];
@@ -1573,21 +1663,248 @@ async function renderMermaid(body) {
     return;
   }
   const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  const nodes = [];
+  els.forEach((el) => {
+    const source = el.textContent || "";
+    const { block, preview } = createDiagramBlock("mermaid", source, "Mermaid");
+    const host = document.createElement("pre");
+    host.className = "mermaid";
+    host.textContent = source;
+    preview.appendChild(host);
+    el.replaceWith(block);
+    nodes.push(host);
+  });
   try {
     window.mermaid.initialize({
       startOnLoad: false,
       securityLevel: "strict",
       theme: dark ? "dark" : "default",
     });
-    await window.mermaid.run({ nodes: els });
+    await window.mermaid.run({ nodes });
+    nodes.forEach((host) => {
+      if (!host.querySelector("svg")) return;
+      markDiagramZoomable(host.closest(".diagram-preview"));
+    });
   } catch (_) {}
+}
+
+// Render PlantUML locally via vendored @plantuml/core (no network).
+async function renderPlantuml(body) {
+  const els = [...body.querySelectorAll("pre.plantuml")];
+  if (!els.length) return;
+
+  // Serialize: engine overwrites in-flight renders if called in parallel.
+  for (const el of els) {
+    const source = el.textContent || "";
+    const { block, preview } = createDiagramBlock(
+      "plantuml",
+      source,
+      "PlantUML",
+    );
+    preview.innerHTML = `<div class="plantuml-loading">正在加载 PlantUML 引擎…</div>`;
+    el.replaceWith(block);
+
+    const dark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    try {
+      preview.innerHTML = `<div class="plantuml-loading">正在渲染 PlantUML…</div>`;
+      const svg = await plantumlRenderSvg(source, loadScriptOnce, { dark });
+      if (!svg || !svg.includes("<svg")) {
+        showPlantumlError(preview, "PlantUML 未返回有效图形");
+        continue;
+      }
+      preview.innerHTML = svg;
+      markDiagramZoomable(preview);
+    } catch (err) {
+      showPlantumlError(
+        preview,
+        "PlantUML 渲染失败" + (err && err.message ? "：" + err.message : ""),
+      );
+    }
+  }
+}
+
+function showPlantumlError(preview, message) {
+  preview.classList.remove("diagram-zoomable");
+  preview.removeAttribute("role");
+  preview.removeAttribute("tabindex");
+  preview.removeAttribute("aria-label");
+  preview.title = "";
+  preview.innerHTML = `<div class="plantuml-error">${escapeHtml(message)}</div>`;
+}
+
+// Mark markdown images as zoomable (skip tiny icons inside links if desired —
+// here every content image can be previewed).
+function enableImageZoom(body) {
+  body.querySelectorAll("img").forEach((img) => {
+    if (img.closest(".diagram-block")) return;
+    img.classList.add("diagram-zoomable");
+    if (!img.title) img.title = "点击放大预览";
+  });
+}
+
+// ── Lightbox (image / Mermaid / PlantUML preview) ────────────────────
+let lightboxScale = 1;
+let lightboxX = 0;
+let lightboxY = 0;
+let lightboxDragging = false;
+let lightboxDragStart = null;
+
+function isLightboxOpen() {
+  const el = document.getElementById("lightbox");
+  return el && !el.hasAttribute("hidden");
+}
+
+function bindLightbox() {
+  const box = document.getElementById("lightbox");
+  const stage = document.getElementById("lightboxStage");
+  const closeBtn = document.getElementById("lightboxClose");
+  const mdBody = document.getElementById("markdownBody");
+  if (!box || !stage || !closeBtn) return;
+
+  closeBtn.addEventListener("click", closeLightbox);
+  box.addEventListener("click", (e) => {
+    if (e.target === box || e.target === stage) closeLightbox();
+  });
+
+  stage.addEventListener(
+    "wheel",
+    (e) => {
+      if (!isLightboxOpen()) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.12 : 0.12;
+      setLightboxScale(lightboxScale + delta);
+    },
+    { passive: false },
+  );
+
+  stage.addEventListener("pointerdown", (e) => {
+    if (!isLightboxOpen()) return;
+    if (e.target === stage) return;
+    lightboxDragging = true;
+    lightboxDragStart = {
+      x: e.clientX,
+      y: e.clientY,
+      ox: lightboxX,
+      oy: lightboxY,
+    };
+    stage.setPointerCapture(e.pointerId);
+    stage.classList.add("dragging");
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (!lightboxDragging || !lightboxDragStart) return;
+    lightboxX = lightboxDragStart.ox + (e.clientX - lightboxDragStart.x);
+    lightboxY = lightboxDragStart.oy + (e.clientY - lightboxDragStart.y);
+    applyLightboxTransform();
+  });
+  stage.addEventListener("pointerup", (e) => {
+    lightboxDragging = false;
+    lightboxDragStart = null;
+    stage.classList.remove("dragging");
+    try {
+      stage.releasePointerCapture(e.pointerId);
+    } catch (_) {}
+  });
+  stage.addEventListener("pointercancel", () => {
+    lightboxDragging = false;
+    lightboxDragStart = null;
+    stage.classList.remove("dragging");
+  });
+
+  if (mdBody) bindDiagramZoom(mdBody);
+}
+
+function setLightboxScale(next) {
+  lightboxScale = Math.min(8, Math.max(0.2, next));
+  applyLightboxTransform();
+}
+
+function applyLightboxTransform() {
+  const content = document.querySelector("#lightboxStage .lightbox-content");
+  if (!content) return;
+  content.style.transform = `translate(${lightboxX}px, ${lightboxY}px) scale(${lightboxScale})`;
+}
+
+function openLightboxFrom(source) {
+  const box = document.getElementById("lightbox");
+  const stage = document.getElementById("lightboxStage");
+  if (!box || !stage || !source) return;
+
+  let content = null;
+  if (source.tagName === "IMG") {
+    content = document.createElement("img");
+    content.src = source.currentSrc || source.src;
+    content.alt = source.alt || "";
+  } else {
+    const svg = source.querySelector("svg");
+    const img = source.querySelector("img");
+    if (svg) {
+      content = svg.cloneNode(true);
+    } else if (img) {
+      content = document.createElement("img");
+      content.src = img.currentSrc || img.src;
+      content.alt = img.alt || "";
+    }
+  }
+  if (!content) return;
+
+  content.classList.add("lightbox-content");
+  stage.innerHTML = "";
+  stage.appendChild(content);
+  lightboxScale = 1;
+  lightboxX = 0;
+  lightboxY = 0;
+  applyLightboxTransform();
+  box.removeAttribute("hidden");
+  box.classList.add("open");
+  document.body.classList.add("lightbox-open");
+}
+
+function closeLightbox() {
+  const box = document.getElementById("lightbox");
+  const stage = document.getElementById("lightboxStage");
+  if (!box) return;
+  box.classList.remove("open");
+  box.setAttribute("hidden", "");
+  document.body.classList.remove("lightbox-open");
+  if (stage) stage.innerHTML = "";
+  lightboxDragging = false;
+  lightboxDragStart = null;
+}
+
+function bindDiagramZoom(body) {
+  body.addEventListener("click", (e) => {
+    if (e.target.closest(".diagram-toolbar, .diagram-source")) return;
+    const img = e.target.closest("img.diagram-zoomable");
+    if (img && body.contains(img) && !img.closest(".diagram-block")) {
+      e.preventDefault();
+      openLightboxFrom(img);
+      return;
+    }
+    const diagram = e.target.closest(".diagram-preview.diagram-zoomable");
+    if (diagram && body.contains(diagram)) {
+      if (diagram.closest(".diagram-block.show-source")) return;
+      e.preventDefault();
+      openLightboxFrom(diagram);
+    }
+  });
+  body.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const diagram = e.target.closest(".diagram-preview.diagram-zoomable");
+    if (!diagram || !body.contains(diagram)) return;
+    if (diagram.closest(".diagram-block.show-source")) return;
+    e.preventDefault();
+    openLightboxFrom(diagram);
+  });
 }
 
 // Parse markdown into `body` and wire up links + heading anchors + outline.
 function renderMarkdownInto(body, text, fileUrl) {
+  closeLightbox();
   body.innerHTML = parseMarkdown(text, true);
 
   fixImageSrcs(body, fileUrl);
+  enableImageZoom(body);
 
   // Relative .md links (and in-page anchors) navigate inside the viewer instead
   // of opening a new file:// tab. Read the raw href, not the DOM-resolved one.
@@ -1628,6 +1945,7 @@ function renderMarkdownInto(body, text, fileUrl) {
   // Math + diagrams — vendored libraries, lazy-loaded only when present.
   renderMath(body);
   renderMermaid(body);
+  renderPlantuml(body);
 }
 
 // Make a rendered table's columns drag-resizable. Wraps the table in a

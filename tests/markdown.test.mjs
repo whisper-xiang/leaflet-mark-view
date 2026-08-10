@@ -149,11 +149,19 @@ t("fenced block math across lines",
   "$$\n\\int_0^1 x\\,dx\n$$",
   'data-tex="\\int_0^1 x\\,dx"');
 
-// ── Mermaid ─────────────────────────────────────────────────────────
+// ── Mermaid / PlantUML ──────────────────────────────────────────────
 t("mermaid fence yields a raw mermaid pre (no highlighting)",
   "```mermaid\ngraph TD\nA-->B\n```",
   '<pre class="mermaid">graph TD\nA--&gt;B</pre>',
   ["language-mermaid", "tok-"]);
+t("plantuml fence yields a raw plantuml pre",
+  "```plantuml\nAlice -> Bob\n```",
+  '<pre class="plantuml">Alice -&gt; Bob</pre>',
+  ["language-plantuml", "tok-"]);
+t("puml fence alias works",
+  "```puml\nA --> B\n```",
+  '<pre class="plantuml">A --&gt; B</pre>',
+  ["language-puml", "tok-"]);
 
 // ── Regression: core blocks ─────────────────────────────────────────
 t("heading and bold",

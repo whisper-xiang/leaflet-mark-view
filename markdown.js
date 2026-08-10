@@ -271,9 +271,14 @@ function parseBlocks(lines, start, end) {
       }
       i++; // closing fence
       const body = code.replace(/\n$/, "");
-      // Mermaid diagrams: keep the raw source for the renderer (no highlighting).
-      if (lang.toLowerCase() === "mermaid") {
+      // Diagram fences: keep raw source for the renderer (no highlighting).
+      const langLower = lang.toLowerCase();
+      if (langLower === "mermaid") {
         html += `<pre class="mermaid">${escapeHtml(body)}</pre>\n`;
+        continue;
+      }
+      if (langLower === "plantuml" || langLower === "puml") {
+        html += `<pre class="plantuml">${escapeHtml(body)}</pre>\n`;
         continue;
       }
       const cls = lang ? ` class="language-${lang}"` : "";

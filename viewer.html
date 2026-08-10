@@ -329,6 +329,18 @@
     <button type="button" class="tree-context-item" id="treeContextReveal" role="menuitem"></button>
   </div>
 
+  <!-- ── Image / diagram lightbox ── -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片预览" hidden>
+    <button type="button" class="lightbox-close" id="lightboxClose" title="关闭 (esc)" aria-label="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </button>
+    <div class="lightbox-hint">滚轮缩放 · 拖拽移动 · Esc 关闭</div>
+    <div class="lightbox-stage" id="lightboxStage"></div>
+  </div>
+
   <!-- ── Confluence export modal ── -->
   <div class="search-backdrop" id="cfBackdrop"></div>
   <div class="cf-modal" id="cfModal" role="dialog" aria-modal="true" aria-label="转换为 Confluence">
@@ -364,6 +376,7 @@
   <script src="remote-md.js"></script>
   <script src="markdown.js"></script>
   <script src="md-to-confluence.js"></script>
+  <script src="plantuml.js"></script>
   <script src="viewer.js"></script>
 </body>
 

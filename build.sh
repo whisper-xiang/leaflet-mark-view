@@ -16,7 +16,7 @@ FILES=(
   home.html home.js
   viewer.html viewer.js viewer.css
   popup.html popup.js
-  markdown.js md-to-confluence.js lmv-db.js remote-md.js
+  markdown.js md-to-confluence.js plantuml.js lmv-db.js remote-md.js
   README.md LICENSE
 )
 

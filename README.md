@@ -23,7 +23,7 @@
 
 ### 数学公式与流程图
 
-Mermaid 流程图、LaTeX 公式均在本地渲染，无需联网。
+Mermaid 流程图、PlantUML、LaTeX 公式均在本地渲染，无需联网。点击图片或图表可放大预览。
 
 <p align="center">
   <img src="public/image-1782547105837.jpg" alt="流程图与数学公式" width="720">
@@ -170,7 +170,9 @@ cd leaflet-mark-view
 - **GFM 兼容** — 管道表格与 HTML `<table>`、任务列表、删除线、脚注、emoji 短名（`:smile:` 等）
 - **YAML Front Matter** — 文首元数据渲染为信息卡片
 - **数学公式** — `$…$` / `$$…$$` 由 KaTeX 本地按需加载渲染
-- **流程图** — ` ```mermaid ` 代码块由 Mermaid 渲染，随深浅主题切换
+- **流程图** — ` ```mermaid ` 代码块由 Mermaid 本地渲染，随深浅主题切换；可切换预览 / 源码
+- **PlantUML** — ` ```plantuml ` / ` ```puml ` 由内置 [@plantuml/core](https://www.npmjs.com/package/@plantuml/core) 引擎本地渲染（与 [plantuml.com](https://plantuml.com/zh/) 官网同源 JS 引擎，不上传、不依赖外网）；可切换预览 / 源码并复制
+- **图片 / 图表放大** — 点击正文图片、Mermaid、PlantUML 预览全屏查看；滚轮缩放、拖拽平移、Esc 关闭
 - **代码高亮** — 内置 JS / TS / Python / Go / Java / Bash / CSS / SQL 等关键字高亮
 - **代码复制** — 代码块悬停显示一键复制
 - **可拖拽表格** — 渲染后的表格列宽可拖拽调整，双击表头自动适配内容宽度
@@ -185,7 +187,7 @@ cd leaflet-mark-view
 
 ### 隐私与安全
 
-- **本地优先** — Markdown 解析、公式、图表均在浏览器本地完成，不上传文件
+- **本地优先** — Markdown 解析、公式、Mermaid、PlantUML 均在浏览器本地完成，不上传本地文件
 - **最小权限** — 仅 `storage` 必选权限；GitHub 域名预授权；其他网站按需单次授权
 - **数据本地存储** — 阅读记录、固定文件夹、自定义背景等存于 IndexedDB / localStorage，不上传云端
 
@@ -202,10 +204,11 @@ leaflet-mark-view/
 ├── viewer.html / viewer.js / viewer.css   # 阅读器主界面
 ├── popup.html / popup.js  # 扩展弹窗
 ├── markdown.js            # GFM Markdown 解析器
+├── plantuml.js            # PlantUML 本地渲染封装（@plantuml/core）
 ├── md-to-confluence.js    # Markdown → Confluence Wiki Markup
 ├── lmv-db.js              # IndexedDB：句柄、最近阅读、固定文件夹、背景图
 ├── remote-md.js           # 远程 Markdown（GitHub API / 直链）
-├── vendor/                # 内置 KaTeX、Mermaid（离线可用）
+├── vendor/                # 内置 KaTeX、Mermaid、PlantUML（离线可用）
 ├── icons/                 # 扩展图标
 ├── public/                # 默认背景与截图资源
 └── tests/                 # 解析器回归测试
@@ -217,6 +220,9 @@ leaflet-mark-view/
 ```bash
 # Markdown 解析器测试
 node tests/markdown.test.mjs
+
+# PlantUML 封装测试
+node tests/plantuml.test.mjs
 
 # Confluence 转换测试
 node tests/confluence.test.mjs
