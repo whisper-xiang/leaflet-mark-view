@@ -6,7 +6,13 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-**[下载最新版](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。
+**[下载最新版 v1.3.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。
+
+### v1.3.0 更新
+
+- **PlantUML 本地渲染** — 支持 ` ```plantuml ` / ` ```puml `，内置与 [plantuml.com](https://plantuml.com/zh/) 同源的 JS 引擎，离线可用
+- **图表预览 / 源码切换** — Mermaid、PlantUML 可一键切换并复制源码
+- **图片与图表放大** — 点击正文图片 / 图表全屏预览，支持滚轮缩放与拖拽
 
 
 ## 截图
@@ -122,6 +128,8 @@ cd leaflet-mark-view
 | 上一篇 / 下一篇 | 右下角浮动翻页按钮，或正文底部上一篇 / 下一篇卡片 |
 | 文档内跳转 | 点指向其他 `.md` 的相对链接，在阅读器内直接打开；脚注 / 页内锚点同页平滑滚动 |
 | 复制代码 | 鼠标悬停代码块，点击右上角复制按钮 |
+| 图表源码切换 | Mermaid / PlantUML 图右上角切换预览与源码，可复制 |
+| 图片 / 图表放大 | 点击正文图片或图表预览，全屏查看（滚轮缩放、拖拽、Esc 关闭） |
 | 转 Confluence | 设置齿轮 → **转换为 Confluence**，弹框内可复制 / 导出 `.txt` |
 | 浏览器打开 | 设置齿轮 → **浏览器渲染**，在新标签页以原生方式查看当前 Markdown |
 | 在系统中定位 | 侧栏文件树右键 → 在系统文件选择器中打开所在目录 |
@@ -209,6 +217,9 @@ leaflet-mark-view/
 ├── lmv-db.js              # IndexedDB：句柄、最近阅读、固定文件夹、背景图
 ├── remote-md.js           # 远程 Markdown（GitHub API / 直链）
 ├── vendor/                # 内置 KaTeX、Mermaid、PlantUML（离线可用）
+│   ├── katex/
+│   ├── mermaid.min.js
+│   └── plantuml/          # @plantuml/core（viz-global.js + plantuml.js）
 ├── icons/                 # 扩展图标
 ├── public/                # 默认背景与截图资源
 └── tests/                 # 解析器回归测试
