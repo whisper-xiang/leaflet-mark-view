@@ -6,13 +6,13 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-**[下载最新版 v1.3.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。
+**[下载最新版 v1.4.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。
 
-### v1.3.0 更新
+### v1.4.0 更新
 
-- **PlantUML 本地渲染** — 支持 ` ```plantuml ` / ` ```puml `，内置与 [plantuml.com](https://plantuml.com/zh/) 同源的 JS 引擎，离线可用
-- **图表预览 / 源码切换** — Mermaid、PlantUML 可一键切换并复制源码
-- **图片与图表放大** — 点击正文图片 / 图表全屏预览，支持滚轮缩放与拖拽
+- **复制 HTML / 导出 Word** — 设置中可将当前文档转为带内联样式的浅色 HTML（可粘贴到公众号 / 飞书 / 邮件），或本地生成 A4 `.docx`
+- **阅读主题** — 默认 / 羊皮纸 / 青纸 / 深色 / 夜墨 五套阅读配色
+- **正文字体** — 黑体 / 宋体可切换
 
 
 ## 截图
