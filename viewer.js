@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindUI();
   applyStoredTheme();
   applyStoredFontSize();
+  applyStoredReadingFont();
   applyStoredBgImage();
   syncOutlineToggleLabel();
   urlModalApi = RemoteMD.bindUrlModal();
@@ -83,6 +84,16 @@ function bindUI() {
         e.preventDefault();
         urlModalApi.closeUrlModal();
       } else if (
+        document.getElementById("htmlModal")?.classList.contains("open")
+      ) {
+        e.preventDefault();
+        closeHtmlExportModal();
+      } else if (
+        document.getElementById("docxModal")?.classList.contains("open")
+      ) {
+        e.preventDefault();
+        closeDocxExportModal();
+      } else if (
         document.getElementById("searchModal").classList.contains("open")
       ) {
         e.preventDefault();
@@ -112,12 +123,20 @@ function bindUI() {
     .getElementById("fontSizeToggle")
     .addEventListener("click", cycleFontSize);
   document
+    .getElementById("readingThemeToggle")
+    .addEventListener("click", cycleReadingTheme);
+  document
+    .getElementById("readingFontToggle")
+    .addEventListener("click", cycleReadingFont);
+  document
     .getElementById("outlineToggle")
     .addEventListener("click", toggleOutline);
   document.getElementById("bgToggle").addEventListener("click", toggleBgImage);
   bindBrowserRender();
   bindPinFolder();
   bindConfluenceModal();
+  bindHtmlExportModal();
+  bindDocxExportModal();
   bindDragDrop();
   bindOutlineResize();
   document
@@ -265,21 +284,86 @@ function toggleOutline() {
 }
 
 // ── Theme ──────────────────────────────────────────────────────────
+const READING_THEMES = [
+  { id: "light", label: "默认", dark: false },
+  { id: "sepia", label: "羊皮纸", dark: false },
+  { id: "sage", label: "青纸", dark: false },
+  { id: "dark", label: "深色", dark: true },
+  { id: "ink", label: "夜墨", dark: true },
+];
+
+function themeMeta(id) {
+  return READING_THEMES.find((t) => t.id === id) || READING_THEMES[0];
+}
+
+function isDarkTheme(id) {
+  return !!themeMeta(id).dark;
+}
+
 function applyStoredTheme() {
   const theme = localStorage.getItem("lmv-theme") || "light";
   setTheme(theme);
 }
 
 function setTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
+  const meta = themeMeta(theme);
+  const root = document.documentElement;
+  root.setAttribute("data-theme", meta.id);
+  root.setAttribute("data-scheme", meta.dark ? "dark" : "light");
   const toggle = document.getElementById("themeToggle");
-  toggle.innerHTML = theme === "dark" ? ICON.sun : ICON.moon;
-  toggle.title = theme === "dark" ? "切换到浅色主题" : "切换到深色主题";
+  toggle.innerHTML = meta.dark ? ICON.sun : ICON.moon;
+  toggle.title = meta.dark ? "切换到浅色主题" : "切换到深色主题";
+  const label = document.getElementById("readingThemeLabel");
+  if (label) label.textContent = meta.label;
+  localStorage.setItem(
+    meta.dark ? "lmv-theme-dark" : "lmv-theme-light",
+    meta.id,
+  );
+}
+
+function cycleReadingTheme() {
+  const current = document.documentElement.getAttribute("data-theme");
+  const i = Math.max(
+    0,
+    READING_THEMES.findIndex((t) => t.id === current),
+  );
+  const next = READING_THEMES[(i + 1) % READING_THEMES.length];
+  setTheme(next.id);
+  localStorage.setItem("lmv-theme", next.id);
+}
+
+const READING_FONTS = [
+  { id: "sans", label: "黑体" },
+  { id: "serif", label: "宋体" },
+];
+
+function applyStoredReadingFont() {
+  setReadingFont(localStorage.getItem("lmv-font") || "sans");
+}
+
+function setReadingFont(id) {
+  const font = READING_FONTS.find((f) => f.id === id) || READING_FONTS[0];
+  document.documentElement.setAttribute("data-font", font.id);
+  const label = document.getElementById("readingFontLabel");
+  if (label) label.textContent = font.label;
+}
+
+function cycleReadingFont() {
+  const current = document.documentElement.getAttribute("data-font") || "sans";
+  const i = Math.max(
+    0,
+    READING_FONTS.findIndex((f) => f.id === current),
+  );
+  const next = READING_FONTS[(i + 1) % READING_FONTS.length];
+  setReadingFont(next.id);
+  localStorage.setItem("lmv-font", next.id);
 }
 
 function toggleTheme(event) {
   const current = document.documentElement.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
+  const next = isDarkTheme(current)
+    ? localStorage.getItem("lmv-theme-light") || "light"
+    : localStorage.getItem("lmv-theme-dark") || "dark";
 
   const canTransition =
     "startViewTransition" in document &&
@@ -309,11 +393,11 @@ function toggleTheme(event) {
     })
     .ready.then(() => {
       document.documentElement.animate(
-        { clipPath: next === "dark" ? [...clipPath].reverse() : clipPath },
+        { clipPath: isDarkTheme(next) ? [...clipPath].reverse() : clipPath },
         {
           duration: 300,
           easing: "ease-in",
-          pseudoElement: `::view-transition-${next === "dark" ? "old" : "new"}(root)`,
+          pseudoElement: `::view-transition-${isDarkTheme(next) ? "old" : "new"}(root)`,
         },
       );
     });
@@ -1489,7 +1573,14 @@ function fixImageSrcs(body, fileUrl) {
     const src = img.getAttribute("src");
     if (!src) return;
     // Already a safe URL (http/https/data/blob)
-    if (/^(https?:|data:|blob:)/.test(src)) return;
+    if (/^(https?:|data:|blob:)/.test(src)) {
+      img.addEventListener(
+        "error",
+        () => showImageFallback(img, "图片无法加载", src),
+        { once: true },
+      );
+      return;
+    }
     if (src.startsWith("//")) return;
 
     let fileHref = null;
@@ -1511,15 +1602,30 @@ function fixImageSrcs(body, fileUrl) {
 
     if (httpHref) {
       img.src = httpHref;
+      img.addEventListener(
+        "error",
+        () => showImageFallback(img, "图片无法加载", src),
+        { once: true },
+      );
       return;
     }
-    if (!fileHref) return;
+    if (!fileHref) {
+      showImageFallback(img, "图片无法加载", src);
+      return;
+    }
 
     // Fetch the local file and replace src with a blob URL so Chrome renders it.
     fetch(fileHref)
-      .then(r => r.ok || r.status === 0 ? r.blob() : Promise.reject(r.status))
-      .then(blob => { img.src = URL.createObjectURL(blob); })
-      .catch(() => { img.alt += " (无法加载)"; });
+      .then((r) => (r.ok || r.status === 0 ? r.blob() : Promise.reject(r.status)))
+      .then((blob) => {
+        img.src = URL.createObjectURL(blob);
+        img.addEventListener(
+          "error",
+          () => showImageFallback(img, "图片无法加载", src),
+          { once: true },
+        );
+      })
+      .catch(() => showImageFallback(img, "本地图片无法读取", src));
   });
 }
 
@@ -1554,6 +1660,10 @@ async function renderMath(body) {
   try {
     await loadScriptOnce("vendor/katex/katex.min.js");
   } catch (_) {
+    els.forEach((el) => {
+      const tex = el.getAttribute("data-tex") || "";
+      showMediaFallback(el, "公式引擎未能加载", tex);
+    });
     return;
   }
   els.forEach((el) => {
@@ -1564,7 +1674,7 @@ async function renderMath(body) {
         throwOnError: false,
       });
     } catch (_) {
-      el.textContent = tex;
+      showMediaFallback(el, "公式无法渲染", tex);
     }
   });
 }
@@ -1660,10 +1770,13 @@ async function renderMermaid(body) {
   try {
     await loadScriptOnce("vendor/mermaid.min.js");
   } catch (_) {
+    els.forEach((el) => {
+      showMediaFallback(el, "Mermaid 引擎未能加载", (el.textContent || "").trim());
+    });
     return;
   }
-  const dark = document.documentElement.getAttribute("data-theme") === "dark";
-  const nodes = [];
+  const dark = isDarkTheme(document.documentElement.getAttribute("data-theme"));
+  const jobs = [];
   els.forEach((el) => {
     const source = el.textContent || "";
     const { block, preview } = createDiagramBlock("mermaid", source, "Mermaid");
@@ -1672,7 +1785,7 @@ async function renderMermaid(body) {
     host.textContent = source;
     preview.appendChild(host);
     el.replaceWith(block);
-    nodes.push(host);
+    jobs.push({ host, preview, source });
   });
   try {
     window.mermaid.initialize({
@@ -1680,12 +1793,23 @@ async function renderMermaid(body) {
       securityLevel: "strict",
       theme: dark ? "dark" : "default",
     });
-    await window.mermaid.run({ nodes });
-    nodes.forEach((host) => {
-      if (!host.querySelector("svg")) return;
-      markDiagramZoomable(host.closest(".diagram-preview"));
-    });
   } catch (_) {}
+  for (const job of jobs) {
+    try {
+      await window.mermaid.run({ nodes: [job.host] });
+      if (!job.host.querySelector("svg")) {
+        showDiagramError(job.preview, "Mermaid 未返回图形", job.source);
+        continue;
+      }
+      markDiagramZoomable(job.host.closest(".diagram-preview"));
+    } catch (err) {
+      showDiagramError(
+        job.preview,
+        "Mermaid 渲染失败" + (err && err.message ? "：" + err.message : ""),
+        job.source,
+      );
+    }
+  }
 }
 
 // Render PlantUML locally via vendored @plantuml/core (no network).
@@ -1704,8 +1828,9 @@ async function renderPlantuml(body) {
     preview.innerHTML = `<div class="plantuml-loading">正在加载 PlantUML 引擎…</div>`;
     el.replaceWith(block);
 
-    const dark =
-      document.documentElement.getAttribute("data-theme") === "dark";
+    const dark = isDarkTheme(
+      document.documentElement.getAttribute("data-theme"),
+    );
     try {
       preview.innerHTML = `<div class="plantuml-loading">正在渲染 PlantUML…</div>`;
       const svg = await plantumlRenderSvg(source, loadScriptOnce, { dark });
@@ -1725,12 +1850,40 @@ async function renderPlantuml(body) {
 }
 
 function showPlantumlError(preview, message) {
+  showDiagramError(preview, message);
+}
+
+function showDiagramError(preview, message, detail) {
   preview.classList.remove("diagram-zoomable");
   preview.removeAttribute("role");
   preview.removeAttribute("tabindex");
   preview.removeAttribute("aria-label");
   preview.title = "";
-  preview.innerHTML = `<div class="plantuml-error">${escapeHtml(message)}</div>`;
+  preview.innerHTML = mediaFallbackHtml(message, detail);
+}
+
+function mediaFallbackHtml(title, detail) {
+  const d = detail
+    ? `<div class="media-fallback-detail">${escHtml(String(detail).slice(0, 240))}</div>`
+    : "";
+  return `<div class="media-fallback"><div class="media-fallback-title">${escHtml(title)}</div>${d}</div>`;
+}
+
+function showMediaFallback(el, title, detail) {
+  const box = document.createElement("div");
+  box.className = "media-fallback";
+  box.innerHTML =
+    `<div class="media-fallback-title">${escHtml(title)}</div>` +
+    (detail
+      ? `<div class="media-fallback-detail">${escHtml(String(detail).slice(0, 240))}</div>`
+      : "");
+  el.replaceWith(box);
+}
+
+function showImageFallback(img, title, detail) {
+  if (!img || !img.parentNode) return;
+  const alt = (img.getAttribute("alt") || "").trim();
+  showMediaFallback(img, alt ? `${title}（${alt}）` : title, detail);
 }
 
 // Mark markdown images as zoomable (skip tiny icons inside links if desired —
@@ -2120,6 +2273,158 @@ function closeConfluenceModal() {
   document.getElementById("cfModal").classList.remove("open");
 }
 
+function latestExportHtml() {
+  const src = document.getElementById("htmlSource").value;
+  const raw = mdToExportHtml(src);
+  return typeof inlineExportHtml === "function" ? inlineExportHtml(raw) : raw;
+}
+
+function renderHtmlExport() {
+  const preview = document.getElementById("htmlPreview");
+  try {
+    preview.innerHTML = latestExportHtml();
+  } catch (_) {
+    preview.innerHTML = '<p style="color:#c00">HTML 生成失败</p>';
+  }
+}
+
+function openHtmlExportModal() {
+  const text = currentFileNode?.__text;
+  if (text == null) {
+    toast("请先打开一个文档");
+    return;
+  }
+  document.getElementById("htmlSource").value = text;
+  renderHtmlExport();
+  document.getElementById("htmlSource").scrollTop = 0;
+  document.getElementById("htmlPreview").scrollTop = 0;
+  document.getElementById("htmlBackdrop").classList.add("open");
+  document.getElementById("htmlModal").classList.add("open");
+}
+
+function closeHtmlExportModal() {
+  document.getElementById("htmlBackdrop").classList.remove("open");
+  document.getElementById("htmlModal").classList.remove("open");
+}
+
+function bindHtmlExportModal() {
+  document.getElementById("htmlExport").addEventListener("click", openHtmlExportModal);
+  document.getElementById("htmlClose").addEventListener("click", closeHtmlExportModal);
+  document.getElementById("htmlBackdrop").addEventListener("click", closeHtmlExportModal);
+  document.getElementById("htmlSource").addEventListener("input", renderHtmlExport);
+
+  document.getElementById("htmlCopy").addEventListener("click", async () => {
+    const html = latestExportHtml();
+    const plain =
+      typeof exportPlainText === "function"
+        ? exportPlainText(document.getElementById("htmlSource").value)
+        : document.getElementById("htmlSource").value;
+    const ok = await copyHtml(html, plain);
+    toast(ok ? "已复制 HTML" : "复制失败");
+  });
+
+  document.getElementById("htmlDownload").addEventListener("click", () => {
+    const html = latestExportHtml();
+    const base = (currentFileNode?.name || "document").replace(
+      /\.(md|markdown|mdown|mkd)$/i,
+      "",
+    );
+    const doc =
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' +
+      escHtml(base) +
+      "</title></head><body>" +
+      html +
+      "</body></html>";
+    const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + ".html";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "Escape" &&
+      document.getElementById("htmlModal").classList.contains("open")
+    ) {
+      closeHtmlExportModal();
+    }
+  });
+}
+
+function renderDocxSummary() {
+  const src = document.getElementById("docxSource").value;
+  const preview = document.getElementById("docxPreview");
+  try {
+    preview.innerHTML = mdToDocxPreviewHtml(src);
+  } catch (_) {
+    preview.innerHTML = '<p style="color:#c00;padding:24px">无法生成 Word 预览</p>';
+  }
+}
+
+function openDocxExportModal() {
+  const text = currentFileNode?.__text;
+  if (text == null) {
+    toast("请先打开一个文档");
+    return;
+  }
+  document.getElementById("docxSource").value = text;
+  renderDocxSummary();
+  document.getElementById("docxSource").scrollTop = 0;
+  document.getElementById("docxPreview").scrollTop = 0;
+  document.getElementById("docxBackdrop").classList.add("open");
+  document.getElementById("docxModal").classList.add("open");
+}
+
+function closeDocxExportModal() {
+  document.getElementById("docxBackdrop").classList.remove("open");
+  document.getElementById("docxModal").classList.remove("open");
+}
+
+function bindDocxExportModal() {
+  document.getElementById("docxExport").addEventListener("click", openDocxExportModal);
+  document.getElementById("docxClose").addEventListener("click", closeDocxExportModal);
+  document.getElementById("docxBackdrop").addEventListener("click", closeDocxExportModal);
+  document.getElementById("docxSource").addEventListener("input", () => {
+    clearTimeout(renderDocxSummary._t);
+    renderDocxSummary._t = setTimeout(renderDocxSummary, 120);
+  });
+
+  document.getElementById("docxDownload").addEventListener("click", () => {
+    const src = document.getElementById("docxSource").value;
+    let bytes;
+    try {
+      bytes = mdToDocx(src);
+    } catch (e) {
+      toast("导出失败");
+      return;
+    }
+    const base = (currentFileNode?.name || "document").replace(
+      /\.(md|markdown|mdown|mkd)$/i,
+      "",
+    );
+    const blob = new Blob([bytes], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + ".docx";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast("已导出 Word");
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "Escape" &&
+      document.getElementById("docxModal").classList.contains("open")
+    ) {
+      closeDocxExportModal();
+    }
+  });
+}
+
 function bindBrowserRender() {
   document.getElementById("browserRender").addEventListener("click", () => {
     const text = currentFileNode?.__text;
@@ -2391,6 +2696,21 @@ function bindConfluenceModal() {
 }
 
 // Clipboard write with a legacy fallback for file:// / restricted contexts.
+async function copyHtml(html, plain) {
+  try {
+    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([plain || html], { type: "text/plain" }),
+        }),
+      ]);
+      return true;
+    }
+  } catch (_) {}
+  return copyText(html);
+}
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);

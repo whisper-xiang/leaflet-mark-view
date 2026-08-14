@@ -1,7 +1,9 @@
 // ── Theme & background (sync visual state with viewer) ────────────────
 function applyStoredTheme() {
   const theme = localStorage.getItem('lmv-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', theme);
+  const dark = theme === 'dark' || theme === 'ink';
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-scheme', dark ? 'dark' : 'light');
 }
 
 function applyStoredBgImage() {

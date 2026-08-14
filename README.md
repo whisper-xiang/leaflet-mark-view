@@ -121,8 +121,8 @@ cd leaflet-mark-view
 | 操作 | 快捷键 / 位置 |
 |------|--------------|
 | 全文搜索 | `Ctrl+K` / `⌘K`，或顶栏搜索框 |
-| 切换主题 | 顶栏月亮 / 太阳图标（带视图过渡动画） |
-| 字体大小 / 大纲 / 背景图 | 顶栏设置齿轮 |
+| 切换主题 | 顶栏月亮 / 太阳图标（浅色系 ↔ 深色系，带视图过渡动画） |
+| 字体大小 / 阅读主题 / 正文字体 / 大纲 / 背景图 | 顶栏设置齿轮 |
 | 折叠侧边栏 | 顶栏左侧图标 |
 | 固定文件夹 | 侧栏顶部图钉，固定后顶栏出现快捷分类 Tab |
 | 上一篇 / 下一篇 | 右下角浮动翻页按钮，或正文底部上一篇 / 下一篇卡片 |
@@ -131,6 +131,8 @@ cd leaflet-mark-view
 | 图表源码切换 | Mermaid / PlantUML 图右上角切换预览与源码，可复制 |
 | 图片 / 图表放大 | 点击正文图片或图表预览，全屏查看（滚轮缩放、拖拽、Esc 关闭） |
 | 转 Confluence | 设置齿轮 → **转换为 Confluence**，弹框内可复制 / 导出 `.txt` |
+| 复制 HTML | 设置齿轮 → **复制 HTML**，弹框内可复制 / 导出 `.html` |
+| 导出 Word | 设置齿轮 → **导出 Word**，弹框内可导出 `.docx` |
 | 浏览器打开 | 设置齿轮 → **浏览器渲染**，在新标签页以原生方式查看当前 Markdown |
 | 在系统中定位 | 侧栏文件树右键 → 在系统文件选择器中打开所在目录 |
 | 回到主页 | 点击左上角 **Leaflet Mark View** Logo |
@@ -168,7 +170,8 @@ cd leaflet-mark-view
 - **阅读进度条** — 顶栏细线随滚动进度延伸（纯 CSS 实现）
 - **阅读记忆** — 记住每个文件的上次阅读位置与最后打开文件，下次自动恢复
 - **上下篇导航** — 按文件列表顺序切换，浮动按钮 + 正文底部卡片双入口
-- **深 / 浅色主题** — 带 View Transition 动画的主题切换
+- **深 / 浅色主题** — 带 View Transition 动画的主题切换；设置中可循环 **默认 / 羊皮纸 / 青纸 / 深色 / 夜墨**
+- **正文字体** — 黑体 / 宋体
 - **字体大小** — 小 / 中 / 大 / 特大四档
 - **背景图开关** — 阅读器内可单独开关装饰背景
 - **固定快捷入口** — 将常用文件夹固定到侧栏图钉，顶栏生成 Feed Tab；支持重命名、移除，有子目录时下拉快速打开
@@ -181,6 +184,7 @@ cd leaflet-mark-view
 - **流程图** — ` ```mermaid ` 代码块由 Mermaid 本地渲染，随深浅主题切换；可切换预览 / 源码
 - **PlantUML** — ` ```plantuml ` / ` ```puml ` 由内置 [@plantuml/core](https://www.npmjs.com/package/@plantuml/core) 引擎本地渲染（与 [plantuml.com](https://plantuml.com/zh/) 官网同源 JS 引擎，不上传、不依赖外网）；可切换预览 / 源码并复制
 - **图片 / 图表放大** — 点击正文图片、Mermaid、PlantUML 预览全屏查看；滚轮缩放、拖拽平移、Esc 关闭
+- **失败占位** — 图片无法加载、Mermaid / PlantUML / 公式渲染失败时显示原因，而不是空白块
 - **代码高亮** — 内置 JS / TS / Python / Go / Java / Bash / CSS / SQL 等关键字高亮
 - **代码复制** — 代码块悬停显示一键复制
 - **可拖拽表格** — 渲染后的表格列宽可拖拽调整，双击表头自动适配内容宽度
@@ -190,7 +194,9 @@ cd leaflet-mark-view
 
 ### 导出与工具
 
-- **转 Confluence** — 将当前文档转为 Confluence Wiki Markup；左侧 Markdown 可编辑，右侧实时预览，支持一键复制与导出 `.confluence.txt`
+- **转 Confluence** — 将当前文档转为 Confluence Wiki Markup；左侧 Markdown 可编辑，右侧实时预览，支持一键复制与导出 `.confluence.txt`；原生 HTML 表格（含合并单元格）一并转换
+- **复制 HTML** — 将当前文档转为带内联样式的浅色文章 HTML，可复制到公众号 / 飞书 / 邮件，或导出 `.html`；排版不跟随阅读主题
+- **导出 Word** — 本地生成 A4 `.docx`（标题黑体、正文宋体）；Markdown 表与原生 HTML 合并单元格表均可导出；图片以说明 + 链接写入，不嵌入、不上传
 - **浏览器渲染** — 以 Blob URL 在新标签页打开原始 Markdown
 
 ### 隐私与安全
@@ -212,8 +218,11 @@ leaflet-mark-view/
 ├── viewer.html / viewer.js / viewer.css   # 阅读器主界面
 ├── popup.html / popup.js  # 扩展弹窗
 ├── markdown.js            # GFM Markdown 解析器
-├── plantuml.js            # PlantUML 本地渲染封装（@plantuml/core）
+├── html-table.js          # HTML 表格抽取与网格模型（Confluence / HTML / Word 导出共用）
 ├── md-to-confluence.js    # Markdown → Confluence Wiki Markup
+├── md-to-html.js          # Markdown → 可粘贴 HTML 文章
+├── md-to-docx.js          # Markdown → Word .docx
+├── plantuml.js            # PlantUML 本地渲染封装（@plantuml/core）
 ├── lmv-db.js              # IndexedDB：句柄、最近阅读、固定文件夹、背景图
 ├── remote-md.js           # 远程 Markdown（GitHub API / 直链）
 ├── vendor/                # 内置 KaTeX、Mermaid、PlantUML（离线可用）
@@ -237,6 +246,15 @@ node tests/plantuml.test.mjs
 
 # Confluence 转换测试
 node tests/confluence.test.mjs
+
+# HTML 表格模型
+node tests/html-table.test.mjs
+
+# HTML 导出结构
+node tests/html-export.test.mjs
+
+# Word / docx 导出
+node tests/docx.test.mjs
 
 # 打包扩展
 ./build.sh

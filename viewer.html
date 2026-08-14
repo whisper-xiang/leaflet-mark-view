@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh" data-theme="light">
+<html lang="zh" data-theme="light" data-scheme="light">
 
 <head>
   <meta charset="UTF-8">
@@ -149,6 +149,22 @@
                 </svg>
                 <span class="settings-label">字体大小</span><span class="settings-val" id="fontSizeLabel">中</span>
               </button>
+              <button class="settings-item" id="readingThemeToggle" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <path d="M8 9h8M8 13h5" />
+                </svg>
+                <span class="settings-label">阅读主题</span><span class="settings-val" id="readingThemeLabel">默认</span>
+              </button>
+              <button class="settings-item" id="readingFontToggle" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M4 20V8l8-4 8 4v12" />
+                  <path d="M12 10v10M8 20h8" />
+                </svg>
+                <span class="settings-label">正文字体</span><span class="settings-val" id="readingFontLabel">黑体</span>
+              </button>
               <button class="settings-item" id="outlineToggle" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                   stroke-linejoin="round">
@@ -183,6 +199,24 @@
                   <path d="m16 11 3 3-3 3" />
                 </svg>
                 <span class="settings-label">转换为 Confluence</span>
+              </button>
+              <button class="settings-item" id="htmlExport" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M8 13h8M8 17h5" />
+                </svg>
+                <span class="settings-label">复制 HTML</span>
+              </button>
+              <button class="settings-item" id="docxExport" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M8 13h3M8 17h8" />
+                </svg>
+                <span class="settings-label">导出 Word</span>
               </button>
             </div>
           </div>
@@ -372,10 +406,74 @@
     </div>
   </div>
 
+  <!-- ── HTML export modal（预览固定浅色纸面，不跟阅读主题） ── -->
+  <div class="search-backdrop" id="htmlBackdrop"></div>
+  <div class="cf-modal" id="htmlModal" role="dialog" aria-modal="true" aria-label="复制 HTML">
+    <div class="cf-modal-box">
+      <div class="cf-modal-head">
+        <span class="cf-modal-title">Markdown → HTML</span>
+        <span class="cf-modal-sub">右侧为固定浅色排版，复制后可粘贴到公众号、飞书、邮件。不使用当前阅读主题。</span>
+        <button class="cf-modal-close" id="htmlClose" title="关闭 (esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="cf-modal-body">
+        <div class="cf-pane">
+          <div class="cf-pane-label">Markdown<span class="cf-pane-tag">可编辑</span></div>
+          <textarea class="cf-pane-text" id="htmlSource" spellcheck="false"></textarea>
+        </div>
+        <div class="cf-pane">
+          <div class="cf-pane-label">HTML 预览</div>
+          <div class="html-export-preview" id="htmlPreview"></div>
+        </div>
+      </div>
+      <div class="cf-modal-foot">
+        <button class="cf-btn cf-btn-primary" id="htmlCopy">复制 HTML</button>
+        <button class="cf-btn" id="htmlDownload">导出 .html</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Word export modal ── -->
+  <div class="search-backdrop" id="docxBackdrop"></div>
+  <div class="cf-modal" id="docxModal" role="dialog" aria-modal="true" aria-label="导出 Word">
+    <div class="cf-modal-box">
+      <div class="cf-modal-head">
+        <span class="cf-modal-title">Markdown → Word</span>
+        <span class="cf-modal-sub">右侧为 A4 纸面预览（宋体正文、黑体标题、<mark style="background:#ff0">高亮</mark>）。图片以说明写入，不嵌入原文件。</span>
+        <button class="cf-modal-close" id="docxClose" title="关闭 (esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="cf-modal-body">
+        <div class="cf-pane">
+          <div class="cf-pane-label">Markdown<span class="cf-pane-tag">可编辑</span></div>
+          <textarea class="cf-pane-text" id="docxSource" spellcheck="false"></textarea>
+        </div>
+        <div class="cf-pane">
+          <div class="cf-pane-label">Word 预览</div>
+          <div class="docx-export-preview" id="docxPreview"></div>
+        </div>
+      </div>
+      <div class="cf-modal-foot">
+        <button class="cf-btn cf-btn-primary" id="docxDownload">导出 .docx</button>
+      </div>
+    </div>
+  </div>
+
   <script src="lmv-db.js"></script>
   <script src="remote-md.js"></script>
   <script src="markdown.js"></script>
+  <script src="html-table.js"></script>
   <script src="md-to-confluence.js"></script>
+  <script src="md-to-html.js"></script>
+  <script src="md-to-docx.js"></script>
   <script src="plantuml.js"></script>
   <script src="viewer.js"></script>
 </body>

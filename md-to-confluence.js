@@ -54,8 +54,41 @@
       .map((c) => c.trim().replace(/\\\|/g, "|"));
   }
 
+  function convertHtmlTables(src, convertBody) {
+    const api = root.HtmlTable;
+    if (!api || typeof api.extractBlocks !== "function") return convertBody(src);
+    const blocks = api.extractBlocks(src);
+    if (!blocks.length) return convertBody(src);
+    let rewritten = "";
+    let last = 0;
+    const rendered = [];
+    // Pick tokens that are absent from the source, so literal text in the
+    // document can never be mistaken for a table placeholder on restoration.
+    let tokenSerial = 0;
+    const nextToken = () => {
+      let token;
+      do {
+        token = `\u0000LMV_HTML_TABLE_${tokenSerial++}\u0000`;
+      } while (src.includes(token));
+      return token;
+    };
+    blocks.forEach((b) => {
+      rewritten += src.slice(last, b.start);
+      const token = nextToken();
+      rewritten += `\n\n${token}\n\n`;
+      last = b.end;
+      rendered.push({ token, markup: api.toConfluence(api.parse(b.html)) });
+    });
+    rewritten += src.slice(last);
+    let out = convertBody(rewritten);
+    rendered.forEach(({ token, markup }) => {
+      out = out.split(token).join(markup);
+    });
+    return out;
+  }
+
   // ── Block structure ───────────────────────────────────────────────
-  function mdToConfluence(src) {
+  function convertBlocks(src) {
     src = src.replace(/\r\n?/g, "\n");
     const out = [];
 
@@ -195,6 +228,11 @@
     }
 
     return out.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+  }
+
+  function mdToConfluence(src) {
+    src = String(src || "").replace(/\r\n?/g, "\n");
+    return convertHtmlTables(src, convertBlocks);
   }
 
   root.mdToConfluence = mdToConfluence;

@@ -7,11 +7,11 @@ import { dirname, join } from "node:path";
 import vm from "node:vm";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const src = readFileSync(join(here, "..", "md-to-confluence.js"), "utf8");
 const ctx = { module: { exports: {} } };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
-vm.runInContext(src, ctx);
+vm.runInContext(readFileSync(join(here, "..", "html-table.js"), "utf8"), ctx);
+vm.runInContext(readFileSync(join(here, "..", "md-to-confluence.js"), "utf8"), ctx);
 const C = ctx.mdToConfluence;
 
 let pass = 0;
@@ -50,6 +50,21 @@ t("front matter becomes an info panel", "---\ntitle: X\n---\n\nbody", ["{info}",
 t("intra-word underscore is preserved", "snake_case_var", "snake_case_var");
 t("link nested inside bold", "**[t](u)**", "*[t|u]*");
 t("escaped pipe stays in a table cell", "| a | b |\n|---|---|\n| x \\| y | z |", "x | y");
+t(
+  "html table with colspan becomes wiki markup",
+  "intro\n\n<table><tr><th colspan=\"2\">Name</th></tr><tr><td>a</td><td>b</td></tr></table>\n",
+  ["colspan=2", "Name", "| a |", "| b |"],
+);
+t(
+  "fenced html table is left as code",
+  "```html\n<table><tr><td>secret</td></tr></table>\n```\n",
+  ["{code:html}", "secret"],
+);
+t(
+  "literal legacy table placeholder is preserved",
+  "%%LMVTABLE0%%\n\n<table><tr><td>cell</td></tr></table>\n",
+  ["%%LMVTABLE0%%", "cell"],
+);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
