@@ -199,6 +199,14 @@
                 </svg>
                 <span class="settings-label">浏览器渲染</span>
               </button>
+              <button class="settings-item" id="openHelpReadme" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                <span class="settings-label">使用说明</span>
+              </button>
               <button class="settings-item" id="confluenceExport" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                   stroke-linejoin="round">
@@ -255,6 +263,10 @@
                       <button class="start-action" type="button" data-start-action="file">打开文件</button>
                       <button class="start-link" type="button" data-start-action="url">打开远程链接</button>
                     </div>
+                    <p class="start-hint">
+                      也可把 Chrome 设为 <code>.md</code> 的默认应用，双击即可打开。
+                      <button type="button" class="start-hint-link" id="openDblClickGuide">查看步骤</button>
+                    </p>
                     <section class="start-recents" id="startRecents" hidden aria-labelledby="startRecentsTitle">
                       <h2 class="start-recents-title" id="startRecentsTitle">最近阅读</h2>
                       <ul class="favorites-list start-recents-list" id="startRecentsList"></ul>

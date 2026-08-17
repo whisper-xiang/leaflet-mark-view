@@ -463,6 +463,11 @@ function tryParseHtmlBlock(lines, startI, endI) {
   if (!openM) return null;
 
   const rootTag = openM[1].toLowerCase();
+  // Void tags never have a closer; treat a single-line <img> as a raw block
+  // so GitHub-style README screenshots are not HTML-escaped.
+  if (/^<(?:img|br|hr|source)\b[^>]*\/?>\s*$/i.test(trimmed)) {
+    return { html: trimmed + "\n", next: startI + 1 };
+  }
   const blockTags = new Set([
     "table",
     "div",
@@ -470,6 +475,9 @@ function tryParseHtmlBlock(lines, startI, endI) {
     "article",
     "details",
     "figure",
+    "p",
+    "center",
+    "picture",
   ]);
   if (!blockTags.has(rootTag)) return null;
 

@@ -96,7 +96,7 @@ cd leaflet-mark-view
 2. 选择 **Google Chrome**，勾选 **始终使用此应用打开 .md 文件**
 3. 确认
 
-**前提**：扩展已安装，且已开启 **允许访问文件网址**（见上方安装说明）。
+**前提**：扩展已安装，且已开启 **允许访问文件网址**（见上方安装说明）。阅读器空状态的「查看步骤」、设置 → **使用说明** 也会打开本节。
 
 
 ## 使用
@@ -110,7 +110,7 @@ cd leaflet-mark-view
 | 单文件 | **Open → Open File**，支持 `.md` / `.markdown` / `.mdown` / `.mkd` |
 | 远程链接 | **Open → Open URL**，粘贴 GitHub 仓库 / 文件页 / raw 直链 / 其他 `.md` 直链 |
 | 拖拽 | 把文件夹或 `.md` 文件拖到阅读器，松手即开 |
-| 直接打开 | 在浏览器地址栏输入 `file://` 路径，扩展自动跳转渲染 |
+| 双击打开 | 将 Chrome 设为 `.md` 默认应用，并开启「允许访问文件网址」，见上方步骤 |
 | 继续阅读 | 阅读器起始页显示最近阅读列表，可一键继续 |
 
 ### 背景图
@@ -198,57 +198,6 @@ cd leaflet-mark-view
 - **数据本地存储** — 阅读记录、固定文件夹、自定义背景等存于 IndexedDB / localStorage，不上传云端
 
 
-## 项目结构
-
-```
-leaflet-mark-view/
-├── manifest.json          # Chrome 扩展清单（Manifest V3）
-├── background.js          # Service Worker：tab 跳转、session 存储权限
-├── content.js             # 拦截 file:// 下的 .md 页面
-├── viewer.html / viewer.js / viewer.css   # 阅读器主界面
-├── popup.html / popup.js  # 扩展弹窗
-├── markdown.js            # GFM Markdown 解析器
-├── html-table.js          # HTML 表格抽取与网格模型（Confluence / HTML / Word 导出共用）
-├── md-to-confluence.js    # Markdown → Confluence Wiki Markup
-├── md-to-html.js          # Markdown → 可粘贴 HTML 文章
-├── md-to-docx.js          # Markdown → Word .docx
-├── plantuml.js            # PlantUML 本地渲染封装（@plantuml/core）
-├── lmv-db.js              # IndexedDB：句柄、最近阅读、固定文件夹、背景图
-├── remote-md.js           # 远程 Markdown（GitHub API / 直链）
-├── vendor/                # 内置 KaTeX、Mermaid、PlantUML（离线可用）
-│   ├── katex/
-│   ├── mermaid.min.js
-│   └── plantuml/          # @plantuml/core（viz-global.js + plantuml.js）
-├── icons/                 # 扩展图标
-├── public/                # 默认背景与截图资源
-└── tests/                 # 解析器回归测试
-```
-
-
-## 开发与测试
-
-```bash
-# Markdown 解析器测试
-node tests/markdown.test.mjs
-
-# PlantUML 封装测试
-node tests/plantuml.test.mjs
-
-# Confluence 转换测试
-node tests/confluence.test.mjs
-
-# HTML 表格模型
-node tests/html-table.test.mjs
-
-# HTML 导出结构
-node tests/html-export.test.mjs
-
-# Word / docx 导出
-node tests/docx.test.mjs
-
-# 打包扩展
-./build.sh
-```
 
 测试无第三方依赖，直接 `node` 运行即可。
 

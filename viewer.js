@@ -141,6 +141,7 @@ function bindUI() {
   document.getElementById("bgToggle").addEventListener("click", toggleBgImage);
   bindBgChooser();
   bindBrowserRender();
+  bindHelpReadme();
   bindPinFolder();
   bindConfluenceModal();
   bindHtmlExportModal();
@@ -629,7 +630,10 @@ function currentLocationLabel() {
 // Update location icon and label.
 function renderNav() {
   const loc = document.getElementById("locLabel");
-  loc.querySelector(".loc-name").textContent = currentLocationLabel();
+  const nameEl = loc.querySelector(".loc-name");
+  const label = currentLocationLabel();
+  nameEl.textContent = label;
+  nameEl.title = label;
   const showFile = fileOnlyView && currentFileNode;
   loc.querySelector(".loc-icon").innerHTML = showFile
     ? '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>'
@@ -1629,6 +1633,41 @@ function highlightMatch(text, q) {
   );
 }
 
+function isDirectImageUrl(href) {
+  return /^(https?:|data:|blob:|chrome-extension:|moz-extension:)/i.test(href);
+}
+
+function bindImageError(img, src, title = "图片无法加载") {
+  img.addEventListener("error", () => showImageFallback(img, title, src), {
+    once: true,
+  });
+}
+
+function applyImageBlob(img, blob, src) {
+  img.src = URL.createObjectURL(blob);
+  bindImageError(img, src);
+}
+
+async function resolveImageViaFs(relSrc) {
+  if (!relSrc || relSrc.startsWith("/") || relSrc.includes("://")) return null;
+  const dir = currentFileNode
+    ? await resolveDirHandle(currentFileNode)
+    : rootHandle;
+  if (!dir || typeof dir.getDirectoryHandle !== "function") return null;
+  const parts = relSrc.split("/").filter((p) => p && p !== ".");
+  if (!parts.length || parts.includes("..")) return null;
+  try {
+    let handle = dir;
+    for (let i = 0; i < parts.length - 1; i++) {
+      handle = await handle.getDirectoryHandle(parts[i]);
+    }
+    const fileHandle = await handle.getFileHandle(parts[parts.length - 1]);
+    return await fileHandle.getFile();
+  } catch (_) {
+    return null;
+  }
+}
+
 // Resolve image src values so local paths display correctly.
 // chrome-extension:// pages cannot render file:// img srcs directly,
 // so we fetch each local URL and swap in a blob URL instead.
@@ -1640,19 +1679,14 @@ function fixImageSrcs(body, fileUrl) {
   body.querySelectorAll("img").forEach((img) => {
     const src = img.getAttribute("src");
     if (!src) return;
-    // Already a safe URL (http/https/data/blob)
-    if (/^(https?:|data:|blob:)/.test(src)) {
-      img.addEventListener(
-        "error",
-        () => showImageFallback(img, "图片无法加载", src),
-        { once: true },
-      );
+    if (isDirectImageUrl(src)) {
+      bindImageError(img, src);
       return;
     }
     if (src.startsWith("//")) return;
 
     let fileHref = null;
-    let httpHref = null;
+    let directHref = null;
     if (/^file:\/\//.test(src)) {
       fileHref = src;
     } else if (src.startsWith("/")) {
@@ -1660,40 +1694,35 @@ function fixImageSrcs(body, fileUrl) {
     } else if (dirUrl) {
       try {
         const resolved = new URL(src, dirUrl).href;
-        if (/^https?:/.test(resolved)) {
-          httpHref = resolved;
+        if (isDirectImageUrl(resolved)) {
+          directHref = resolved;
         } else if (resolved.startsWith("file://")) {
           fileHref = resolved;
         }
       } catch (_) {}
     }
 
-    if (httpHref) {
-      img.src = httpHref;
-      img.addEventListener(
-        "error",
-        () => showImageFallback(img, "图片无法加载", src),
-        { once: true },
-      );
+    if (directHref) {
+      img.src = directHref;
+      bindImageError(img, src);
       return;
     }
-    if (!fileHref) {
-      showImageFallback(img, "图片无法加载", src);
+    if (fileHref) {
+      fetch(fileHref)
+        .then((r) =>
+          r.ok || r.status === 0 ? r.blob() : Promise.reject(r.status),
+        )
+        .then((blob) => applyImageBlob(img, blob, src))
+        .catch(() => showImageFallback(img, "本地图片无法读取", src));
       return;
     }
 
-    // Fetch the local file and replace src with a blob URL so Chrome renders it.
-    fetch(fileHref)
-      .then((r) => (r.ok || r.status === 0 ? r.blob() : Promise.reject(r.status)))
-      .then((blob) => {
-        img.src = URL.createObjectURL(blob);
-        img.addEventListener(
-          "error",
-          () => showImageFallback(img, "图片无法加载", src),
-          { once: true },
-        );
+    resolveImageViaFs(src)
+      .then((file) => {
+        if (!file) throw new Error("missing");
+        applyImageBlob(img, file, src);
       })
-      .catch(() => showImageFallback(img, "本地图片无法读取", src));
+      .catch(() => showImageFallback(img, "图片无法加载", src));
   });
 }
 
@@ -2504,6 +2533,50 @@ function bindBrowserRender() {
     const url = URL.createObjectURL(blob);
     chrome.tabs.create({ url });
   });
+}
+
+function bindHelpReadme() {
+  document.getElementById("openHelpReadme")?.addEventListener("click", () => {
+    openBuiltinReadme();
+  });
+  document.getElementById("openDblClickGuide")?.addEventListener("click", () => {
+    openBuiltinReadme("双击");
+  });
+}
+
+async function openBuiltinReadme(scrollHint) {
+  const name = "README.md";
+  const src =
+    typeof chrome !== "undefined" && chrome.runtime?.getURL
+      ? chrome.runtime.getURL(name)
+      : new URL(name, location.href).href;
+  if (viewingBuiltinReadme && currentFileNode) {
+    scrollReadmeHint(scrollHint);
+    return;
+  }
+  try {
+    const res = await fetch(src);
+    if (!res.ok && res.status !== 0) throw new Error(`无法打开说明 (${res.status})`);
+    const text = await res.text();
+    await openDirectContent(name, text, src, {
+      autoOpen: true,
+      builtinReadme: true,
+    });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => scrollReadmeHint(scrollHint));
+    });
+  } catch (e) {
+    toast(e.message || "无法打开使用说明");
+  }
+}
+
+function scrollReadmeHint(scrollHint) {
+  if (!scrollHint) return;
+  const body = document.getElementById("markdownBody");
+  const h = [...body.querySelectorAll("h2, h3, h4")].find((el) =>
+    el.textContent.includes(scrollHint),
+  );
+  if (h) scrollToHeading(h);
 }
 
 // ── Pin folder (快捷入口) ──────────────────────────────────────────────

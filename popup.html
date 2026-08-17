@@ -123,8 +123,7 @@
       .open-menu-list {
         background: rgba(18, 20, 18, 0.96);
       }
-      .recents,
-      .url-panel {
+      .recents {
         background: rgba(18, 20, 18, 0.42);
       }
     }
@@ -391,52 +390,6 @@
       color: var(--text);
     }
 
-    .url-panel {
-      position: relative;
-      z-index: 0;
-      margin-top: 16px;
-      padding: 10px 8px 8px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.42);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .url-panel[hidden] { display: none; }
-    .url-label {
-      display: block;
-      margin: 0 0 6px;
-      padding: 0 6px;
-      font-size: 11px;
-      font-weight: 650;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-    }
-    .url-input {
-      width: 100%;
-      height: 32px;
-      padding: 0 8px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 12.5px;
-    }
-    .url-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    .url-input:disabled {
-      opacity: 0.6;
-    }
-    .url-error {
-      margin: 6px 6px 0;
-      font-size: 11px;
-      color: #dc3c3c;
-    }
-    .url-error[hidden] { display: none; }
-
     @media (prefers-reduced-motion: no-preference) {
       .brand, .actions, .recents, .foot {
         animation: rise 0.38s ease both;
@@ -478,11 +431,6 @@
     <section class="recents" id="recents" hidden>
       <h2 class="recents-title">最近阅读</h2>
       <ul class="recents-list" id="recentsList"></ul>
-    </section>
-    <section class="url-panel" id="urlPanel" hidden>
-      <label class="url-label" for="urlInput">远程链接</label>
-      <input class="url-input" id="urlInput" type="text" placeholder="粘贴 GitHub 仓库或 .md 链接…" autocomplete="off" spellcheck="false">
-      <p class="url-error" id="urlError" hidden></p>
     </section>
     </div>
 
@@ -527,7 +475,6 @@
   </div>
 
   <script src="lmv-db.js"></script>
-  <script src="remote-md.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

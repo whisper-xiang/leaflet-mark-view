@@ -168,5 +168,15 @@ t("heading and bold",
   "# Title\n\nhello **world**",
   ["<h1", "<strong>world</strong>"]);
 
+// ── Raw HTML blocks (GitHub README screenshots) ─────────────────────
+t("centered HTML img block is not escaped",
+  '<p align="center">\n  <img src="public/shot.jpg" alt="shot" width="720">\n</p>',
+  ['<img src="public/shot.jpg"', 'align="center"'],
+  ["&lt;img", "&lt;p"]);
+t("standalone HTML img line is not escaped",
+  '<img src="public/shot.jpg" alt="shot">',
+  '<img src="public/shot.jpg"',
+  ["&lt;img"]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
