@@ -76,6 +76,45 @@ const LMV = (() => {
     } catch (_) {}
   }
 
+  // ── Last-opened single-file snapshot ────────────────────────────────
+  // FileSystemFileHandle permission usually does not survive reload, so we
+  // keep the last local file's text and restore from it when the handle
+  // cannot be re-read.
+
+  async function setLastFileSnapshot(name, text) {
+    if (!name || text == null) return;
+    try {
+      const db = await openDB();
+      const tx = db.transaction('prefs', 'readwrite');
+      tx.objectStore('prefs').put({ id: 'last-file-snapshot', name, text });
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
+  }
+
+  async function getLastFileSnapshot() {
+    try {
+      const db = await openDB();
+      return new Promise(res => {
+        const tx = db.transaction('prefs', 'readonly');
+        const req = tx.objectStore('prefs').get('last-file-snapshot');
+        req.onsuccess = () => {
+          const row = req.result;
+          res(row && row.text != null ? { name: row.name, text: row.text } : null);
+        };
+        req.onerror = () => res(null);
+      });
+    } catch (_) { return null; }
+  }
+
+  async function clearLastFileSnapshot() {
+    try {
+      const db = await openDB();
+      const tx = db.transaction('prefs', 'readwrite');
+      tx.objectStore('prefs').delete('last-file-snapshot');
+      await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    } catch (_) {}
+  }
+
   // ── Last-opened handle (used by reconnect banner) ───────────────────
 
   async function storeHandle(handle) {
@@ -327,6 +366,9 @@ const LMV = (() => {
     setCustomBg,
     getCustomBg,
     clearCustomBg,
+    setLastFileSnapshot,
+    getLastFileSnapshot,
+    clearLastFileSnapshot,
     storeHandle,
     getStoredHandle,
     addRecent,
@@ -338,6 +380,7 @@ const LMV = (() => {
     openProjectReadmeInViewer,
     openHandleInViewer,
     renderRecentsList,
+    entryIcon,
     escHtml,
   };
 })();

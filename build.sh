@@ -12,8 +12,7 @@ rm -f "$OUT"
 # Individual runtime files the extension ships.
 FILES=(
   manifest.json
-  background.js content.js newtab-gate.js
-  home.html home.js
+  background.js content.js
   viewer.html viewer.js viewer.css
   popup.html popup.js
   markdown.js md-to-confluence.js md-to-html.js md-to-docx.js html-table.js plantuml.js lmv-db.js remote-md.js

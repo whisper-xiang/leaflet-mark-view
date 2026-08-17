@@ -19,7 +19,7 @@
     <!-- ── Sidebar (full-height left column) ── -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <button type="button" class="topbar-logo" id="homeBtn" title="回到主页">
+        <button type="button" class="topbar-logo" id="homeBtn" title="开始阅读">
           <svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
@@ -172,15 +172,23 @@
                 </svg>
                 <span class="settings-label">大纲</span><span class="settings-val" id="outlineToggleLabel">开</span>
               </button>
-              <button class="settings-item" id="bgToggle" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-5-5L5 21" />
-                </svg>
-                <span class="settings-label">背景图</span><span class="settings-val" id="bgToggleLabel">开</span>
-              </button>
+              <div class="settings-submenu">
+                <button class="settings-item settings-submenu-trigger" type="button" role="menuitem" aria-haspopup="true" aria-expanded="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="9" cy="9" r="2" />
+                    <path d="m21 15-5-5L5 21" />
+                  </svg>
+                  <span class="settings-label">背景图</span><span class="settings-val" id="bgToggleLabel">开</span>
+                  <svg class="settings-submenu-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+                <div class="settings-submenu-list" role="menu" aria-label="背景图设置">
+                  <button class="settings-item" id="bgToggle" type="button" role="menuitem"><span class="settings-label">显示背景图</span></button>
+                  <button class="settings-item" id="bgChoose" type="button" role="menuitem"><span class="settings-label">选择本地图片</span></button>
+                  <button class="settings-item" id="bgReset" type="button" role="menuitem"><span class="settings-label">恢复默认背景</span></button>
+                </div>
+              </div>
 
               <button class="settings-item" id="browserRender" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
@@ -219,6 +227,7 @@
                 <span class="settings-label">导出 Word</span>
               </button>
             </div>
+            <input type="file" id="bgFileInput" accept="image/*" hidden>
           </div>
         </div>
       </header>
@@ -233,7 +242,23 @@
 
                   <!-- Empty state -->
                   <div class="empty-state" id="emptyState">
-                    <div class="viewer-no-file">从侧边栏选择文件，或点击 Open 打开文件夹 / 文件</div>
+                    <div class="start-mark" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                        <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+                      </svg>
+                    </div>
+                    <h1 class="start-title">开始阅读</h1>
+                    <p class="start-desc">打开一个文件夹、Markdown 文件或远程链接，也可以直接拖进这里。</p>
+                    <div class="start-actions" aria-label="打开内容">
+                      <button class="start-action start-action-primary" type="button" data-start-action="folder">打开文件夹</button>
+                      <button class="start-action" type="button" data-start-action="file">打开文件</button>
+                      <button class="start-link" type="button" data-start-action="url">打开远程链接</button>
+                    </div>
+                    <section class="start-recents" id="startRecents" hidden aria-labelledby="startRecentsTitle">
+                      <h2 class="start-recents-title" id="startRecentsTitle">最近阅读</h2>
+                      <ul class="favorites-list start-recents-list" id="startRecentsList"></ul>
+                    </section>
                   </div>
 
                   <!-- Markdown output -->

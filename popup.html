@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh" data-theme="light">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,175 +8,462 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #fcfcfb;
-      --surface: #f5f5f3;
-      --border: #e6e6e1;
-      --text: #1a1a17;
-      --text-muted: #6b6b63;
-      --text-faint: #9a9a90;
-      --accent: #2f6f4e;
-      --accent-hover: #275d42;
-      --accent-soft: #e9f1ec;
+      --bg: #ffffff;
+      --surface: #f6f6f7;
+      --surface-hover: #ebebef;
+      --border: #e2e2e3;
+      --border-strong: #c2c2c4;
+      --text: #3c3c43;
+      --text-muted: #67676c;
+      --text-faint: #929295;
+      --accent: #3eaf7c;
+      --accent-hover: #349567;
+      --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
       --accent-on: #ffffff;
+      --radius: 8px;
+      --bg-image: url("public/bg.png");
+      --font-ui: Inter, ui-sans-serif, -apple-system, "Helvetica Neue", "Segoe UI",
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #101210;
-        --surface: #0b0d0b;
-        --border: #23261f;
-        --text: #e7e9e3;
-        --text-muted: #8a8d83;
-        --text-faint: #5c6057;
-        --accent: #5fae84;
-        --accent-hover: #6ebf93;
-        --accent-soft: #16241c;
-        --accent-on: #0b0d0b;
+        --bg: #1b1b1f;
+        --surface: #161618;
+        --surface-hover: #32363f;
+        --border: #2e2e32;
+        --border-strong: #3c3f44;
+        --text: #dfdfd6;
+        --text-muted: #98989f;
+        --text-faint: #6a6a71;
+        --accent: #3eaf7c;
+        --accent-hover: #4ad9a0;
+        --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+        --accent-on: #1b1b1f;
+      }
+
+      html {
+        background-color: #1b1b1f;
+      }
+
+      body:not(.bg-off) {
+        --bg: rgba(27, 27, 31, 0.72);
+        --surface: rgba(22, 22, 24, 0.62);
+        --surface-hover: rgba(50, 54, 63, 0.72);
+        --border: rgba(255, 255, 255, 0.12);
+        --border-strong: rgba(255, 255, 255, 0.2);
+      }
+
+      body.bg-off {
+        background: #1b1b1f;
+      }
+
+      body::before {
+        background: color-mix(in srgb, #1b1b1f 42%, transparent);
       }
     }
 
+    html {
+      background: var(--bg-image) center / cover no-repeat;
+      background-color: #ffffff;
+      overflow: visible;
+    }
+
     body {
-      width: 300px;
-      font-family: ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
-      background: var(--bg);
+      width: 328px;
+      min-height: 268px;
+      position: relative;
+      overflow: visible;
+      font-family: var(--font-ui);
+      background: var(--bg-image) center / cover no-repeat;
+      background-color: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
 
+    body:not(.bg-off) {
+      --bg: rgba(255, 255, 255, 0.72);
+      --surface: rgba(255, 255, 255, 0.62);
+      --surface-hover: rgba(0, 0, 0, 0.05);
+      --border: rgba(0, 0, 0, 0.1);
+      --border-strong: rgba(0, 0, 0, 0.16);
+    }
+
+    body.bg-off {
+      background: #ffffff;
+      background-image: none;
+    }
+    html:has(body.bg-off) {
+      background: #ffffff;
+      background-image: none;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: color-mix(in srgb, #ffffff 28%, transparent);
+      pointer-events: none;
+    }
+    body.bg-off::before { display: none; }
+
+    @media (prefers-color-scheme: dark) {
+      body:not(.bg-off) {
+        --bg: rgba(27, 27, 31, 0.72);
+        --surface: rgba(22, 22, 24, 0.62);
+        --surface-hover: rgba(50, 54, 63, 0.72);
+        --border: rgba(255, 255, 255, 0.12);
+        --border-strong: rgba(255, 255, 255, 0.2);
+      }
+      body.bg-off,
+      html:has(body.bg-off) {
+        background: #1b1b1f;
+        background-image: none;
+      }
+      .open-menu-list {
+        background: rgba(18, 20, 18, 0.96);
+      }
+      .recents,
+      .url-panel {
+        background: rgba(18, 20, 18, 0.42);
+      }
+    }
+
     svg { display: block; }
 
-    .header {
-      padding: 20px 20px 16px;
+    .shell {
+      position: relative;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+      min-height: 268px;
+      padding: 18px 16px 14px;
+    }
+
+    .main {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 2px 12px;
       border-bottom: 1px solid var(--border);
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-    }
-
-    .logo-mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 11px;
-      background: var(--accent-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-    .logo-mark svg { width: 21px; height: 21px; }
-
-    .logo h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
-    .logo .tagline { font-size: 11.5px; color: var(--text-faint); margin-top: 2px; }
-
-    .body { padding: 16px 20px 18px; }
-
-    .open-btn {
-      width: 100%;
+    .mark {
+      width: 40px;
       height: 40px;
-      background: var(--accent);
-      color: var(--accent-on);
-      border: none;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 550;
-      font-family: inherit;
-      cursor: pointer;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: background .14s ease, transform .08s ease;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--accent-soft);
+      color: var(--accent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    .open-btn svg { width: 15px; height: 15px; }
-    .open-btn:hover { background: var(--accent-hover); }
-    .open-btn:active { transform: translateY(1px); }
+    .mark svg { width: 21px; height: 21px; }
 
-    .features {
-      margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 11px;
+    .brand h1 {
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
     }
-
-    .feature {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .brand p {
+      margin-top: 3px;
       font-size: 12px;
       color: var(--text-muted);
+      line-height: 1.35;
     }
 
-    .feature-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 7px;
-      background: var(--surface);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-    .feature-icon svg { width: 14px; height: 14px; }
-
-    .setting-row {
+    .actions {
       margin-top: 16px;
-      padding-top: 15px;
+      padding-top: 12px;
       border-top: 1px solid var(--border);
+    }
+
+    .actions-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
-    .setting-text { min-width: 0; }
-    .setting-label { font-size: 12.5px; font-weight: 500; color: var(--text); }
-    .setting-desc { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
 
-    .switch {
-      flex-shrink: 0;
-      width: 38px;
-      height: 22px;
-      border-radius: 999px;
-      border: none;
-      background: var(--border);
-      cursor: pointer;
-      position: relative;
-      transition: background .16s ease;
-      padding: 0;
+    .foot {
+      margin: 0;
+      min-width: 0;
+      flex: 1;
+      font-size: 11px;
+      color: var(--text-faint);
+      text-align: left;
+      line-height: 1.4;
     }
-    .switch::after {
+
+    .open-menu {
+      position: relative;
+      z-index: 1;
+      flex: 0 0 auto;
+    }
+    .open-menu.open {
+      z-index: 40;
+    }
+
+    .open-btn {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: var(--accent-on);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: background 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
+    }
+    .open-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .open-btn:hover,
+    .open-btn[aria-expanded="true"] {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+    .open-btn:active { transform: translateY(1px); }
+    .open-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .open-btn .caret {
+      width: 12px;
+      height: 12px;
+      opacity: 0.85;
+      transform: rotate(90deg);
+      transition: transform 0.15s ease;
+    }
+    .open-btn[aria-expanded="true"] .caret { transform: rotate(-90deg); }
+
+    .open-menu-list {
+      display: none;
+      position: absolute;
+      top: auto;
+      bottom: 0;
+      left: auto;
+      right: calc(100% + 6px);
+      z-index: 50;
+      flex-direction: column;
+      gap: 1px;
+      width: max-content;
+      min-width: 148px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:
+        0 1px 2px color-mix(in srgb, var(--text) 6%, transparent),
+        0 12px 28px color-mix(in srgb, var(--text) 12%, transparent);
+      pointer-events: auto;
+      transform-origin: right bottom;
+    }
+    .open-menu-list::before {
       content: "";
       position: absolute;
-      top: 3px;
-      left: 3px;
+      top: 0;
+      right: -8px;
+      width: 8px;
+      height: 100%;
+    }
+    .open-menu.open .open-menu-list { display: flex; }
+
+    .open-menu-list button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 30px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .open-menu-list button svg {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: color 0.12s ease;
+    }
+    .open-menu-list button:hover {
+      background: var(--surface-hover);
+    }
+    .open-menu-list button:hover svg {
+      color: var(--accent);
+    }
+    .open-menu-list button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+
+    .recents {
+      position: relative;
+      z-index: 0;
+      margin-top: 16px;
+      padding: 10px 8px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .recents[hidden] { display: none; }
+
+    .recents-title {
+      margin: 0 0 6px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 650;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .recents-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .recent {
+      width: 100%;
+      min-height: 34px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12.5px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .recent:hover { background: var(--surface-hover); }
+    .recent:hover .recent-icon { color: var(--accent); }
+    .recent:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+    .recent-icon {
       width: 16px;
       height: 16px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 2px rgba(0,0,0,.25);
-      transition: transform .16s ease;
-    }
-    .switch.on { background: var(--accent); }
-    .switch.on::after { transform: translateX(16px); }
-
-    .footer {
-      padding: 11px 20px;
-      border-top: 1px solid var(--border);
-      font-size: 10.5px;
+      flex-shrink: 0;
       color: var(--text-faint);
-      text-align: center;
-      letter-spacing: .01em;
+      transition: color 0.12s ease;
+    }
+    .recent-icon svg { width: 16px; height: 16px; }
+    .recent-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .url-panel {
+      position: relative;
+      z-index: 0;
+      margin-top: 16px;
+      padding: 10px 8px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .url-panel[hidden] { display: none; }
+    .url-label {
+      display: block;
+      margin: 0 0 6px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 650;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .url-input {
+      width: 100%;
+      height: 32px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12.5px;
+    }
+    .url-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .url-input:disabled {
+      opacity: 0.6;
+    }
+    .url-error {
+      margin: 6px 6px 0;
+      font-size: 11px;
+      color: #dc3c3c;
+    }
+    .url-error[hidden] { display: none; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .brand, .actions, .recents, .foot {
+        animation: rise 0.38s ease both;
+      }
+      .actions { animation-delay: 0.05s; }
+      .recents { animation-delay: 0.1s; }
+      .foot { animation-delay: 0.16s; }
+      .open-menu.open .open-menu-list {
+        animation: menu-from-left 0.16s ease;
+      }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes menu-from-left {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: none; }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">
-      <div class="logo-mark">
+  <div class="shell">
+    <div class="main">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
           <path d="M2 21c0-3 1.85-5.36 5.08-6"/>
@@ -184,58 +471,63 @@
       </div>
       <div>
         <h1>Leaflet Mark View</h1>
-        <div class="tagline">本地 Markdown 阅读器</div>
+        <p>文件夹、单篇或远程链接</p>
+      </div>
+    </div>
+
+    <section class="recents" id="recents" hidden>
+      <h2 class="recents-title">最近阅读</h2>
+      <ul class="recents-list" id="recentsList"></ul>
+    </section>
+    <section class="url-panel" id="urlPanel" hidden>
+      <label class="url-label" for="urlInput">远程链接</label>
+      <input class="url-input" id="urlInput" type="text" placeholder="粘贴 GitHub 仓库或 .md 链接…" autocomplete="off" spellcheck="false">
+      <p class="url-error" id="urlError" hidden></p>
+    </section>
+    </div>
+
+    <div class="actions">
+      <div class="actions-row">
+        <p class="foot">本地优先，文件不会上传</p>
+        <div class="open-menu" id="openMenu">
+          <button class="open-btn" id="openBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="openMenuList">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+            </svg>
+            Open
+            <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
+          <div class="open-menu-list" id="openMenuList" role="menu">
+        <button type="button" data-pick="folder" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+          </svg>
+          打开文件夹
+        </button>
+        <button type="button" data-pick="file" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
+            <path d="M14 2v6h6"/>
+          </svg>
+          打开 Markdown 文件
+        </button>
+        <button type="button" data-pick="url" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          打开远程链接
+        </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="body">
-    <button class="open-btn" id="openBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
-      </svg>
-      打开阅读器
-    </button>
-
-    <div class="features">
-      <div class="feature">
-        <span class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-        </span>
-        本地文件夹递归浏览，全文搜索
-      </div>
-      <div class="feature">
-        <span class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 7l3.5 5L5 17M14 17h5"/></svg>
-        </span>
-        数学公式 · Mermaid / PlantUML · 代码高亮
-      </div>
-      <div class="feature">
-        <span class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/><path d="m16 11 3 3-3 3"/></svg>
-        </span>
-        一键转 Confluence Wiki Markup
-      </div>
-      <div class="feature">
-        <span class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-        </span>
-        本地优先，公式 / Mermaid / PlantUML 本地渲染
-      </div>
-    </div>
-
-    <div class="setting-row">
-      <div class="setting-text">
-        <div class="setting-label">接管新标签页</div>
-        <div class="setting-desc">关闭后新标签页跳转 Google</div>
-      </div>
-      <button class="switch" id="newtabToggle" role="switch" aria-checked="true"
-        aria-label="接管新标签页" title="新标签页是否显示主页"></button>
-    </div>
-  </div>
-
-  <div class="footer">Leaflet Mark View · v1.4.0</div>
-
+  <script src="lmv-db.js"></script>
+  <script src="remote-md.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

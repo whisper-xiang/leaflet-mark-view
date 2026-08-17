@@ -53,8 +53,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pendingKey = params.get("pending");
   const src = params.get("src") || "";
   const filePath = params.get("path") || "";
+  const pick = params.get("pick") || "";
   const builtinReadme =
     params.get("builtin") === "readme" || LMV.isProjectReadmeUrl(src);
+  await setupStartState();
   // `pending` is a one-shot key (consumed on first open); `src` is the durable
   // file:// URL that survives refresh. Either one means "open this file".
   if (pendingKey || src) {
@@ -64,7 +66,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       src,
       { builtinReadme, filePath },
     );
-  } else {
+  } else if (pick === "folder" || pick === "file" || pick === "url") {
+    consumePickParam();
+    if (pick === "folder") await selectFolder();
+    else if (pick === "file") await selectFile();
+    else urlModalApi.openUrlModal();
+  } else if (!params.has("start")) {
     await tryRestoreFolder();
   }
 
@@ -132,6 +139,7 @@ function bindUI() {
     .getElementById("outlineToggle")
     .addEventListener("click", toggleOutline);
   document.getElementById("bgToggle").addEventListener("click", toggleBgImage);
+  bindBgChooser();
   bindBrowserRender();
   bindPinFolder();
   bindConfluenceModal();
@@ -165,6 +173,13 @@ function bindUI() {
     .getElementById("searchModalInput")
     .addEventListener("keydown", onModalKey);
   document.getElementById("homeBtn").addEventListener("click", goHome);
+  document.querySelectorAll("[data-start-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.startAction === "folder") selectFolder();
+      else if (button.dataset.startAction === "url") urlModalApi.openUrlModal();
+      else selectFile();
+    });
+  });
 
   bindTreeContextMenu();
 
@@ -185,6 +200,17 @@ function bindUI() {
     },
     { passive: true },
   );
+}
+
+async function setupStartState() {
+  const section = document.getElementById("startRecents");
+  const list = document.getElementById("startRecentsList");
+  const refresh = async () => {
+    const recents = await LMV.listRecents();
+    section.hidden = recents.length === 0;
+    if (recents.length) await LMV.renderRecentsList(list, { onChange: refresh });
+  };
+  await refresh();
 }
 
 // ── Per-scope reading memory (last file + scroll position) ──────────
@@ -420,6 +446,28 @@ function setBgVisible(on, save = true) {
 function toggleBgImage() {
   const isOn = !document.body.classList.contains("bg-off");
   setBgVisible(!isOn);
+}
+
+function bindBgChooser() {
+  const choose = document.getElementById("bgChoose");
+  const reset = document.getElementById("bgReset");
+  const input = document.getElementById("bgFileInput");
+
+  choose.addEventListener("click", () => input.click());
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+    await LMV.setCustomBg(file);
+    LMV.applyBgImage();
+    setBgVisible(true);
+    toast("背景已更新");
+  });
+  reset.addEventListener("click", async () => {
+    await LMV.clearCustomBg();
+    LMV.applyBgImage();
+    toast("已恢复默认背景");
+  });
 }
 
 // ── Drag & drop (open a folder or file by dropping it anywhere) ──────
@@ -965,17 +1013,35 @@ function decodeJsString(s) {
 async function tryRestoreFolder() {
   try {
     const handle = await LMV.getStoredHandle();
-    if (!handle) return;
-    const perm = await handle.queryPermission({ mode: "read" });
-    if (perm === "granted") {
-      await restoreHandle(handle);
-    } else if (perm === "prompt") {
-      // Show a banner offering to reconnect
-      showReconnectBanner(handle);
+    if (handle) {
+      let perm = "prompt";
+      try {
+        perm = await handle.queryPermission({ mode: "read" });
+      } catch (_) {}
+      if (perm === "granted") {
+        await restoreHandle(handle);
+        return;
+      }
+      // File handles typically lose permission on reload; fall back to the
+      // last local snapshot so the document is still there after refresh.
+      if (handle.kind === "file" && (await restoreFileSnapshot(handle.name))) {
+        return;
+      }
+      if (perm === "prompt") showReconnectBanner(handle);
+      return;
     }
+    await restoreFileSnapshot();
   } catch (_) {
     /* ignore */
   }
+}
+
+async function restoreFileSnapshot(expectedName) {
+  const snap = await LMV.getLastFileSnapshot();
+  if (!snap?.name || snap.text == null) return false;
+  if (expectedName && snap.name !== expectedName) return false;
+  await openDirectContent(snap.name, snap.text, null, { autoOpen: true });
+  return true;
 }
 
 // Restore either a directory or a single file, depending on the handle kind.
@@ -1010,6 +1076,7 @@ async function loadFolder(
   { autoOpen = true } = {},
 ) {
   viewingBuiltinReadme = false;
+  LMV.clearLastFileSnapshot();
   if (autoOpen) {
     LMV.addRecent(dirHandle);
     showMarkdownBody();
@@ -1054,6 +1121,7 @@ async function loadFolder(
 function showMarkdownBody() {
   document.getElementById("emptyState").style.display = "none";
   document.getElementById("markdownBody").style.display = "block";
+  clearStartParam();
 }
 
 async function scanDir(dirHandle, prefix) {
@@ -2747,18 +2815,34 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
 }
 
+function clearStartParam() {
+  const u = new URL(location.href);
+  if (!u.searchParams.has("start")) return;
+  u.searchParams.delete("start");
+  history.replaceState(null, "", u.pathname + u.search + u.hash);
+}
+
+function consumePickParam() {
+  const u = new URL(location.href);
+  if (!u.searchParams.has("pick")) return;
+  u.searchParams.delete("pick");
+  history.replaceState(null, "", u.pathname + u.search + u.hash);
+}
+
 function clearFileUrlParams() {
   const u = new URL(location.href);
   u.searchParams.delete("pending");
   u.searchParams.delete("name");
   u.searchParams.delete("src");
   u.searchParams.delete("path");
+  u.searchParams.delete("start");
+  u.searchParams.delete("pick");
   history.replaceState(null, "", u.pathname + u.search);
 }
 
-// Return to the home page.
+// Return to the reader's start state without restoring a previous document.
 function goHome() {
-  location.href = "home.html";
+  location.href = "viewer.html?start=1";
 }
 
 // ── File opening ────────────────────────────────────────────────────
@@ -2776,6 +2860,7 @@ async function openFile(node) {
   if (node.url) {
     const u = new URL(location.href);
     u.searchParams.delete("pending");
+    u.searchParams.delete("start");
     u.searchParams.set("name", node.name);
     u.searchParams.set("src", node.url);
     if (node.path && node.path !== node.name) {
@@ -2796,6 +2881,9 @@ async function openFile(node) {
     const file = await node.handle.getFile();
     const text = await file.text();
     node.__text = text; // cache for full-text search
+    if (fileOnlyView && !viewingBuiltinReadme && !node.url) {
+      await LMV.setLastFileSnapshot(node.name, text);
+    }
 
     renderMarkdownInto(document.getElementById("markdownBody"), text, node.url);
     // Restore the previous reading position for this file (default: top).
