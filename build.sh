@@ -16,7 +16,7 @@ FILES=(
   viewer.html viewer.js viewer.css
   popup.html popup.js
   markdown.js md-to-confluence.js md-to-html.js md-to-docx.js html-table.js plantuml.js lmv-db.js remote-md.js
-  README.md LICENSE
+  README.md PRIVACY.md LICENSE
 )
 
 # Directories shipped whole (icons, default background, vendored libs).

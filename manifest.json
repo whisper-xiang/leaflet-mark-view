@@ -4,7 +4,7 @@
   "short_name": "Leaflet MV",
   "version": "1.4.0",
   "author": "轻语",
-  "description": "Read local & remote Markdown — folder browsing, math, Mermaid, PlantUML (local), image preview, Confluence / HTML / Word export. Local-first rendering.",
+  "description": "Read local & GitHub Markdown with math, Mermaid, PlantUML, and HTML/Word export. Files stay on your device.",
   "homepage_url": "https://github.com/whisper-xiang/leaflet-mark-view",
   "minimum_chrome_version": "116",
   "background": {
@@ -37,11 +37,5 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["viewer.html", "viewer.css", "lmv-db.js", "remote-md.js", "README.md", "markdown.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }

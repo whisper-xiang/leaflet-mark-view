@@ -6,7 +6,7 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-**[下载最新版 v1.4.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。
+**[下载最新版 v1.4.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。
 
 ### v1.4.0 更新
 
@@ -196,10 +196,16 @@ cd leaflet-mark-view
 - **本地优先** — Markdown 解析、公式、Mermaid、PlantUML 均在浏览器本地完成，不上传本地文件
 - **最小权限** — 仅 `storage` 必选权限；GitHub 域名预授权；其他网站按需单次授权
 - **数据本地存储** — 阅读记录、固定文件夹、自定义背景等存于 IndexedDB / localStorage，不上传云端
+- **[隐私政策](PRIVACY.md)** — Chrome 网上应用店所需的数据处理说明
 
 
 
 测试无第三方依赖，直接 `node` 运行即可。
+
+
+## Chrome 网上应用店
+
+商店图标、1280×800 截图、宣传图、中英文案、隐私政策勾选稿与审核测试步骤已备在 [`store/`](store/README.md)。按该目录的清单注册开发者账号、推送本仓库（使 [隐私政策](PRIVACY.md) 可公网访问）后即可上传 `./build.sh` 打出的 zip。
 
 
 ## 安装要求
