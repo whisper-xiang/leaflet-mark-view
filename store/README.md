@@ -15,14 +15,15 @@ python3 store/make-assets.py
 | 文件 | 用途 | 尺寸 |
 |------|------|------|
 | `store/icon-128.png` | 商店图标 | 128×128 |
-| `store/screenshots/01-reader-light.png` | 截图 | 1280×800 |
-| `store/screenshots/02-reader-dark.png` | 截图 | 1280×800 |
-| `store/screenshots/03-math-diagrams.png` | 截图 | 1280×800 |
-| `store/screenshots/04-confluence.png` | 截图 | 1280×800 |
-| `store/promo/tile-440x280.png` | 小宣传图（必传） | 440×280 |
-| `store/promo/marquee-1400x560.png` | 大横幅（可选） | 1400×560 |
+| `store/screenshots/01-start.png` | 截图：起始页 | 1280×800 |
+| `store/screenshots/02-reader.png` | 截图：阅读 | 1280×800 |
+| `store/screenshots/03-settings.png` | 截图：设置 | 1280×800 |
+| `store/screenshots/04-search.png` | 截图：搜索 | 1280×800 |
+| `store/screenshots/05-confluence.png` | 截图：导出 | 1280×800 |
+| `store/promo/小型宣传图块-440x280.png` | **小型宣传图块**（必传） | 440×280 |
+| `store/promo/顶部宣传图块-1400x560.png` | **顶部宣传图块**（推荐） | 1400×560 |
 
-这些文件**不要**打进扩展 zip。`./build.sh` 已按白名单打包，不会带上 `store/`。
+你新截的原图放在 `store/promo/` 后重跑脚本即可；脚本会把原图挪到 `store/promo/raw/`，再按商店尺寸裁切导出。不要把 `raw/` 里的大图传到后台。
 
 ## 1. 开发者账号（一次性）
 
@@ -66,8 +67,8 @@ Listing 图片上传：
 
 1. 图标：`store/icon-128.png`
 2. 截图（按文件名顺序，最多 5 张）：`store/screenshots/`
-3. Small promotional tile：`store/promo/tile-440x280.png`
-4. Marquee（可选）：`store/promo/marquee-1400x560.png`
+3. 小型宣传图块：`store/promo/小型宣传图块-440x280.png`
+4. 顶部宣传图块：`store/promo/顶部宣传图块-1400x560.png`
 
 ## 5. 提交
 
