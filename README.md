@@ -6,13 +6,14 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-**[下载最新版 v1.4.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。
+**[下载最新版 v1.5.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。
 
-### v1.4.0 更新
+### v1.5.0 更新
 
-- **复制 HTML / 导出 Word** — 设置中可将当前文档转为带内联样式的浅色 HTML（可粘贴到公众号 / 飞书 / 邮件），或本地生成 A4 `.docx`
-- **阅读主题** — 默认 / 羊皮纸 / 青纸 / 深色 / 夜墨 五套阅读配色
-- **正文字体** — 黑体 / 宋体可切换
+- **工具栏直达阅读器** — 点击扩展图标直接打开阅读器，不再经过弹窗
+- **最近阅读** — 顶栏右侧下拉，可继续阅读或从列表移除
+- **设置整理** — 字体大小 / 阅读主题 / 正文字体收入「主题」；HTML / Word / Confluence 收入「导出」
+- **默认背景图** — 首次打开即显示装饰背景；Open 与最近阅读始终使用品牌色按钮
 
 
 ## 截图
