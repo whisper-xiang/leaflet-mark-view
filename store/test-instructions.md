@@ -8,7 +8,7 @@ How to test Leaflet Mark View (no account required).
 A) Remote GitHub (fastest — does not need file:// access)
 
 1. Install the extension.
-2. Click the toolbar icon.
+2. Click the toolbar icon to open the viewer.
 3. Open → 打开远程链接 (Open remote link).
 4. Paste this public repo URL and press Enter:
    https://github.com/whisper-xiang/leaflet-mark-view

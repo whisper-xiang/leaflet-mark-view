@@ -17,3 +17,17 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     chrome.tabs.update(sender.tab.id, { url: msg.url });
   }
 });
+
+chrome.action.onClicked.addListener(async () => {
+  const viewerUrl = chrome.runtime.getURL("viewer.html");
+  const existing = await chrome.tabs.query({ url: viewerUrl + "*" });
+  const tab = existing[0];
+  if (tab?.id != null) {
+    await chrome.tabs.update(tab.id, { active: true });
+    if (tab.windowId != null) {
+      await chrome.windows.update(tab.windowId, { focused: true });
+    }
+    return;
+  }
+  await chrome.tabs.create({ url: viewerUrl + "?start=1" });
+});

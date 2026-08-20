@@ -152,6 +152,7 @@ const LMV = (() => {
       await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
 
       await trimRecents();
+      window.dispatchEvent(new CustomEvent("lmv-recents-changed"));
     } catch (_) {}
   }
 
@@ -166,6 +167,7 @@ const LMV = (() => {
       await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
 
       await trimRecents();
+      window.dispatchEvent(new CustomEvent("lmv-recents-changed"));
     } catch (_) {}
   }
 

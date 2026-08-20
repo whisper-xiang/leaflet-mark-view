@@ -23,12 +23,12 @@ Productivity
 A quiet Markdown reader for Chrome. Open a local folder, a single file, or a GitHub repository — drag and drop works too. Parsing, math, and diagrams run in your browser. Files are not uploaded.
 
 Open
-• Toolbar icon → Open: folder, Markdown file, or a GitHub / .md URL
+• Toolbar icon: open the reader, then a folder, Markdown file, or a GitHub / .md URL
 • Drag a folder or .md file onto the viewer
 • Optionally make Chrome the default app for .md files and enable “Allow access to file URLs” to open files with a double-click
 
 Read
-• File tree, full-text search (Ctrl/⌘ K), outline, and remembered scroll position
+• File tree, full-text search (Ctrl/⌘ K), outline, recents, and remembered scroll position
 • Themes (light, sepia, sage, dark, ink), sans or serif body font, four font sizes
 • GFM tables, task lists, footnotes, and code highlighting
 • KaTeX, Mermaid, and PlantUML render locally; click an image or diagram to zoom

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="viewer.css">
 </head>
 
-<body class="bg-off">
+<body>
 
   <!-- Reading progress bar — pure CSS, driven by #contentArea scroll position. -->
   <div class="read-progress" id="readProgress"></div>
@@ -128,6 +128,14 @@
         <!-- Feed tabs: dynamically populated from pinned folder's subdirs -->
         <nav class="topbar-feed-tabs" id="feedTabs" aria-label="快捷文件夹"></nav>
 
+        <div class="feed-menu recents-menu" id="recentsMenu" hidden>
+          <button class="feed-trigger primary" id="recentsTrigger" type="button" aria-haspopup="true" aria-expanded="false"
+            aria-controls="recentsMenuList">最近阅读</button>
+          <div class="feed-list recents-menu-panel" role="menu" aria-label="最近阅读">
+            <ul class="favorites-list recents-menu-list" id="recentsMenuList"></ul>
+          </div>
+        </div>
+
         <div class="topbar-actions">
 
           <button class="btn-icon" id="themeToggle" title="切换主题"></button>
@@ -142,29 +150,28 @@
               </svg>
             </button>
             <div class="settings-list" role="menu">
-              <button class="settings-item" id="fontSizeToggle" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="M4 19V7a2 2 0 0 1 2-2h2M4 13h6M14 19v-8a2 2 0 0 1 2-2h2M14 15h6" />
-                </svg>
-                <span class="settings-label">字体大小</span><span class="settings-val" id="fontSizeLabel">中</span>
-              </button>
-              <button class="settings-item" id="readingThemeToggle" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <rect x="4" y="4" width="16" height="16" rx="2" />
-                  <path d="M8 9h8M8 13h5" />
-                </svg>
-                <span class="settings-label">阅读主题</span><span class="settings-val" id="readingThemeLabel">默认</span>
-              </button>
-              <button class="settings-item" id="readingFontToggle" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="M4 20V8l8-4 8 4v12" />
-                  <path d="M12 10v10M8 20h8" />
-                </svg>
-                <span class="settings-label">正文字体</span><span class="settings-val" id="readingFontLabel">黑体</span>
-              </button>
+              <div class="settings-submenu">
+                <button class="settings-item settings-submenu-trigger" type="button" role="menuitem" aria-haspopup="true" aria-expanded="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 3v1M12 20v1M4.22 4.22l.7.7M19.08 19.08l.7.7M3 12h1M20 12h1M4.22 19.78l.7-.7M19.08 4.92l.7-.7" />
+                  </svg>
+                  <span class="settings-label">主题</span>
+                  <svg class="settings-submenu-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+                <div class="settings-submenu-list" role="menu" aria-label="主题">
+                  <button class="settings-item" id="fontSizeToggle" type="button" role="menuitem">
+                    <span class="settings-label">字体大小</span><span class="settings-val" id="fontSizeLabel">中</span>
+                  </button>
+                  <button class="settings-item" id="readingThemeToggle" type="button" role="menuitem">
+                    <span class="settings-label">阅读主题</span><span class="settings-val" id="readingThemeLabel">默认</span>
+                  </button>
+                  <button class="settings-item" id="readingFontToggle" type="button" role="menuitem">
+                    <span class="settings-label">正文字体</span><span class="settings-val" id="readingFontLabel">黑体</span>
+                  </button>
+                </div>
+              </div>
               <button class="settings-item" id="outlineToggle" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                   stroke-linejoin="round">
@@ -199,6 +206,23 @@
                 </svg>
                 <span class="settings-label">浏览器渲染</span>
               </button>
+              <div class="settings-submenu">
+                <button class="settings-item settings-submenu-trigger" type="button" role="menuitem" aria-haspopup="true" aria-expanded="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="m17 8-5-5-5 5" />
+                    <path d="M12 3v12" />
+                  </svg>
+                  <span class="settings-label">导出</span>
+                  <svg class="settings-submenu-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+                <div class="settings-submenu-list" role="menu" aria-label="导出">
+                  <button class="settings-item" id="htmlExport" type="button" role="menuitem"><span class="settings-label">复制 HTML</span></button>
+                  <button class="settings-item" id="docxExport" type="button" role="menuitem"><span class="settings-label">导出 Word</span></button>
+                  <button class="settings-item" id="confluenceExport" type="button" role="menuitem"><span class="settings-label">转换为 Confluence</span></button>
+                </div>
+              </div>
               <button class="settings-item" id="openHelpReadme" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                   stroke-linejoin="round">
@@ -206,33 +230,6 @@
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 </svg>
                 <span class="settings-label">使用说明</span>
-              </button>
-              <button class="settings-item" id="confluenceExport" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" />
-                  <path d="M9 20h6M12 4v16" />
-                  <path d="m16 11 3 3-3 3" />
-                </svg>
-                <span class="settings-label">转换为 Confluence</span>
-              </button>
-              <button class="settings-item" id="htmlExport" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-                  <path d="M14 2v6h6" />
-                  <path d="M8 13h8M8 17h5" />
-                </svg>
-                <span class="settings-label">复制 HTML</span>
-              </button>
-              <button class="settings-item" id="docxExport" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-                  <path d="M14 2v6h6" />
-                  <path d="M8 13h3M8 17h8" />
-                </svg>
-                <span class="settings-label">导出 Word</span>
               </button>
             </div>
             <input type="file" id="bgFileInput" accept="image/*" hidden>
@@ -267,10 +264,6 @@
                       也可把 Chrome 设为 <code>.md</code> 的默认应用，双击即可打开。
                       <button type="button" class="start-hint-link" id="openDblClickGuide">查看步骤</button>
                     </p>
-                    <section class="start-recents" id="startRecents" hidden aria-labelledby="startRecentsTitle">
-                      <h2 class="start-recents-title" id="startRecentsTitle">最近阅读</h2>
-                      <ul class="favorites-list start-recents-list" id="startRecentsList"></ul>
-                    </section>
                   </div>
 
                   <!-- Markdown output -->

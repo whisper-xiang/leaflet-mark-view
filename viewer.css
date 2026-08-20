@@ -1342,10 +1342,6 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .tree-context-menu {
 .start-action-primary { border-color: var(--accent); background: var(--accent); color: var(--accent-on); }
 .start-action-primary:hover { border-color: var(--accent-hover); background: var(--accent-hover); }
 .start-link { border-color: var(--border); color: var(--accent); }
-.start-recents { width: min(100%, 420px); margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); text-align: left; }
-.start-recents-title { margin: 0 0 4px; color: var(--text-faint); font-size: 11px; font-weight: 650; letter-spacing: 0.06em; }
-.start-recents-list .favorites-item { padding-left: 8px; }
-.start-recents-list .favorites-remove { opacity: 0.55; }
 
 @media (max-width: 700px) {
   .doc-main { min-width: 0; }
@@ -3459,14 +3455,14 @@ html[data-scheme="light"]
   .outline:not(.empty):not(.collapsed),
 html[data-scheme="light"] body:not(.bg-off):not(.is-home) .content-area,
 html[data-scheme="light"] body:not(.bg-off):not(.is-home) .open-menu-list,
-html[data-scheme="light"] body:not(.bg-off):not(.is-home) .sb-action,
+html[data-scheme="light"] body:not(.bg-off):not(.is-home) .sb-action:not(.primary),
 html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .topbar,
 html[data-scheme="dark"]
   body:not(.bg-off):not(.is-home)
   .outline:not(.empty):not(.collapsed),
 html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .content-area,
 html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .open-menu-list,
-html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .sb-action {
+html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .sb-action:not(.primary) {
   background-color: var(--glass);
 }
 
@@ -3487,29 +3483,6 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .settings-list {
 
 body:not(.bg-off):not(.is-home) .content-area {
   min-height: 100%;
-}
-
-html[data-scheme="light"] body:not(.bg-off):not(.is-home) .sb-action.primary {
-  border-color: var(--border);
-  color: var(--text);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .sb-action.primary {
-  border-color: var(--border);
-  color: #ffffff;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-body:not(.bg-off):not(.is-home) .sb-action.primary svg {
-  color: var(--text-muted);
-}
-
-body:not(.bg-off):not(.is-home) .sb-action.primary:hover {
-  background-color: var(--surface-hover);
-  border-color: var(--border-strong);
 }
 
 /* ── Feed Tabs (header 快捷分类 dropdown) ──────────────────────────── */
@@ -3548,6 +3521,22 @@ body:not(.bg-off):not(.is-home) .sb-action.primary:hover {
 .feed-trigger:hover {
   background: var(--surface-hover);
   color: var(--text);
+}
+
+.feed-trigger.primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-on);
+  font-weight: 550;
+}
+.feed-trigger.primary::after {
+  opacity: 0.85;
+}
+.feed-menu.open .feed-trigger.primary,
+.feed-trigger.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-on);
 }
 
 /* flat trigger: no dropdown arrow, link style */
@@ -3678,6 +3667,24 @@ body:not(.bg-off):not(.is-home) .sb-action.primary:hover {
 .feed-ctx-item[data-action="remove"]:hover {
   background: rgba(220, 60, 60, 0.1);
   color: #dc3c3c;
+}
+
+.recents-menu .feed-list {
+  left: auto;
+  right: 0;
+  min-width: 228px;
+  max-width: 320px;
+}
+.recents-menu-list .favorites-item {
+  padding: 7px 8px;
+  font-size: 13px;
+}
+.recents-menu-list .favorites-remove {
+  opacity: 0.5;
+}
+.recents-menu-list .favorites-row:hover .favorites-remove,
+.recents-menu-list .favorites-remove:focus-visible {
+  opacity: 1;
 }
 
 /* Glassmorphism support (same as settings-list) */

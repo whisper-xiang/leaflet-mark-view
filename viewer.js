@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pick = params.get("pick") || "";
   const builtinReadme =
     params.get("builtin") === "readme" || LMV.isProjectReadmeUrl(src);
-  await setupStartState();
+  await refreshRecentsMenu();
   // `pending` is a one-shot key (consumed on first open); `src` is the durable
   // file:// URL that survives refresh. Either one means "open this file".
   if (pendingKey || src) {
@@ -143,6 +143,7 @@ function bindUI() {
   bindBrowserRender();
   bindHelpReadme();
   bindPinFolder();
+  bindRecentsMenu();
   bindConfluenceModal();
   bindHtmlExportModal();
   bindDocxExportModal();
@@ -203,15 +204,38 @@ function bindUI() {
   );
 }
 
-async function setupStartState() {
-  const section = document.getElementById("startRecents");
-  const list = document.getElementById("startRecentsList");
-  const refresh = async () => {
-    const recents = await LMV.listRecents();
-    section.hidden = recents.length === 0;
-    if (recents.length) await LMV.renderRecentsList(list, { onChange: refresh });
-  };
-  await refresh();
+async function refreshRecentsMenu() {
+  const wrap = document.getElementById("recentsMenu");
+  const list = document.getElementById("recentsMenuList");
+  if (!wrap || !list) return;
+  const recents = await LMV.listRecents();
+  wrap.hidden = recents.length === 0;
+  if (!recents.length) {
+    wrap.classList.remove("open");
+    return;
+  }
+  await LMV.renderRecentsList(list, { onChange: refreshRecentsMenu });
+}
+
+function bindRecentsMenu() {
+  const wrap = document.getElementById("recentsMenu");
+  if (!wrap) return;
+  let hideTimer;
+  wrap.addEventListener("mouseenter", () => {
+    clearTimeout(hideTimer);
+    closeFeedMenus();
+    wrap.classList.add("open");
+    document.getElementById("recentsTrigger")?.setAttribute("aria-expanded", "true");
+  });
+  wrap.addEventListener("mouseleave", () => {
+    hideTimer = setTimeout(() => {
+      wrap.classList.remove("open");
+      document.getElementById("recentsTrigger")?.setAttribute("aria-expanded", "false");
+    }, 150);
+  });
+  window.addEventListener("lmv-recents-changed", () => {
+    refreshRecentsMenu();
+  });
 }
 
 // ── Per-scope reading memory (last file + scroll position) ──────────
@@ -433,8 +457,8 @@ function toggleTheme(event) {
 // ── Background image ────────────────────────────────────────────────
 function applyStoredBgImage() {
   LMV.applyBgImage();
-  // Restore on/off preference — default OFF for the flat VitePress-style reading view.
-  const show = localStorage.getItem("lmv-bg-show") === "on";
+  // Restore on/off preference — default ON; only an explicit "off" hides it.
+  const show = localStorage.getItem("lmv-bg-show") !== "off";
   setBgVisible(show, /* save */ false);
 }
 
