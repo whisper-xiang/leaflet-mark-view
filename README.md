@@ -6,7 +6,7 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-**[下载最新版 v1.5.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。
+[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.5.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
 
 ### v1.5.0 更新
 

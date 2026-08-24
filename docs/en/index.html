@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leaflet Mark View: local Markdown, paper-quiet reading</title>
+  <meta name="description" content="A quiet Markdown reader for Chrome. Open a local folder, a file, or a GitHub repo. Math and diagrams render on your device. Files are not uploaded." />
+  <link rel="canonical" href="https://whisper-xiang.github.io/leaflet-mark-view/en/" />
+  <link rel="alternate" hreflang="zh-CN" href="https://whisper-xiang.github.io/leaflet-mark-view/zh-CN/" />
+  <link rel="alternate" hreflang="en" href="https://whisper-xiang.github.io/leaflet-mark-view/en/" />
+  <link rel="alternate" hreflang="x-default" href="https://whisper-xiang.github.io/leaflet-mark-view/" />
+  <link rel="icon" type="image/png" href="../assets/app-icon.png" />
+  <meta property="og:title" content="Leaflet Mark View: local Markdown, paper-quiet reading" />
+  <meta property="og:description" content="Open a local folder, a file, or a GitHub repo. Parsing, math, and diagrams stay in the browser." />
+  <meta property="og:image" content="https://whisper-xiang.github.io/leaflet-mark-view/assets/screenshots/reader-light.jpg" />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="../site.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a href="./" class="brand">
+      <img src="../assets/app-icon.png" alt="" width="34" height="34" />
+      <div class="brand-text">
+        <span class="brand-name">Leaflet Mark View</span>
+        <span class="brand-tag">Read locally</span>
+      </div>
+    </a>
+    <nav class="site-nav">
+      <a href="#features">Features</a>
+      <a href="#feedback">Feedback</a>
+      <a href="#install">Install</a>
+    </nav>
+    <div class="header-actions">
+      <a class="language-switcher" href="../zh-CN/" lang="zh-CN" hreflang="zh-CN" onclick="localStorage.setItem('leafletmv.locale','zh-CN')">简体中文</a>
+      <a class="btn-github" href="https://github.com/whisper-xiang/leaflet-mark-view" target="_blank" rel="noopener noreferrer">
+        <span>GitHub</span>
+        <span class="gh-star-badge">
+          <svg class="gh-star-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/></svg>
+          <span class="gh-star-count"></span>
+        </span>
+      </a>
+      <a class="btn-primary" href="https://github.com/whisper-xiang/leaflet-mark-view/releases/latest">Releases</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-icon">
+        <img src="../assets/app-icon.png" alt="Leaflet Mark View icon" width="64" height="64" />
+      </div>
+      <h1>Local reading, paper quiet<br /><em>Markdown stays on your machine</em></h1>
+      <p class="hero-subtitle">Open a local folder, a file, or a GitHub repo. Parsing stays in the browser.</p>
+      <div class="hero-ctas">
+        <a class="hero-cta-main" href="https://github.com/whisper-xiang/leaflet-mark-view/releases/latest">Download for Chrome</a>
+        <a class="hero-cta-secondary" href="#features">Browse features</a>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Product screenshots">
+      <figure class="stage-base">
+        <img src="../assets/screenshots/reader-light.jpg" alt="Leaflet Mark View light three-pane reader" width="1280" height="800" fetchpriority="high" />
+      </figure>
+      <figure class="stage-overlay">
+        <img src="../assets/screenshots/reader-dark.jpg" alt="Leaflet Mark View dark reader" width="1280" height="800" loading="lazy" />
+      </figure>
+    </section>
+
+    <aside class="trust-rail">
+      <div class="trust-item"><strong>Local first</strong><span>Files never leave your computer</span></div>
+      <div class="trust-item"><strong>Math and diagrams</strong><span>KaTeX, Mermaid, PlantUML</span></div>
+      <div class="trust-item"><strong>Full-text search</strong><span>⌘K across names and body</span></div>
+      <div class="trust-item"><strong>Export</strong><span>HTML, Word, Confluence</span></div>
+    </aside>
+
+    <section id="features" class="features">
+      <div class="section-head">
+        <p>Reading</p>
+        <h2>A quiet, complete Markdown reader</h2>
+      </div>
+      <div class="features-grid">
+        <article class="feature-card">
+          <div>
+            <div class="feature-num">01 / FOLDER</div>
+            <h3>Folders, GitHub, drag and drop</h3>
+            <p>File tree, search, outline, and remembered scroll. Light, parchment, sage, dark, and ink themes.</p>
+          </div>
+          <img src="../assets/screenshots/reader-light.jpg" alt="Reader with file tree, search, and article" width="1280" height="800" />
+        </article>
+        <article class="feature-card">
+          <div class="feature-num">02 / RENDER</div>
+          <h3>Math and diagrams, rendered locally</h3>
+          <p>KaTeX, Mermaid, and PlantUML run in the browser. Click an image or diagram to zoom.</p>
+          <img src="../assets/screenshots/math-diagrams.jpg" alt="Locally rendered flowchart and math formula" width="1280" height="800" loading="lazy" />
+        </article>
+        <article class="feature-card">
+          <div class="feature-num">03 / EXPORT</div>
+          <h3>Export where you already write</h3>
+          <p>Copy styled HTML, export an A4 Word file, or convert to Confluence wiki markup.</p>
+          <img src="../assets/screenshots/confluence.jpg" alt="Markdown to Confluence conversion window" width="1280" height="800" loading="lazy" />
+        </article>
+      </div>
+    </section>
+
+    <section id="feedback" class="feedback">
+      <h2>Feedback keeps Leaflet moving</h2>
+      <p class="feedback-desc">Leaflet Mark View is independently built and open source. Open an issue with ideas, or star the repo if it helps you read.</p>
+      <div class="feedback-links">
+        <a class="feedback-btn" href="https://github.com/whisper-xiang/leaflet-mark-view/issues">Open a GitHub Issue</a>
+        <a class="feedback-btn ghost" href="https://github.com/whisper-xiang/leaflet-mark-view">Star the project</a>
+      </div>
+    </section>
+
+    <section id="install" class="install">
+      <h2>Install</h2>
+      <div class="install-box">
+        <p class="install-lead">Requires Chrome or Edge 116+. Download the Release zip, then load it unpacked in developer mode.</p>
+        <div class="install-methods">
+          <div class="install-method">
+            <strong>Download and unzip</strong>
+            <p class="install-sub">Open <a href="https://github.com/whisper-xiang/leaflet-mark-view/releases/latest">Releases</a>, download <code>leaflet-mark-view.zip</code>, and unzip it anywhere.</p>
+          </div>
+          <div class="install-method">
+            <strong>Load the unpacked extension</strong>
+            <p class="install-sub">Go to <code>chrome://extensions/</code>, turn on Developer mode, click Load unpacked, and select the unzipped folder.</p>
+          </div>
+          <div class="install-method">
+            <strong>Allow access to file URLs</strong>
+            <p class="install-sub">On the extension details page, enable Allow access to file URLs. Without it, local <code>.md</code> files and nearby images will not open.</p>
+          </div>
+          <div class="install-method">
+            <strong>Load from source</strong>
+            <div class="install-cmd">
+              <code>git clone https://github.com/whisper-xiang/leaflet-mark-view.git</code>
+              <button type="button" data-copy="git clone https://github.com/whisper-xiang/leaflet-mark-view.git" data-copied="Copied">Copy</button>
+            </div>
+          </div>
+        </div>
+        <div class="install-note">
+          <p>Set Chrome as the default app for <code>.md</code> files to open them with a double-click. Full steps are in the <a href="https://github.com/whisper-xiang/leaflet-mark-view#readme">GitHub README</a>. No account, analytics, or ads. Reading history stays on your device. See <a href="https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md">PRIVACY.md</a>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-nav">
+        <a href="#features">Features</a>
+        <a href="#feedback">Feedback</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/whisper-xiang/leaflet-mark-view/blob/main/LICENSE">MIT</a>
+        <a href="https://github.com/whisper-xiang/leaflet-mark-view">GitHub</a>
+      </div>
+      <p>© 2026 Leaflet Mark View. Made by 轻语.</p>
+    </div>
+  </footer>
+</body>
+</html>

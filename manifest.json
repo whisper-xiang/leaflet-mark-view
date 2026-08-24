@@ -5,7 +5,7 @@
   "version": "1.5.0",
   "author": "轻语",
   "description": "Read local & GitHub Markdown with math, Mermaid, PlantUML, and HTML/Word export. Files stay on your device.",
-  "homepage_url": "https://github.com/whisper-xiang/leaflet-mark-view",
+  "homepage_url": "https://whisper-xiang.github.io/leaflet-mark-view/",
   "minimum_chrome_version": "116",
   "background": {
     "service_worker": "background.js"

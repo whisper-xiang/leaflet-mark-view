@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Leaflet Mark View</title>
+  <link rel="icon" type="image/png" href="./assets/app-icon.png" />
+  <link rel="alternate" hreflang="zh-CN" href="./zh-CN/" />
+  <link rel="alternate" hreflang="en" href="./en/" />
+  <style>
+    :root {
+      --bg: #f3f6f4;
+      --ink: #1c2420;
+      --muted: #8a958e;
+      --line: rgba(28, 36, 32, 0.08);
+      --font-serif: "Songti SC", "STSong", "Iowan Old Style", Georgia, serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141a16;
+        --ink: #e8eee9;
+        --muted: #7b877f;
+        --line: rgba(232, 238, 233, 0.1);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "PingFang SC", "Hiragino Sans GB", -apple-system, sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: radial-gradient(var(--line) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+    .splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+    }
+    .splash img {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      box-shadow: 0 14px 34px rgba(47, 111, 78, 0.18);
+    }
+    .splash h1 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .fallback {
+      position: absolute;
+      bottom: 2rem;
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.88rem;
+    }
+    .fallback a { color: var(--muted); text-decoration: none; }
+    .fallback a:hover { color: var(--ink); }
+  </style>
+  <script>
+    (function () {
+      var stored = localStorage.getItem("leafletmv.locale");
+      var lang = stored || ((navigator.language || "").toLowerCase().indexOf("zh") === 0 ? "zh-CN" : "en");
+      var dest = lang === "en" ? "./en/" : "./zh-CN/";
+      setTimeout(function () { location.replace(dest); }, 420);
+    })();
+  </script>
+</head>
+<body>
+  <div class="splash">
+    <img src="./assets/app-icon.png" alt="Leaflet Mark View" />
+    <h1>Leaflet Mark View</h1>
+  </div>
+  <nav class="fallback">
+    <a href="./zh-CN/">简体中文</a>
+    <a href="./en/">English</a>
+  </nav>
+</body>
+</html>

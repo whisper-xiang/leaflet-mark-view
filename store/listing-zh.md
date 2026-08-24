@@ -46,7 +46,8 @@ Productivity（效率工具）
 
 需要 Chrome 116 或更高版本。本地文件夹依赖 File System Access API。用 Chrome 直接打开磁盘上的 .md 时，请在扩展详情中开启「允许访问文件网址」。
 
-项目主页与更新说明：https://github.com/whisper-xiang/leaflet-mark-view
+项目主页：https://whisper-xiang.github.io/leaflet-mark-view/
+更新说明：https://github.com/whisper-xiang/leaflet-mark-view/releases
 隐私政策：https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
 ```
 
@@ -54,7 +55,7 @@ Productivity（效率工具）
 
 | 字段 | 填写 |
 |------|------|
-| Homepage URL | `https://github.com/whisper-xiang/leaflet-mark-view` |
+| Homepage URL | `https://whisper-xiang.github.io/leaflet-mark-view/` |
 | Support URL | `https://github.com/whisper-xiang/leaflet-mark-view/issues` |
 | Privacy policy | `https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md` |
 

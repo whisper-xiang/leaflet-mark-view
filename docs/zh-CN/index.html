@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leaflet Mark View：本地阅读，纸感呈现</title>
+  <meta name="description" content="在 Chrome 里安静地读你的 Markdown。打开本地文件夹、单篇文章或 GitHub 仓库。公式与流程图本地渲染，文件不上传。" />
+  <link rel="canonical" href="https://whisper-xiang.github.io/leaflet-mark-view/zh-CN/" />
+  <link rel="alternate" hreflang="zh-CN" href="https://whisper-xiang.github.io/leaflet-mark-view/zh-CN/" />
+  <link rel="alternate" hreflang="en" href="https://whisper-xiang.github.io/leaflet-mark-view/en/" />
+  <link rel="alternate" hreflang="x-default" href="https://whisper-xiang.github.io/leaflet-mark-view/" />
+  <link rel="icon" type="image/png" href="../assets/app-icon.png" />
+  <meta property="og:title" content="Leaflet Mark View：本地阅读，纸感呈现" />
+  <meta property="og:description" content="在 Chrome 里安静地读你的 Markdown。解析、公式与流程图都在本机完成。" />
+  <meta property="og:image" content="https://whisper-xiang.github.io/leaflet-mark-view/assets/screenshots/reader-light.jpg" />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="../site.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a href="./" class="brand">
+      <img src="../assets/app-icon.png" alt="" width="34" height="34" />
+      <div class="brand-text">
+        <span class="brand-name">Leaflet Mark View</span>
+        <span class="brand-tag">Read locally</span>
+      </div>
+    </a>
+    <nav class="site-nav">
+      <a href="#features">功能特性</a>
+      <a href="#feedback">反馈支持</a>
+      <a href="#install">安装说明</a>
+    </nav>
+    <div class="header-actions">
+      <a class="language-switcher" href="../en/" lang="en" hreflang="en" onclick="localStorage.setItem('leafletmv.locale','en')">English</a>
+      <a class="btn-github" href="https://github.com/whisper-xiang/leaflet-mark-view" target="_blank" rel="noopener noreferrer">
+        <span>GitHub</span>
+        <span class="gh-star-badge">
+          <svg class="gh-star-icon" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/></svg>
+          <span class="gh-star-count"></span>
+        </span>
+      </a>
+      <a class="btn-primary" href="https://github.com/whisper-xiang/leaflet-mark-view/releases/latest">查看发布说明</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-icon">
+        <img src="../assets/app-icon.png" alt="Leaflet Mark View 图标" width="64" height="64" />
+      </div>
+      <h1>本地阅读，纸感呈现<br /><em>让 Markdown 留在本机</em></h1>
+      <p class="hero-subtitle">打开本地文件夹、单篇文章或 GitHub 仓库。解析与渲染都在浏览器里完成，文件不上传。</p>
+      <div class="hero-ctas">
+        <a class="hero-cta-main" href="https://github.com/whisper-xiang/leaflet-mark-view/releases/latest">下载 Chrome 扩展</a>
+        <a class="hero-cta-secondary" href="#features">浏览核心特性</a>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="产品截图">
+      <figure class="stage-base">
+        <img src="../assets/screenshots/reader-light.jpg" alt="Leaflet Mark View 浅色三栏阅读界面" width="1280" height="800" fetchpriority="high" />
+      </figure>
+      <figure class="stage-overlay">
+        <img src="../assets/screenshots/reader-dark.jpg" alt="Leaflet Mark View 深色阅读界面" width="1280" height="800" loading="lazy" />
+      </figure>
+    </section>
+
+    <aside class="trust-rail">
+      <div class="trust-item"><strong>本地优先</strong><span>文件不离开你的电脑</span></div>
+      <div class="trust-item"><strong>公式与流程图</strong><span>KaTeX、Mermaid、PlantUML</span></div>
+      <div class="trust-item"><strong>全文搜索</strong><span>⌘K 搜文件名与正文</span></div>
+      <div class="trust-item"><strong>一键导出</strong><span>HTML、Word、Confluence</span></div>
+    </aside>
+
+    <section id="features" class="features">
+      <div class="section-head">
+        <p>Reading</p>
+        <h2>安静、完整的 Markdown 阅读</h2>
+      </div>
+      <div class="features-grid">
+        <article class="feature-card">
+          <div>
+            <div class="feature-num">01 / FOLDER</div>
+            <h3>文件夹、GitHub，拖进来就能读</h3>
+            <p>侧栏文件树、全文搜索、大纲与阅读位置记忆。浅色、羊皮纸、青纸、深色、夜墨，按文章切换。</p>
+          </div>
+          <img src="../assets/screenshots/reader-light.jpg" alt="阅读器：文件树、搜索与正文" width="1280" height="800" />
+        </article>
+        <article class="feature-card">
+          <div class="feature-num">02 / RENDER</div>
+          <h3>公式与流程图本地渲染</h3>
+          <p>KaTeX、Mermaid、PlantUML 都不联网。点击图片或图表即可放大查看。</p>
+          <img src="../assets/screenshots/math-diagrams.jpg" alt="本地渲染的流程图与数学公式" width="1280" height="800" loading="lazy" />
+        </article>
+        <article class="feature-card">
+          <div class="feature-num">03 / EXPORT</div>
+          <h3>导出到你正在用的地方</h3>
+          <p>复制带样式的 HTML，导出 A4 Word，或转为 Confluence Wiki Markup。</p>
+          <img src="../assets/screenshots/confluence.jpg" alt="Markdown 转 Confluence 对照窗口" width="1280" height="800" loading="lazy" />
+        </article>
+      </div>
+    </section>
+
+    <section id="feedback" class="feedback">
+      <h2>反馈与支持 Leaflet 持续改进</h2>
+      <p class="feedback-desc">Leaflet Mark View 是独立开发并开源的 Chrome 扩展。欢迎在 GitHub 提交问题与建议，或给仓库点一颗星。</p>
+      <div class="feedback-links">
+        <a class="feedback-btn" href="https://github.com/whisper-xiang/leaflet-mark-view/issues">提交 GitHub Issue</a>
+        <a class="feedback-btn ghost" href="https://github.com/whisper-xiang/leaflet-mark-view">给项目点个 Star</a>
+      </div>
+    </section>
+
+    <section id="install" class="install">
+      <h2>安装说明</h2>
+      <div class="install-box">
+        <p class="install-lead">需要 Chrome 或 Edge 116 及以上。下载 Release 压缩包后，在扩展页以开发者模式加载。</p>
+        <div class="install-methods">
+          <div class="install-method">
+            <strong>下载并解压</strong>
+            <p class="install-sub">打开 <a href="https://github.com/whisper-xiang/leaflet-mark-view/releases/latest">Releases</a>，下载 <code>leaflet-mark-view.zip</code>，解压到任意目录。</p>
+          </div>
+          <div class="install-method">
+            <strong>加载已解压的扩展</strong>
+            <p class="install-sub">打开 <code>chrome://extensions/</code>，开启右上角「开发者模式」，点击「加载已解压的扩展程序」，选择解压后的文件夹。</p>
+          </div>
+          <div class="install-method">
+            <strong>允许访问文件网址</strong>
+            <p class="install-sub">在扩展详情页开启「允许访问文件网址」。不开启则无法拦截本机 <code>.md</code>，也无法读取同目录图片。</p>
+          </div>
+          <div class="install-method">
+            <strong>从源码加载</strong>
+            <div class="install-cmd">
+              <code>git clone https://github.com/whisper-xiang/leaflet-mark-view.git</code>
+              <button type="button" data-copy="git clone https://github.com/whisper-xiang/leaflet-mark-view.git" data-copied="已复制">复制</button>
+            </div>
+          </div>
+        </div>
+        <div class="install-note">
+          <p>将 Chrome 设为 <code>.md</code> 的默认应用后，双击文件即可用本扩展打开。详细步骤见 <a href="https://github.com/whisper-xiang/leaflet-mark-view#readme">GitHub README</a>。无账号、无统计、无广告，阅读记录只保存在本机。隐私说明见 <a href="https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md">PRIVACY.md</a>。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-nav">
+        <a href="#features">功能特性</a>
+        <a href="#feedback">反馈支持</a>
+        <a href="#install">安装说明</a>
+        <a href="https://github.com/whisper-xiang/leaflet-mark-view/blob/main/LICENSE">MIT</a>
+        <a href="https://github.com/whisper-xiang/leaflet-mark-view">GitHub</a>
+      </div>
+      <p>© 2026 Leaflet Mark View. 由 轻语 制作.</p>
+    </div>
+  </footer>
+</body>
+</html>
