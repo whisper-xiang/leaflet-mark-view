@@ -127,6 +127,9 @@ function bindUI() {
     .getElementById("sidebarExpand")
     .addEventListener("click", toggleSidebar);
   document
+    .getElementById("sidebarCollapse")
+    .addEventListener("click", toggleSidebar);
+  document
     .getElementById("fontSizeToggle")
     .addEventListener("click", cycleFontSize);
   document
@@ -148,6 +151,8 @@ function bindUI() {
   bindHtmlExportModal();
   bindDocxExportModal();
   bindDragDrop();
+  applyStoredSidebar();
+  bindSidebarSlide();
   bindOutlineResize();
   document
     .getElementById("searchTrigger")
@@ -559,8 +564,142 @@ function bindDragDrop() {
 }
 
 // ── Sidebar ─────────────────────────────────────────────────────────
+const SIDEBAR_COLLAPSED_KEY = "lmv-sidebar-collapsed";
+const SIDEBAR_REVEAL_KEY = "lmv-sidebar-reveal";
+
+function sidebarEls() {
+  return {
+    sidebar: document.getElementById("sidebar"),
+    slot: document.getElementById("sidebarSlot"),
+  };
+}
+
+function sidebarFullWidth(sidebar) {
+  const cs = getComputedStyle(sidebar);
+  return (
+    parseFloat(cs.minWidth) ||
+    parseFloat(cs.flexBasis) ||
+    parseFloat(cs.width) ||
+    272
+  );
+}
+
+function clearSidebarInline(slot, sidebar) {
+  slot.style.width = "";
+  sidebar.style.transform = "";
+}
+
+function saveSidebarReveal(ratio) {
+  try {
+    localStorage.setItem(SIDEBAR_REVEAL_KEY, String(ratio));
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, ratio <= 0 ? "1" : "0");
+  } catch (_) {}
+}
+
+function setSidebarCollapsed(collapsed) {
+  const { sidebar, slot } = sidebarEls();
+  sidebar.classList.toggle("collapsed", collapsed);
+  slot?.classList.toggle("collapsed", collapsed);
+  sidebar.toggleAttribute("inert", collapsed);
+  if (slot && sidebar) clearSidebarInline(slot, sidebar);
+  saveSidebarReveal(collapsed ? 0 : 1);
+}
+
 function toggleSidebar() {
-  document.getElementById("sidebar").classList.toggle("collapsed");
+  setSidebarCollapsed(
+    !document.getElementById("sidebar").classList.contains("collapsed"),
+  );
+}
+
+function parkSidebar(visible, full) {
+  const { sidebar, slot } = sidebarEls();
+  if (!sidebar || !slot) return 0;
+  if (full == null) full = sidebarFullWidth(sidebar);
+  const v = Math.min(full, Math.max(0, visible));
+  if (v <= 1) {
+    setSidebarCollapsed(true);
+    return 0;
+  }
+  sidebar.classList.remove("collapsed");
+  slot.classList.remove("collapsed");
+  sidebar.removeAttribute("inert");
+  if (v >= full - 1) {
+    clearSidebarInline(slot, sidebar);
+    saveSidebarReveal(1);
+    return full;
+  }
+  slot.style.width = v + "px";
+  sidebar.style.transform = `translateX(${v - full}px)`;
+  saveSidebarReveal(v / full);
+  return v;
+}
+
+function applyStoredSidebar() {
+  const { sidebar, slot } = sidebarEls();
+  if (!sidebar || !slot) return;
+  const reveal = parseFloat(localStorage.getItem(SIDEBAR_REVEAL_KEY));
+  if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1" || reveal === 0) {
+    setSidebarCollapsed(true);
+    return;
+  }
+  if (!Number.isNaN(reveal) && reveal > 0 && reveal < 1) {
+    slot.classList.add("dragging");
+    parkSidebar(reveal * sidebarFullWidth(sidebar));
+    slot.classList.remove("dragging");
+  }
+}
+
+function bindSidebarSlide() {
+  const { sidebar, slot } = sidebarEls();
+  const handle = document.getElementById("sidebarHandle");
+  if (!slot || !sidebar || !handle) return;
+
+  const applyOffset = (visible, full) => {
+    const v = Math.min(full, Math.max(0, visible));
+    slot.style.width = v + "px";
+    sidebar.style.transform = `translateX(${v - full}px)`;
+    return v;
+  };
+
+  handle.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const full = sidebarFullWidth(sidebar);
+    const startX = e.clientX;
+    const startVisible = slot.getBoundingClientRect().width;
+    slot.classList.add("dragging");
+    handle.classList.add("dragging");
+    document.body.style.cursor = "ew-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (e) => {
+      applyOffset(startVisible + (e.clientX - startX), full);
+    };
+
+    const onUp = (e) => {
+      const visible = applyOffset(startVisible + (e.clientX - startX), full);
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      slot.classList.remove("dragging");
+      handle.classList.remove("dragging");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      parkSidebar(visible, full);
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+
+  handle.addEventListener("dblclick", () => toggleSidebar());
+
+  window.addEventListener("resize", () => {
+    const reveal = parseFloat(localStorage.getItem(SIDEBAR_REVEAL_KEY));
+    if (Number.isNaN(reveal) || reveal <= 0 || reveal >= 1) return;
+    slot.classList.add("dragging");
+    parkSidebar(reveal * sidebarFullWidth(sidebar));
+    slot.classList.remove("dragging");
+  });
 }
 
 function bindOutlineResize() {
@@ -2609,7 +2748,13 @@ async function updatePinLabel() {
   if (!rootHandle) return;
   const existing = await LMV.getPinByName(rootHandle.name);
   const btn = document.getElementById("pinFolderToggle");
-  if (btn) btn.classList.toggle("pinned", !!existing);
+  if (!btn) return;
+  const pinned = !!existing;
+  btn.classList.toggle("pinned", pinned);
+  btn.setAttribute("aria-pressed", pinned ? "true" : "false");
+  const label = pinned ? "解除固定快捷入口" : "固定为快捷入口";
+  btn.title = label;
+  btn.setAttribute("aria-label", label);
 }
 
 function bindPinFolder() {

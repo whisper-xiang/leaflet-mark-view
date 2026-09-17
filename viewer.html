@@ -17,6 +17,7 @@
   <div class="app-shell">
 
     <!-- ── Sidebar (full-height left column) ── -->
+    <div class="sidebar-slot" id="sidebarSlot">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <button type="button" class="topbar-logo" id="homeBtn" title="开始阅读">
@@ -26,6 +27,13 @@
             <path d="M2 21c0-3 1.85-5.36 5.08-6" />
           </svg>
           Leaflet Mark View
+        </button>
+        <button class="btn-icon sidebar-collapse" id="sidebarCollapse" title="收起侧边栏" type="button" aria-label="收起侧边栏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M9 3v18" />
+          </svg>
         </button>
       </div>
 
@@ -40,10 +48,12 @@
             </svg>
             <span class="loc-name">未选择</span>
           </span>
-          <button class="sidebar-pin" id="pinFolderToggle" title="固定为快捷入口" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+          <button class="sidebar-pin" id="pinFolderToggle" title="固定为快捷入口" type="button" aria-pressed="false" aria-label="固定为快捷入口">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
               stroke-linejoin="round">
-              <path d="M12 17v5M9 9V4M15 9V4M9 4h6M6 9h12l-1.5 8h-9L6 9z"/>
+              <path class="pin-head" d="M9 4h6v5H9z"/>
+              <path class="pin-head" d="M6 9h12l-1.6 8H7.6L6 9z"/>
+              <path class="pin-needle" d="M12 17v5"/>
             </svg>
           </button>
         </div>
@@ -98,13 +108,15 @@
         </div>
       </div>
     </aside>
+    </div>
+    <div class="sidebar-handle" id="sidebarHandle" role="separator" aria-orientation="vertical" aria-label="拖动以收起侧边栏"></div>
 
     <!-- ── Main column: topbar on top, content below ── -->
     <div class="main-col">
 
       <!-- Top bar (sits above content area, not above sidebar) -->
       <header class="topbar">
-        <button class="btn-icon sidebar-expand" id="sidebarExpand" title="展开侧边栏" type="button">
+        <button class="btn-icon sidebar-expand" id="sidebarExpand" title="展开侧边栏" type="button" aria-label="展开侧边栏">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
             stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" />
