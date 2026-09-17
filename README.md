@@ -6,14 +6,12 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.5.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.6.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
 
-### v1.5.0 更新
+### v1.6.0 更新
 
-- **工具栏直达阅读器** — 点击扩展图标直接打开阅读器，不再经过弹窗
-- **最近阅读** — 顶栏右侧下拉，可继续阅读或从列表移除
-- **设置整理** — 字体大小 / 阅读主题 / 正文字体收入「主题」；HTML / Word / Confluence 收入「导出」
-- **默认背景图** — 首次打开即显示装饰背景；Open 与最近阅读始终使用品牌色按钮
+- **侧栏展开 / 收起** — 标题栏收起，顶栏搜索左侧展开；状态会记住
+- **侧栏拖动停位** — 拖右缘只移动位置、宽度不变，松手停在拖到的地方
 
 
 ## 截图
