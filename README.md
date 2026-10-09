@@ -6,7 +6,17 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.6.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.7.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+
+### v1.7.0 更新
+
+- **网页转 Markdown** — 本机提取正文，在阅读器新标签页打开并保存到最近阅读
+- **右键与快捷键** — 网页右键「用 Leaflet 阅读当前网页」；Alt + Shift + M（Mac：Option + Shift + M）直接转换
+- **自动滚动** — 支持 5–200 像素/秒、暂停/继续和到底循环，记住速度偏好
+- **阅读体验** — 开始滚动后收起面板；弹框背景与速度滑块适配主题；主题颜色渐变周期缩短至 40 秒
+- **Esc 行为** — 优先关闭当前弹框或菜单，再按可暂停自动滚动
+
+已有用户更新后请在 `chrome://extensions` 重新加载扩展；使用解压安装时需先替换安装目录文件。快捷键可在 `chrome://extensions/shortcuts` 修改。
 
 ### v1.6.0 更新
 
@@ -33,7 +43,7 @@
 
 ## 自动滚动
 
-点击阅读器顶栏的「自动滚动」按钮，展开控制面板后点击「开始滚动」。支持 5–200 像素/秒调速、暂停/继续和到底循环；速度与循环偏好会保留。手动滚动、点击正文或大纲、切换文档、离开标签页或按 Esc 会暂停。到底后再次开始会从顶部阅读。
+点击阅读器顶栏的「自动滚动」按钮，展开控制面板后点击「开始滚动」。支持 5–200 像素/秒调速、暂停/继续和到底循环；速度与循环偏好会保留。手动滚动、点击正文或大纲、切换文档、离开标签页会暂停。Esc 优先关闭当前弹框或菜单，没有弹框时暂停滚动。到底后再次开始会从顶部阅读。
 
 交互参考 [阅行](https://github.com/Susie-ss/yuexing)，使用正文专属的逐帧滚动实现。
 
