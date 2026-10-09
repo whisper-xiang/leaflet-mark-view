@@ -95,10 +95,10 @@
   --text-muted: #67676c; /* --vp-c-text-2 */
   --text-faint: #929295; /* --vp-c-text-3 */
 
-  /* Brand — rainbow animation, starts green #3eaf7c, 60s cycle */
+  /* Brand — rainbow animation, starts green #3eaf7c, 40s cycle */
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --accent-on: #ffffff;
-  animation: rainbow-brand 60s linear infinite;
+  animation: rainbow-brand 40s linear infinite;
 
   /* Code */
   --code-inline-bg: rgba(142, 150, 170, 0.14); /* --vp-c-default-soft */
@@ -2847,6 +2847,11 @@ body.lightbox-open {
   visibility: visible;
   transform: translateY(0);
 }
+.settings-menu.escape-dismissed .settings-list {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 .settings-menu:hover #settingsTrigger {
   background: var(--surface-hover);
   color: var(--text);
@@ -3539,15 +3544,15 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .sb-action:not(.primary
 }
 
 /* Floating menus over content need a solid panel, not the page tint. */
-html[data-scheme="light"] body:not(.bg-off):not(.is-home) .settings-list,
-html[data-theme="sepia"] body:not(.bg-off):not(.is-home) .settings-list,
-html[data-theme="sage"] body:not(.bg-off):not(.is-home) .settings-list {
+html[data-scheme="light"] body:not(.bg-off):not(.is-home) :is(.settings-list, .auto-scroll-panel),
+html[data-theme="sepia"] body:not(.bg-off):not(.is-home) :is(.settings-list, .auto-scroll-panel),
+html[data-theme="sage"] body:not(.bg-off):not(.is-home) :is(.settings-list, .auto-scroll-panel) {
   background-color: var(--glass-menu);
   border-color: var(--border);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
 }
 
-html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .settings-list {
+html[data-scheme="dark"] body:not(.bg-off):not(.is-home) :is(.settings-list, .auto-scroll-panel) {
   background-color: var(--glass-menu);
   border-color: var(--border);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.48);
@@ -3768,3 +3773,22 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .feed-list {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+/* Automatic reading controls */
+.auto-scroll-control { position: relative; }
+.auto-scroll-control .is-running { color: var(--accent); background: var(--accent-soft); }
+.auto-scroll-panel {
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 150;
+  width: min(260px, calc(100vw - 32px)); padding: 18px;
+  display: grid; gap: 12px; border: 1px solid var(--border);
+  border-radius: 12px; background: var(--bg-elevated); color: var(--text);
+  box-shadow: var(--shadow); font-size: 13px;
+}
+.auto-scroll-panel[hidden] { display: none; }
+.auto-scroll-panel label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.auto-scroll-panel .auto-scroll-loop { justify-content: flex-start; }
+.auto-scroll-panel input { accent-color: var(--accent); }
+.auto-scroll-panel input[type="range"] { width: 100%; margin: 0; }
+.auto-scroll-panel output, .auto-scroll-panel small, #autoScrollStatus { color: var(--text-muted); }
+#autoScrollToggle { padding: 8px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--accent-soft); color: var(--text); font: inherit; cursor: pointer; }
+#autoScrollToggle:hover { border-color: var(--accent); }

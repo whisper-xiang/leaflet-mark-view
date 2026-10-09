@@ -1,6 +1,6 @@
 # Leaflet Mark View 隐私政策
 
-生效日期：2026-08-18  
+生效日期：2026-10-09<br>
 开发者：轻语  
 扩展主页：https://github.com/whisper-xiang/leaflet-mark-view  
 联系：请通过 [GitHub Issues](https://github.com/whisper-xiang/leaflet-mark-view/issues) 联系。
@@ -17,7 +17,7 @@ Leaflet Mark View（「本扩展」）是一款在 Chrome 中阅读 Markdown 的
 
 以下信息只写在你的浏览器里，不会发送给开发者或其他方：
 
-- 最近打开的文件夹 / 文件 / 远程链接记录（IndexedDB）
+- 最近打开的文件夹 / 文件 / 远程链接记录，以及主动转换的网页标题、来源网址与 Markdown 正文（IndexedDB，最近阅读最多 20 条；移除或自动清理记录时同步删除网页摘录）
 - 固定文件夹、自定义背景图（IndexedDB）
 - 主题、字体、字号、大纲开关、阅读位置（localStorage）
 - 打开某个文件时的临时文本缓存（`chrome.storage.session`，关闭浏览器即清除）
@@ -37,6 +37,10 @@ Leaflet Mark View（「本扩展」）是一款在 Chrome 中阅读 Markdown 的
 
 打开本地文件夹或本地文件时，内容不会上传。
 
+## 网页正文转换
+
+点击「阅读当前网页」时，扩展通过 `activeTab` 临时权限读取当前标签页已加载的正文，在本机提取文章并转换为 Markdown。不自动读取其他标签页，不上传正文，也不调用在线转换服务。转换后的文档保存在最近阅读中；阅读时，原文中的远程图片可能按原地址加载。
+
 ## 本地文件访问
 
 本扩展申请 `file://` 主机权限，用于：
@@ -51,6 +55,8 @@ Chrome 仍要求你在扩展详情页额外开启 **「允许访问文件网址�
 | 权限 | 用途 |
 |------|------|
 | `storage` | 在本机保存临时文本与偏好 |
+| `activeTab` | 主动点击扩展后临时读取当前网页正文 |
+| `scripting` | 主动转换时运行本地打包的正文提取和 Markdown 转换脚本 |
 | `file:///*` | 拦截并阅读本地 Markdown 及同目录图片 |
 | `raw.githubusercontent.com` / `api.github.com` | 打开 GitHub 仓库或文件 |
 | 可选 `https://*/*` | 仅在你粘贴其他站点的 `.md` 链接并同意后，访问该域名 |
@@ -71,7 +77,7 @@ Chrome 仍要求你在扩展详情页额外开启 **「允许访问文件网址�
 
 # Privacy Policy (English)
 
-Effective date: 18 August 2026  
+Effective date: 9 October 2026<br>
 Developer: 轻语 (Qingyu)  
 Homepage: https://github.com/whisper-xiang/leaflet-mark-view  
 Contact: [GitHub Issues](https://github.com/whisper-xiang/leaflet-mark-view/issues)
@@ -88,7 +94,7 @@ There is no account system, analytics SDK, advertising, or developer backend. Ma
 
 The following stays in your browser and is never sent to the developer:
 
-- Recent folders / files / remote URLs (IndexedDB)
+- Recent folders / files / remote URLs and explicitly captured webpage titles, source URLs, and Markdown text (IndexedDB; shared limit of 20 recent entries; removing or trimming an entry deletes its capture)
 - Pinned folders and a custom background image (IndexedDB)
 - Theme, font, font size, outline, and reading position (localStorage)
 - Temporary file text while opening a document (`chrome.storage.session`, cleared when the browser session ends)
@@ -104,6 +110,10 @@ Network requests happen only after you take an action:
 3. **Remote images referenced by a document** — the browser loads `https` image URLs that appear in the Markdown itself.
 
 Local folders and local files are not uploaded.
+
+## Webpage conversion
+
+When you choose “阅读当前网页” (Read current webpage), temporary `activeTab` access allows the Extension to read the loaded page. Bundled scripts run via `scripting` to extract and convert its article locally. It does not automatically read other tabs, upload article text, or use an online conversion service. Captures are saved in recent documents. Remote images may be loaded from their original URLs while reading.
 
 ## Local file access
 

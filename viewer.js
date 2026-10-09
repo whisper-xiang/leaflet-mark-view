@@ -1,4 +1,4 @@
-// Brand color driven by @keyframes rainbow-brand in viewer.css (60s cycle).
+// Brand color driven by @keyframes rainbow-brand in viewer.css (40s cycle).
 
 // ── Icons (inline stroke SVG, feather-style 1.6) ────────────────────
 const ICON = {
@@ -15,6 +15,7 @@ const ICON = {
 };
 
 // ── State ──────────────────────────────────────────────────────────
+let autoScroller = null;
 let rootHandle = null;
 let allFiles = []; // flat list: { name, path, handle }
 let activeEl = null; // currently highlighted sidebar item
@@ -59,7 +60,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshRecentsMenu();
   // `pending` is a one-shot key (consumed on first open); `src` is the durable
   // file:// URL that survives refresh. Either one means "open this file".
-  if (pendingKey || src) {
+  if (params.has("capture")) {
+    await openWebCapture(params.get("capture"));
+  } else if (pendingKey || src) {
     await tryOpenPending(
       pendingKey,
       params.get("name") || "untitled.md",
@@ -79,34 +82,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function bindUI() {
+  autoScroller = bindAutoScroll();
   bindOpenMenus();
   bindLightbox();
   document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+  document.addEventListener("keydown", handleReaderEscape, { capture: true });
+  const settingsMenu = document.querySelector(".settings-menu");
+  const reopenSettings = () => settingsMenu.classList.remove("escape-dismissed");
+  settingsMenu.addEventListener("mouseenter", reopenSettings);
+  settingsMenu.addEventListener("focusin", reopenSettings);
+  document.getElementById("settingsTrigger").addEventListener("click", reopenSettings);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (isLightboxOpen()) {
-        e.preventDefault();
-        closeLightbox();
-      } else if (document.getElementById("urlModal")?.classList.contains("open")) {
-        e.preventDefault();
-        urlModalApi.closeUrlModal();
-      } else if (
-        document.getElementById("htmlModal")?.classList.contains("open")
-      ) {
-        e.preventDefault();
-        closeHtmlExportModal();
-      } else if (
-        document.getElementById("docxModal")?.classList.contains("open")
-      ) {
-        e.preventDefault();
-        closeDocxExportModal();
-      } else if (
-        document.getElementById("searchModal").classList.contains("open")
-      ) {
-        e.preventDefault();
-        closeSearchModal();
-      }
-    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       openSearchModal();
     }
@@ -207,6 +194,51 @@ function bindUI() {
     },
     { passive: true },
   );
+}
+
+// Resolve Escape before input-level handlers close a popup and make the same
+// key event look like a request to stop scrolling. Each press has one action.
+function handleReaderEscape(event) {
+  if (event.key !== "Escape" || event.isComposing) return;
+  // The inline rename editor owns Escape and restores its previous value.
+  if (event.target.closest(".feed-rename-input")) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  if (event.repeat) return;
+  if (isLightboxOpen()) {
+    closeLightbox();
+    return;
+  }
+  const modals = [
+    ["urlModal", () => urlModalApi.closeUrlModal()],
+    ["htmlModal", closeHtmlExportModal],
+    ["docxModal", closeDocxExportModal],
+    ["cfModal", closeConfluenceModal],
+    ["searchModal", closeSearchModal],
+  ];
+  for (const [id, close] of modals) {
+    if (document.getElementById(id)?.classList.contains("open")) {
+      close();
+      return;
+    }
+  }
+  if (autoScroller?.closePanel()) return;
+  const menus = document.querySelectorAll(".open-menu.open, .feed-menu.open, .feed-ctx-menu.open, .tree-context-menu.open");
+  const settings = document.querySelector(".settings-menu");
+  const settingsOpen = settings && !settings.classList.contains("escape-dismissed") &&
+    getComputedStyle(settings.querySelector(".settings-list")).visibility === "visible";
+  if (menus.length || settingsOpen) {
+    closeOpenMenus();
+    closeFeedMenus();
+    hideTreeContextMenu();
+    document.querySelectorAll(".feed-ctx-menu.open").forEach(menu => menu.classList.remove("open"));
+    if (settingsOpen) {
+      document.getElementById("settingsTrigger").focus();
+      settings.classList.add("escape-dismissed");
+    }
+    return;
+  }
+  autoScroller?.stop();
 }
 
 async function refreshRecentsMenu() {
@@ -986,6 +1018,18 @@ async function tryOpenPending(
   }
 }
 
+// Captured pages reopen from the saved Markdown, never by fetching source HTML.
+async function openWebCapture(id) {
+  try {
+    const capture = await LMV.getWebCapture(id);
+    if (!capture) throw new Error("此网页摘录已从最近阅读中移除，请回到原网页重新转换。");
+    await openDirectContent(capture.name, capture.text, capture.url, { captureId: id });
+  } catch (error) {
+    showMarkdownBody();
+    setContent(`<p style="padding:32px">${escHtml(error.message)}</p>`);
+  }
+}
+
 // Open markdown content that arrived via the content-script redirect.
 // We only have the raw text + the file's file:// URL (no FS Access handle), so
 // we render immediately, then try to enumerate sibling .md files by fetching the
@@ -994,18 +1038,20 @@ async function openDirectContent(
   name,
   text,
   srcUrl,
-  { autoOpen = true, builtinReadme = false, filePath = "" } = {},
+  { autoOpen = true, builtinReadme = false, filePath = "", captureId = "" } = {},
 ) {
   viewingBuiltinReadme = builtinReadme;
   rootHandle = null;
   singleFileHandle = null;
   const path = filePath || name;
   const isRemote = /^https?:/.test(srcUrl || "");
-  scopeKey = builtinReadme
-    ? "builtin:readme"
-    : isRemote
-      ? "remote:" + srcUrl
-      : "dir:" + (srcUrl ? srcUrl.slice(0, srcUrl.lastIndexOf("/") + 1) : name);
+  scopeKey = captureId
+    ? "capture:" + captureId
+    : builtinReadme
+      ? "builtin:readme"
+      : isRemote
+        ? "remote:" + srcUrl
+        : "dir:" + (srcUrl ? srcUrl.slice(0, srcUrl.lastIndexOf("/") + 1) : name);
   searchIndexBuilt = false;
 
   const node = {
@@ -1013,6 +1059,7 @@ async function openDirectContent(
     name,
     path,
     url: srcUrl || null,
+    captureId,
     handle: memHandle(name, text),
     __text: text,
   };
@@ -1031,7 +1078,7 @@ async function openDirectContent(
     clearFileUrlParams();
   }
 
-  if (builtinReadme) return;
+  if (builtinReadme || captureId) return;
 
   if (isRemote && srcUrl.includes("raw.githubusercontent.com")) {
     try {
@@ -2313,6 +2360,7 @@ function bindDiagramZoom(body) {
 
 // Parse markdown into `body` and wire up links + heading anchors + outline.
 function renderMarkdownInto(body, text, fileUrl) {
+  autoScroller?.stop();
   closeLightbox();
   body.innerHTML = parseMarkdown(text, true);
 
@@ -3074,6 +3122,7 @@ function consumePickParam() {
 function clearFileUrlParams() {
   const u = new URL(location.href);
   u.searchParams.delete("pending");
+  u.searchParams.delete("capture");
   u.searchParams.delete("name");
   u.searchParams.delete("src");
   u.searchParams.delete("path");
@@ -3099,8 +3148,15 @@ async function openFile(node) {
 
   // Direct (file://) mode: keep the address bar pointed at the open file so a
   // refresh reopens it instead of the file we first arrived on.
-  if (node.url) {
+  if (node.captureId) {
     const u = new URL(location.href);
+    u.search = "";
+    u.hash = "";
+    u.searchParams.set("capture", node.captureId);
+    history.replaceState(null, "", u);
+  } else if (node.url) {
+    const u = new URL(location.href);
+    u.searchParams.delete("capture");
     u.searchParams.delete("pending");
     u.searchParams.delete("start");
     u.searchParams.set("name", node.name);
@@ -3114,6 +3170,10 @@ async function openFile(node) {
     if (/^https?:/.test(node.url)) {
       LMV.addRecentRemote(node.url, node.path || node.name);
     }
+  }
+
+  if (!node.captureId && !node.url && new URL(location.href).searchParams.has("capture")) {
+    clearFileUrlParams();
   }
 
   showMarkdownBody();
@@ -3159,6 +3219,7 @@ function highlightSidebar(node) {
 // Uses offsetTop traversal (reliable; unaffected by current scroll/viewport).
 // Defers hash update so Chrome doesn't trigger its own anchor-scroll first.
 function scrollToHeading(h) {
+  autoScroller?.stop();
   const ca = document.getElementById("contentArea");
   let top = 0;
   let el = h;
@@ -3338,6 +3399,7 @@ function slugFromText(text) {
 }
 
 function setContent(html) {
+  autoScroller?.stop();
   document.getElementById("markdownBody").innerHTML = html;
 }
 

@@ -171,6 +171,43 @@ const LMV = (() => {
     } catch (_) {}
   }
 
+  // Web captures share the bounded recent-document store. Removing a recent
+  // also removes its Markdown snapshot; no source-page fetch is needed to reopen.
+  async function saveWebCapture({ title, sourceUrl, markdown }) {
+    const id = 'webpage:' + crypto.randomUUID();
+    const name = (title || '网页摘录').replace(/[\\/:*?"<>|]/g, '-').slice(0, 120) + '.md';
+    const entry = { id, kind: 'webpage', name, title, url: sourceUrl, text: markdown, openedAt: Date.now() };
+    const db = await openDB();
+    try {
+      const tx = db.transaction('recents', 'readwrite');
+      tx.objectStore('recents').put(entry);
+      await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error); });
+    } finally { db.close(); }
+    await trimRecents();
+    return id;
+  }
+
+  async function getWebCapture(id) {
+    const db = await openDB();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction('recents', 'readwrite');
+        const store = tx.objectStore('recents');
+        const req = store.get(id);
+        let row = null;
+        req.onsuccess = () => {
+          if (req.result?.kind === 'webpage' && typeof req.result.text === 'string') {
+            row = { ...req.result, openedAt: Date.now() };
+            store.put(row);
+          }
+        };
+        tx.oncomplete = () => resolve(row);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    } finally { db.close(); }
+  }
+
   async function trimRecents() {
     const all = await listRecents();
     if (all.length <= MAX_RECENTS) return;
@@ -292,6 +329,10 @@ const LMV = (() => {
 
   async function openRecent(recent) {
     if (!recent) return;
+    if (recent.kind === 'webpage') {
+      location.href = 'viewer.html?capture=' + encodeURIComponent(recent.id);
+      return;
+    }
     if (recent.kind === 'remote' && recent.url) {
       location.href = 'viewer.html'
         + '?src=' + encodeURIComponent(recent.url)
@@ -307,7 +348,7 @@ const LMV = (() => {
     if (kind === 'directory') {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>';
     }
-    if (kind === 'remote') {
+    if (kind === 'remote' || kind === 'webpage') {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
     }
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>';
@@ -375,6 +416,8 @@ const LMV = (() => {
     getStoredHandle,
     addRecent,
     addRecentRemote,
+    saveWebCapture,
+    getWebCapture,
     listRecents,
     removeRecent,
     openRecent,

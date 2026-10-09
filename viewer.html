@@ -150,6 +150,21 @@
 
         <div class="topbar-actions">
 
+          <div class="auto-scroll-control">
+            <button class="btn-icon" id="autoScrollTrigger" type="button" title="自动滚动" aria-label="自动滚动" aria-expanded="false" aria-controls="autoScrollPanel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v18m-4-4 4 4 4-4M15 5h6m-6 5h6m-6 5h6" /></svg>
+            </button>
+            <section class="auto-scroll-panel" id="autoScrollPanel" aria-label="自动滚动设置" hidden>
+              <strong>自动滚动</strong>
+              <span id="autoScrollStatus" role="status">已暂停</span>
+              <label for="autoScrollSpeed">速度 <output id="autoScrollSpeedLabel" for="autoScrollSpeed">35 像素/秒</output></label>
+              <input id="autoScrollSpeed" type="range" min="5" max="200" step="5" value="35">
+              <label class="auto-scroll-loop"><input id="autoScrollLoop" type="checkbox">到底后循环阅读</label>
+              <button id="autoScrollToggle" type="button" aria-pressed="false">开始滚动</button>
+              <small>Esc 先关闭弹框，再按可暂停</small>
+            </section>
+          </div>
+
           <button class="btn-icon" id="themeToggle" title="切换主题"></button>
 
           <div class="settings-menu">
@@ -517,6 +532,7 @@
   <script src="md-to-html.js"></script>
   <script src="md-to-docx.js"></script>
   <script src="plantuml.js"></script>
+  <script src="auto-scroll.js"></script>
   <script src="viewer.js"></script>
 </body>
 

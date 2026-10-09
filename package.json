@@ -1,0 +1,6 @@
+{
+  "name": "leaflet-mark-view",
+  "private": true,
+  "scripts": { "test": "node --test tests/*.test.mjs" },
+  "devDependencies": { "fake-indexeddb": "6.2.4", "jsdom": "26.1.0" }
+}

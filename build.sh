@@ -12,8 +12,8 @@ rm -f "$OUT"
 # Individual runtime files the extension ships.
 FILES=(
   manifest.json
-  background.js content.js
-  viewer.html viewer.js viewer.css
+  background.js content.js webpage-capture.js popup.html popup.css popup.js
+  viewer.html viewer.js viewer.css auto-scroll.js
   markdown.js md-to-confluence.js md-to-html.js md-to-docx.js html-table.js plantuml.js lmv-db.js remote-md.js
   README.md PRIVACY.md LICENSE
 )

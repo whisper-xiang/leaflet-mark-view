@@ -13,7 +13,7 @@ https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
 ## Single purpose（单一用途）
 
 ```
-A local-first Markdown reader for Chrome. Users open a local folder, a local .md file, or a GitHub / HTTPS Markdown URL and read it in a dedicated viewer, with optional export to HTML, Word, or Confluence wiki markup. There is no account and no cloud sync.
+A local-first Markdown reader for Chrome. Users open a local folder, a local .md file, a GitHub / HTTPS Markdown URL, or explicitly convert the active webpage to Markdown and read it in a dedicated viewer, with optional export to HTML, Word, or Confluence wiki markup. There is no account and no cloud sync.
 ```
 
 中文备忘（不必贴到英文框，供你对照）：
@@ -28,6 +28,18 @@ A local-first Markdown reader for Chrome. Users open a local folder, a local .md
 
 ```
 Stores reading preferences and a short-lived copy of Markdown text on the device (chrome.storage.session / IndexedDB / localStorage) so the viewer can restore the last file, theme, and scroll position. This data never leaves the browser.
+```
+
+### `activeTab`
+
+```
+Temporarily reads the active webpage only when the user invokes the extension and chooses Read current webpage. Its article is converted to Markdown locally and saved in recent documents. No background browsing collection or uploads.
+```
+
+### `scripting`
+
+```
+Runs bundled Mozilla Readability, Turndown, and the conversion script in the active tab's isolated world after the user explicitly requests webpage conversion. No remote code is downloaded or executed.
 ```
 
 ### Host permission `file:///*`
