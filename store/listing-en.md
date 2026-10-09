@@ -48,7 +48,7 @@ Privacy
 Requires Chrome 116+. Local folders use the File System Access API. To intercept .md files opened from disk, turn on “Allow access to file URLs” on the extension details page.
 
 Homepage: https://whisper-xiang.github.io/leaflet-mark-view/
-Privacy: https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
+Privacy: https://whisper-xiang.github.io/leaflet-mark-view/privacy.html
 ```
 
 ## Extra URLs
@@ -56,5 +56,5 @@ Privacy: https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
 | Field | Value |
 |------|--------|
 | Homepage URL | `https://whisper-xiang.github.io/leaflet-mark-view/` |
-| Support URL | `https://github.com/whisper-xiang/leaflet-mark-view/issues` |
-| Privacy policy | `https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md` |
+| Support URL | `https://whisper-xiang.github.io/leaflet-mark-view/support.html` |
+| Privacy policy | `https://whisper-xiang.github.io/leaflet-mark-view/privacy.html` |

@@ -50,7 +50,7 @@ Productivity（效率工具）
 
 项目主页：https://whisper-xiang.github.io/leaflet-mark-view/
 更新说明：https://github.com/whisper-xiang/leaflet-mark-view/releases
-隐私政策：https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
+隐私政策：https://whisper-xiang.github.io/leaflet-mark-view/privacy.html
 ```
 
 ## 商店附加链接
@@ -58,8 +58,8 @@ Productivity（效率工具）
 | 字段 | 填写 |
 |------|------|
 | Homepage URL | `https://whisper-xiang.github.io/leaflet-mark-view/` |
-| Support URL | `https://github.com/whisper-xiang/leaflet-mark-view/issues` |
-| Privacy policy | `https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md` |
+| Support URL | `https://whisper-xiang.github.io/leaflet-mark-view/support.html` |
+| Privacy policy | `https://whisper-xiang.github.io/leaflet-mark-view/privacy.html` |
 
 ## 内容分级
 

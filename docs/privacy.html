@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>隐私政策 / Privacy Policy — Leaflet Mark View</title>
+<meta name="description" content="Leaflet Mark View 隐私政策：网页正文在本机处理，权限、存储、保留与删除说明。">
+<link rel="canonical" href="https://whisper-xiang.github.io/leaflet-mark-view/privacy.html">
+<link rel="stylesheet" href="info.css">
+</head><body>
+<header><a class="brand" href="zh-CN/">Leaflet Mark View</a><nav aria-label="导航"><a href="support.html">支持 / Support</a><a href="privacy.html">隐私 / Privacy</a></nav></header>
+<main><h1 id="leaflet-mark-view-隐私政策" tabindex="-1">Leaflet Mark View 隐私政策 </h1>
+<p>生效日期：2026-10-09
+开发者：轻语<br>
+扩展主页：https://github.com/whisper-xiang/leaflet-mark-view<br>
+联系：请通过 <a href="https://github.com/whisper-xiang/leaflet-mark-view/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a> 联系。</p>
+<p>Leaflet Mark View（「本扩展」）是一款在 Chrome 中阅读 Markdown 的工具。本政策说明本扩展如何处理数据。</p>
+<h2 id="我们收集什么" tabindex="-1">我们收集什么 </h2>
+<p><strong>本扩展会在本机处理用户主动打开的文档与网页正文，但不将这些内容收集到开发者服务器，不上传或出售用户的个人数据。</strong></p>
+<p>没有账号系统，没有分析 SDK，没有广告，也没有开发者服务器。Markdown 解析、数学公式、Mermaid、PlantUML 均在你的浏览器本地完成。</p>
+<h2 id="仅保存在本机的数据" tabindex="-1">仅保存在本机的数据 </h2>
+<p>以下信息只写在你的浏览器里，不会发送给开发者或其他方：</p>
+<ul>
+<li>最近打开的文件夹 / 文件 / 远程链接记录，以及主动转换的网页标题、来源网址与 Markdown 正文（IndexedDB，最近阅读最多 20 条；移除或自动清理记录时同步删除网页摘录）</li>
+<li>固定文件夹、自定义背景图（IndexedDB）</li>
+<li>主题、字体、字号、大纲开关、阅读位置（localStorage）</li>
+<li>打开某个文件时的临时文本缓存（<code>chrome.storage.session</code>，关闭浏览器即清除）</li>
+</ul>
+<p>你可以随时通过 Chrome 的「清除网站数据」或移除扩展来删除这些数据。</p>
+<h2 id="何时会访问网络" tabindex="-1">何时会访问网络 </h2>
+<p>只有在你主动操作时才会发网络请求：</p>
+<ol>
+<li><strong>打开 GitHub 链接</strong>
+向 <code>api.github.com</code> 和/或 <code>raw.githubusercontent.com</code> 请求仓库目录或 Markdown 正文。</li>
+<li><strong>打开其他网站的 <code>.md</code> 直链</strong>
+首次使用时 Chrome 会弹出授权，仅授予你确认的那个域名。扩展默认不拥有「访问所有网站」的权限。</li>
+<li><strong>GitHub 仓库的 README 徽章等远程图片</strong>
+若文档本身引用了 <code>https</code> 图片，浏览器会按图片地址加载。</li>
+</ol>
+<p>打开本地文件夹或本地文件时，内容不会上传。</p>
+<h2 id="网页正文转换" tabindex="-1">网页正文转换 </h2>
+<p>通过扩展弹框、网页右键菜单或快捷键主动使用「阅读当前网页」时，扩展通过 <code>activeTab</code> 临时权限读取当前标签页已加载的正文，在本机提取文章并转换为 Markdown。不自动读取其他标签页，不上传正文，也不调用在线转换服务。转换后的文档保存在最近阅读中；阅读时，原文中的远程图片可能按原地址加载。</p>
+<h2 id="本地文件访问" tabindex="-1">本地文件访问 </h2>
+<p>本扩展申请 <code>file://</code> 主机权限，用于：</p>
+<ul>
+<li>当你用 Chrome 直接打开本地 <code>.md</code> 文件时，拦截并在阅读器中渲染</li>
+<li>读取 Markdown 同目录下的相对路径图片</li>
+</ul>
+<p>Chrome 仍要求你在扩展详情页额外开启 <strong>「允许访问文件网址」</strong>。未开启时，本地 <code>file://</code> 拦截不会生效；你仍可用阅读器内的「打开文件夹 / 打开文件」。</p>
+<h2 id="权限摘要" tabindex="-1">权限摘要 </h2>
+<table>
+<thead>
+<tr><th align="left">权限</th><th align="left">用途</th></tr>
+</thead>
+<tbody>
+<tr><td align="left"><code>storage</code></td><td align="left">在本机保存临时文本与偏好</td></tr>
+<tr><td align="left"><code>activeTab</code></td><td align="left">主动点击扩展后临时读取当前网页正文</td></tr>
+<tr><td align="left"><code>scripting</code></td><td align="left">主动转换时运行本地打包的正文提取和 Markdown 转换脚本</td></tr>
+<tr><td align="left"><code>contextMenus</code></td><td align="left">在普通网页右键菜单中提供「用 Leaflet 阅读当前网页」入口</td></tr>
+<tr><td align="left"><code>file:///*</code></td><td align="left">拦截并阅读本地 Markdown 及同目录图片</td></tr>
+<tr><td align="left"><code>raw.githubusercontent.com</code> / <code>api.github.com</code></td><td align="left">打开 GitHub 仓库或文件</td></tr>
+<tr><td align="left">可选 <code>https://*/*</code></td><td align="left">仅在你粘贴其他站点的 <code>.md</code> 链接并同意后，访问该域名</td></tr>
+</tbody>
+</table>
+<h2 id="数据分享与保留" tabindex="-1">数据分享与保留 </h2>
+<p>不与第三方分享用户数据。没有云端副本，因此也没有「从开发者服务器删除」的流程；卸载扩展或清除浏览器数据即可。</p>
+<h2 id="数据用途限制" tabindex="-1">数据用途限制 </h2>
+<p>本扩展遵循 Chrome 网上应用店用户数据政策，包括 Limited Use 要求。读取的文档、网页正文与来源网址仅用于用户主动使用的阅读、转换、导出和最近阅读功能，不用于广告或用户画像。开发者不接收或人工查看这些内容。</p>
+<h2 id="儿童" tabindex="-1">儿童 </h2>
+<p>本扩展不面向 13 岁以下儿童，也不故意收集儿童信息。</p>
+<h2 id="政策变更" tabindex="-1">政策变更 </h2>
+<p>若处理方式发生变化，会更新本页并调整「生效日期」。继续使用即表示你了解更新后的政策。</p>
+<hr>
+<h1 id="privacy-policy-english" tabindex="-1">Privacy Policy (English) </h1>
+<p>Effective date: 9 October 2026
+Developer: 轻语 (Qingyu)<br>
+Homepage: https://github.com/whisper-xiang/leaflet-mark-view<br>
+Contact: <a href="https://github.com/whisper-xiang/leaflet-mark-view/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a></p>
+<p>Leaflet Mark View (the “Extension”) is a Chrome Markdown reader. This policy describes how data is handled.</p>
+<h2 id="what-we-collect" tabindex="-1">What we collect </h2>
+<p><strong>The Extension processes documents and webpage content that the user chooses to open on their device. It does not collect that content on developer servers, upload it, or sell personal data.</strong></p>
+<p>There is no account system, analytics SDK, advertising, or developer backend. Markdown parsing, math (KaTeX), Mermaid, and PlantUML all run locally in your browser.</p>
+<h2 id="data-stored-only-on-your-device" tabindex="-1">Data stored only on your device </h2>
+<p>The following stays in your browser and is never sent to the developer:</p>
+<ul>
+<li>Recent folders / files / remote URLs and explicitly captured webpage titles, source URLs, and Markdown text (IndexedDB; shared limit of 20 recent entries; removing or trimming an entry deletes its capture)</li>
+<li>Pinned folders and a custom background image (IndexedDB)</li>
+<li>Theme, font, font size, outline, and reading position (localStorage)</li>
+<li>Temporary file text while opening a document (<code>chrome.storage.session</code>, cleared when the browser session ends)</li>
+</ul>
+<p>You can delete this data by clearing site data for the Extension or by uninstalling it.</p>
+<h2 id="when-the-network-is-used" tabindex="-1">When the network is used </h2>
+<p>Network requests happen only after you take an action:</p>
+<ol>
+<li><strong>Opening a GitHub URL</strong> — requests to <code>api.github.com</code> and/or <code>raw.githubusercontent.com</code>.</li>
+<li><strong>Opening a <code>.md</code> URL on another site</strong> — Chrome prompts you the first time; only the host you approve is granted. The Extension does not ship with access to all websites.</li>
+<li><strong>Remote images referenced by a document</strong> — the browser loads <code>https</code> image URLs that appear in the Markdown itself.</li>
+</ol>
+<p>Local folders and local files are not uploaded.</p>
+<h2 id="webpage-conversion" tabindex="-1">Webpage conversion </h2>
+<p>When you choose “阅读当前网页” (Read current webpage) through the popup, webpage context menu, or keyboard shortcut, temporary <code>activeTab</code> access allows the Extension to read the loaded page. The <code>contextMenus</code> permission provides the webpage right-click entry. Bundled scripts run via <code>scripting</code> to extract and convert its article locally. It does not automatically read other tabs, upload article text, or use an online conversion service. Captures are saved in recent documents. Remote images may be loaded from their original URLs while reading.</p>
+<h2 id="local-file-access" tabindex="-1">Local file access </h2>
+<p>The <code>file://</code> host permission is used to:</p>
+<ul>
+<li>Intercept a local <code>.md</code> file opened in Chrome and render it in the viewer</li>
+<li>Load images next to that Markdown file</li>
+</ul>
+<p>Chrome still requires <strong>“Allow access to file URLs”</strong> on the extension details page. If that toggle is off, <code>file://</code> interception is disabled; you can still use Open Folder / Open File inside the viewer.</p>
+<h2 id="data-sharing-and-retention" tabindex="-1">Data sharing and retention </h2>
+<p>User data is not shared with third parties. There is no cloud copy, so there is no server-side deletion request. Uninstalling the Extension or clearing browser data removes local records.</p>
+<h2 id="limited-use" tabindex="-1">Limited use </h2>
+<p>The Extension adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements. Documents, webpage content, and source URLs are used only for user-initiated reading, conversion, export, and recent-document features, not advertising or user profiling. The developer does not receive or manually review that content.</p>
+<h2 id="children" tabindex="-1">Children </h2>
+<p>The Extension is not directed at children under 13 and does not knowingly collect their information.</p>
+<h2 id="changes" tabindex="-1">Changes </h2>
+<p>If this policy changes, we will update this page and the effective date.</p>
+</main>
+<footer>Leaflet Mark View · <a href="support.html">联系与支持 / Contact and support</a></footer>
+</body></html>

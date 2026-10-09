@@ -2,10 +2,10 @@
 
 后台路径：Developer Dashboard → 你的扩展 → **Privacy**。
 
-隐私政策 URL（推送 `PRIVACY.md` 到 GitHub 后即可用）：
+隐私政策 URL（GitHub Pages 从 main /docs 发布成功后使用）：
 
 ```
-https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
+https://whisper-xiang.github.io/leaflet-mark-view/privacy.html
 ```
 
 ---
@@ -33,7 +33,7 @@ Stores reading preferences and a short-lived copy of Markdown text on the device
 ### `activeTab`
 
 ```
-Temporarily reads the active webpage only when the user invokes the extension and chooses Read current webpage. Its article is converted to Markdown locally and saved in recent documents. No background browsing collection or uploads.
+Provides temporary access to the current tab only after the user explicitly requests webpage reading through the toolbar popup, webpage context menu, or keyboard shortcut. The extension reads the article title, URL, and loaded page content to convert it to Markdown locally and open it in the reader. Captures stay on the device. It does not continuously monitor browsing or upload captured content.
 ```
 
 ### `contextMenus`
@@ -81,26 +81,19 @@ Requested at runtime only when the user pastes a Markdown URL that is not GitHub
 说明（若出现文本框）：
 
 ```
-KaTeX, Mermaid, and PlantUML are bundled under vendor/ and execute locally. The extension does not load scripts from the network.
+Mozilla Readability, Turndown, KaTeX, Mermaid, and PlantUML are bundled under vendor/ and execute locally. The extension does not load scripts from the network.
 ```
 
 ---
 
 ## Data usage / certification（勾选）
 
-**Does this item collect or use any user data?**  
-若后台问「是否收集」，选 **No**（数据只留在用户设备，开发者收不到）。
+网页转换会处理 **Website content（网站内容）**，最近阅读还会保存用户主动打开的来源网址。不得仅因为数据只保存在本机，就将「收集或使用数据」一律填为 No 或全部不勾选。
 
-若必须勾类别，保持全部不勾：
+按后台当前定义披露网站内容以及实际保存的来源网址 / 最近阅读数据；明确用途为用户主动发起的阅读、转换和本地历史恢复，不上传给开发者，不用于广告或画像。不要宣称读取完整浏览历史，扩展并无 history 权限。
 
-- [ ] Personally identifiable information
-- [ ] Health information
-- [ ] Financial and payment information
-- [ ] Authentication information
-- [ ] Personal communications
-- [ ] Location
-- [ ] Web history
-- [ ] User activity
+Google 官方说明：即使数据仅在本机处理或保存，也要披露处理方式：
+https://developer.chrome.com/docs/webstore/program-policies/user-data-faq/
 
 认证声明全部勾选同意（Limited Use、不出售、不用于无关目的等）。以后台当前英文原文为准。
 
@@ -110,3 +103,11 @@ KaTeX, Mermaid, and PlantUML are bundled under vendor/ and execute locally. The 
 
 - **Justify permissions that are not obvious**：见上面各段。
 - **Host permissions disclosure**：商店详情里会自动带上；描述中已写明 GitHub 与按需授权。
+
+## 支持网址
+
+```
+https://whisper-xiang.github.io/leaflet-mark-view/support.html
+```
+
+修改根目录 PRIVACY.md 后运行 `node scripts/build-privacy.mjs`，再提交 docs/privacy.html，以保持在线政策与源码一致。

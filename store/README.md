@@ -38,10 +38,12 @@ python3 store/make-assets.py
 商店要一个公网 HTTPS 链接。把本仓库（含根目录 `PRIVACY.md`）推到 `main` 后使用：
 
 ```
-https://github.com/whisper-xiang/leaflet-mark-view/blob/main/PRIVACY.md
+https://whisper-xiang.github.io/leaflet-mark-view/privacy.html
 ```
 
-未推送之前不要提交审核。
+在 GitHub 仓库 Settings → Pages 中使用 main 分支的 /docs 目录发布。等待隐私政策页和 support.html 均能公开访问后再提交审核。
+
+修改 PRIVACY.md 后运行 `node scripts/build-privacy.mjs` 更新在线 HTML。
 
 ## 3. 打 zip
 

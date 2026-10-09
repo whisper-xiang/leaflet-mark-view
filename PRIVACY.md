@@ -9,7 +9,7 @@ Leaflet Mark View（「本扩展」）是一款在 Chrome 中阅读 Markdown 的
 
 ## 我们收集什么
 
-**本扩展不收集、不上传、不出售用户的个人数据。**
+**本扩展会在本机处理用户主动打开的文档与网页正文，但不将这些内容收集到开发者服务器，不上传或出售用户的个人数据。**
 
 没有账号系统，没有分析 SDK，没有广告，也没有开发者服务器。Markdown 解析、数学公式、Mermaid、PlantUML 均在你的浏览器本地完成。
 
@@ -66,6 +66,10 @@ Chrome 仍要求你在扩展详情页额外开启 **「允许访问文件网址�
 
 不与第三方分享用户数据。没有云端副本，因此也没有「从开发者服务器删除」的流程；卸载扩展或清除浏览器数据即可。
 
+## 数据用途限制
+
+本扩展遵循 Chrome 网上应用店用户数据政策，包括 Limited Use 要求。读取的文档、网页正文与来源网址仅用于用户主动使用的阅读、转换、导出和最近阅读功能，不用于广告或用户画像。开发者不接收或人工查看这些内容。
+
 ## 儿童
 
 本扩展不面向 13 岁以下儿童，也不故意收集儿童信息。
@@ -87,7 +91,7 @@ Leaflet Mark View (the “Extension”) is a Chrome Markdown reader. This policy
 
 ## What we collect
 
-**The Extension does not collect, upload, or sell personal data.**
+**The Extension processes documents and webpage content that the user chooses to open on their device. It does not collect that content on developer servers, upload it, or sell personal data.**
 
 There is no account system, analytics SDK, advertising, or developer backend. Markdown parsing, math (KaTeX), Mermaid, and PlantUML all run locally in your browser.
 
@@ -128,6 +132,10 @@ Chrome still requires **“Allow access to file URLs”** on the extension detai
 ## Data sharing and retention
 
 User data is not shared with third parties. There is no cloud copy, so there is no server-side deletion request. Uninstalling the Extension or clearing browser data removes local records.
+
+## Limited use
+
+The Extension adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements. Documents, webpage content, and source URLs are used only for user-initiated reading, conversion, export, and recent-document features, not advertising or user profiling. The developer does not receive or manually review that content.
 
 ## Children
 
