@@ -60,7 +60,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshRecentsMenu();
   // `pending` is a one-shot key (consumed on first open); `src` is the durable
   // file:// URL that survives refresh. Either one means "open this file".
-  if (params.has("capture")) {
+  if (params.has("captureError")) {
+    showMarkdownBody();
+    setContent(`<p style="padding:32px">网页转换失败：${escHtml(params.get("captureError"))}</p>`);
+  } else if (params.has("capture")) {
     await openWebCapture(params.get("capture"));
   } else if (pendingKey || src) {
     await tryOpenPending(
@@ -3123,6 +3126,7 @@ function clearFileUrlParams() {
   const u = new URL(location.href);
   u.searchParams.delete("pending");
   u.searchParams.delete("capture");
+  u.searchParams.delete("captureError");
   u.searchParams.delete("name");
   u.searchParams.delete("src");
   u.searchParams.delete("path");
@@ -3157,6 +3161,7 @@ async function openFile(node) {
   } else if (node.url) {
     const u = new URL(location.href);
     u.searchParams.delete("capture");
+    u.searchParams.delete("captureError");
     u.searchParams.delete("pending");
     u.searchParams.delete("start");
     u.searchParams.set("name", node.name);
@@ -3172,7 +3177,7 @@ async function openFile(node) {
     }
   }
 
-  if (!node.captureId && !node.url && new URL(location.href).searchParams.has("capture")) {
+  if (!node.captureId && !node.url && ["capture", "captureError"].some(key => new URL(location.href).searchParams.has(key))) {
     clearFileUrlParams();
   }
 

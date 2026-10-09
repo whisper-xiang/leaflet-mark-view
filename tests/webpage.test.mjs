@@ -70,17 +70,20 @@ test('web snapshots obey the existing 20-document recent limit', async () => {
   for (let i = 0; i < 22; i++) await db.saveWebCapture({ title: 'Article ' + i, sourceUrl: 'https://example.com/' + i, markdown: 'text' });
   assert.equal((await db.listRecents()).length, 20);
 });
-function background({ injectionError = false, captureError = false } = {}) {
+function background({ injectionError = false, captureError = false, beforeInject } = {}) {
   const listeners = [], created = [], injections = [], saved = [];
+  const installed = [], menuClicks = [], commands = [], menus = [];
   const chrome = {
-    runtime: { getURL: path => 'chrome-extension://test/' + path, onInstalled: { addListener() {} }, onStartup: { addListener() {} }, onMessage: { addListener(fn) { listeners.push(fn); } } },
+    runtime: { getURL: path => 'chrome-extension://test/' + path, onInstalled: { addListener(fn) { installed.push(fn); } }, onStartup: { addListener() {} }, onMessage: { addListener(fn) { listeners.push(fn); } } },
     storage: { session: { setAccessLevel() {} } },
-    tabs: { async get() { return { url: 'https://example.com/post' }; }, async create(args) { created.push(args); }, async query() { return []; } },
-    scripting: { async executeScript(args) { injections.push(args); if (injectionError) throw Error('denied'); return [{ result: captureError ? { ok: false, error: '没有正文' } : { ok: true, article: { title: 'Title', sourceUrl: 'https://example.com/post', markdown: '# Body' } } }]; } },
+    contextMenus: { removeAll(callback) { menus.length = 0; callback(); }, create(menu) { menus.push(menu); }, onClicked: { addListener(fn) { menuClicks.push(fn); } } },
+    commands: { onCommand: { addListener(fn) { commands.push(fn); } } },
+    tabs: { async get() { return { url: 'https://example.com/post' }; }, async create(args) { created.push(args); }, async query(options) { return options.active ? [{ id: 11 }] : []; } },
+    scripting: { async executeScript(args) { injections.push(args); if (beforeInject) await beforeInject(); if (injectionError) throw Error('denied'); return [{ result: captureError ? { ok: false, error: '没有正文' } : { ok: true, article: { title: 'Title', sourceUrl: 'https://example.com/post', markdown: '# Body' } } }]; } },
   };
   const context = vm.createContext({ chrome, importScripts() {}, LMV: { async saveWebCapture(article) { saved.push(article); return 'webpage:123'; } } });
   vm.runInContext(read('background.js'), context);
-  return { listeners, created, injections, saved };
+  return { listeners, created, injections, saved, installed, menuClicks, commands, menus };
 }
 test('popup capture runs isolated bundled scripts and opens a saved reader without replacing original', async () => {
   const b = background();
@@ -98,4 +101,46 @@ test('capture failures reach the popup and do not create empty documents', async
     const response = await new Promise(resolve => b.listeners[1]({ type: 'lmv-capture-page', tabId: 7 }, { url: 'chrome-extension://test/popup.html' }, resolve));
     assert.equal(response.ok, false); assert.ok(response.error); assert.equal(b.created.length, 0); assert.equal(b.saved.length, 0);
   }
+});
+
+test('install/update registers one menu limited to HTTP(S) documents', () => {
+  const b = background();
+  for (let i = 0; i < 2; i++) b.installed.forEach(listener => listener());
+  assert.equal(b.menus.length, 1);
+  assert.equal(b.menus[0].title, '用 Leaflet 阅读当前网页');
+  assert.deepEqual(Array.from(b.menus[0].documentUrlPatterns), ['http://*/*', 'https://*/*']);
+});
+test('context menu captures the clicked tab, not the link or a newly focused tab', async () => {
+  const b = background();
+  await b.menuClicks[0]({ menuItemId: 'lmv-capture-page', linkUrl: 'https://other.example/' }, { id: 42 });
+  assert.equal(b.injections[0].target.tabId, 42);
+  assert.equal(b.created.length, 1);
+  assert.match(b.created[0].url, /capture=webpage/);
+});
+test('shortcut uses its event tab and falls back to the active tab when absent', async () => {
+  const b = background();
+  await b.commands[0]('capture-page', { id: 9 });
+  await b.commands[0]('capture-page');
+  await b.commands[0]('unrelated-command', { id: 1 });
+  assert.deepEqual(b.injections.map(args => args.target.tabId), [9, 11]);
+});
+test('shortcut and menu failures open an explanatory reader without saving a capture', async () => {
+  const b = background({ captureError: true });
+  await b.commands[0]('capture-page', { id: 9 });
+  assert.equal(new URL(b.created[0].url).searchParams.get('captureError'), '没有正文');
+  assert.equal(b.saved.length, 0);
+});
+test('repeated shortcut/menu gestures cannot duplicate an in-progress capture', async () => {
+  let release;
+  const wait = new Promise(resolve => { release = resolve; });
+  const b = background({ beforeInject: () => wait });
+  const first = b.commands[0]('capture-page', { id: 9 });
+  await b.commands[0]('capture-page', { id: 9 });
+  await b.menuClicks[0]({ menuItemId: 'lmv-capture-page' }, { id: 9 });
+  assert.equal(b.injections.length, 1);
+  release();
+  await first;
+  assert.equal(b.created.length, 1);
+  await b.commands[0]('capture-page', { id: 9 });
+  assert.equal(b.created.length, 2);
 });

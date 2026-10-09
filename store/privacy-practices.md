@@ -36,6 +36,12 @@ Stores reading preferences and a short-lived copy of Markdown text on the device
 Temporarily reads the active webpage only when the user invokes the extension and chooses Read current webpage. Its article is converted to Markdown locally and saved in recent documents. No background browsing collection or uploads.
 ```
 
+### `contextMenus`
+
+```
+Adds a Read current webpage with Leaflet item to the context menu on HTTP/HTTPS pages. Conversion runs only when the user chooses it; the item captures the current page, not the target of a clicked link.
+```
+
 ### `scripting`
 
 ```

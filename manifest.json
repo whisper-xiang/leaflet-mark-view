@@ -10,7 +10,7 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
   "host_permissions": [
     "file:///*",
     "https://raw.githubusercontent.com/*",
@@ -25,6 +25,12 @@
       "all_frames": false
     }
   ],
+  "commands": {
+    "capture-page": {
+      "suggested_key": { "default": "Alt+Shift+M", "mac": "Alt+Shift+M" },
+      "description": "用 Leaflet 阅读当前网页"
+    }
+  },
   "action": {
     "default_icon": {
       "16": "icons/icon16.png",

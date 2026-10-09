@@ -70,6 +70,8 @@ function bindAutoScroll() {
   } catch { speed.value = 35; }
   function configure() {
     speed.value = controller.configure(speed.value, loop.checked);
+    const progress = (Number(speed.value) - Number(speed.min)) / (Number(speed.max) - Number(speed.min)) * 100;
+    speed.style.setProperty("--auto-scroll-progress", `${progress}%`);
     document.getElementById("autoScrollSpeedLabel").textContent = `${speed.value} 像素/秒`;
     try { localStorage.setItem("lmv-auto-scroll", JSON.stringify({ speed: Number(speed.value), loop: loop.checked })); } catch {}
   }

@@ -36,3 +36,11 @@ readerButton.addEventListener("click", async () => {
     window.close();
   } catch (error) { status.textContent = error.message; }
 });
+
+// Show the actual binding, including user changes or an unassigned shortcut.
+chrome.commands.getAll().then(commands => {
+  const shortcut = commands.find(command => command.name === "capture-page")?.shortcut;
+  document.getElementById("shortcutHint").textContent = shortcut
+    ? `快捷键：${shortcut} · 也可在网页中右键打开`
+    : "可在 chrome://extensions/shortcuts 设置快捷键，也可在网页中右键打开";
+}).catch(() => {});

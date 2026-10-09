@@ -39,7 +39,7 @@ Leaflet Mark View（「本扩展」）是一款在 Chrome 中阅读 Markdown 的
 
 ## 网页正文转换
 
-点击「阅读当前网页」时，扩展通过 `activeTab` 临时权限读取当前标签页已加载的正文，在本机提取文章并转换为 Markdown。不自动读取其他标签页，不上传正文，也不调用在线转换服务。转换后的文档保存在最近阅读中；阅读时，原文中的远程图片可能按原地址加载。
+通过扩展弹框、网页右键菜单或快捷键主动使用「阅读当前网页」时，扩展通过 `activeTab` 临时权限读取当前标签页已加载的正文，在本机提取文章并转换为 Markdown。不自动读取其他标签页，不上传正文，也不调用在线转换服务。转换后的文档保存在最近阅读中；阅读时，原文中的远程图片可能按原地址加载。
 
 ## 本地文件访问
 
@@ -57,6 +57,7 @@ Chrome 仍要求你在扩展详情页额外开启 **「允许访问文件网址�
 | `storage` | 在本机保存临时文本与偏好 |
 | `activeTab` | 主动点击扩展后临时读取当前网页正文 |
 | `scripting` | 主动转换时运行本地打包的正文提取和 Markdown 转换脚本 |
+| `contextMenus` | 在普通网页右键菜单中提供「用 Leaflet 阅读当前网页」入口 |
 | `file:///*` | 拦截并阅读本地 Markdown 及同目录图片 |
 | `raw.githubusercontent.com` / `api.github.com` | 打开 GitHub 仓库或文件 |
 | 可选 `https://*/*` | 仅在你粘贴其他站点的 `.md` 链接并同意后，访问该域名 |
@@ -113,7 +114,7 @@ Local folders and local files are not uploaded.
 
 ## Webpage conversion
 
-When you choose “阅读当前网页” (Read current webpage), temporary `activeTab` access allows the Extension to read the loaded page. Bundled scripts run via `scripting` to extract and convert its article locally. It does not automatically read other tabs, upload article text, or use an online conversion service. Captures are saved in recent documents. Remote images may be loaded from their original URLs while reading.
+When you choose “阅读当前网页” (Read current webpage) through the popup, webpage context menu, or keyboard shortcut, temporary `activeTab` access allows the Extension to read the loaded page. The `contextMenus` permission provides the webpage right-click entry. Bundled scripts run via `scripting` to extract and convert its article locally. It does not automatically read other tabs, upload article text, or use an online conversion service. Captures are saved in recent documents. Remote images may be loaded from their original URLs while reading.
 
 ## Local file access
 

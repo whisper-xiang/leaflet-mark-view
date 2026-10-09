@@ -63,3 +63,52 @@ async function capturePage(tabId) {
   const captureId = await LMV.saveWebCapture(result.article);
   await chrome.tabs.create({ url: chrome.runtime.getURL("viewer.html") + "?capture=" + encodeURIComponent(captureId) });
 }
+
+
+const CAPTURE_MENU_ID = "lmv-capture-page";
+
+// Menus persist across worker restarts; recreate only when installing/updating.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: CAPTURE_MENU_ID,
+      title: "用 Leaflet 阅读当前网页",
+      contexts: ["page", "selection", "link", "image", "video", "audio"],
+      documentUrlPatterns: ["http://*/*", "https://*/*"],
+    });
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === CAPTURE_MENU_ID) return captureFromGesture(tab);
+});
+
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command === "capture-page") return captureFromGesture(tab);
+});
+
+const pendingCaptures = new Set();
+async function captureFromGesture(tab) {
+  let tabId;
+  let ownsCapture = false;
+  try {
+    // Prefer the event's tab: focus may change while asynchronous work runs.
+    if (!Number.isInteger(tab?.id)) {
+      [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    }
+    tabId = tab?.id;
+    if (!Number.isInteger(tabId)) throw new Error("未找到当前网页，请先打开一篇文章。");
+    if (pendingCaptures.has(tabId)) return;
+    pendingCaptures.add(tabId);
+    ownsCapture = true;
+    await capturePage(tabId);
+  } catch (error) {
+    // Commands/context menus have no popup in which to display a failure.
+    await chrome.tabs.create({
+      url: chrome.runtime.getURL("viewer.html") + "?captureError=" +
+        encodeURIComponent(error.message || "网页转换失败，请重试。"),
+    });
+  } finally {
+    if (ownsCapture) pendingCaptures.delete(tabId);
+  }
+}
