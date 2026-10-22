@@ -1929,15 +1929,14 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .tree-context-menu {
 .markdown-body li.task-item {
   list-style: none;
   margin-left: -1.15em;
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
+  /* 保持普通行内流。flex 会把每个文本节点和每个 <code> 都当成一列，
+     长任务句会被拆成竖条。 */
 }
 .markdown-body li.task-item input[type="checkbox"] {
-  margin-top: 5px;
+  margin: 0.35em 0.45em 0 0;
+  vertical-align: text-top;
   cursor: default;
   accent-color: var(--accent);
-  flex-shrink: 0;
 }
 
 .markdown-body blockquote {
