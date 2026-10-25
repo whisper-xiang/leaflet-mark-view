@@ -177,6 +177,14 @@ t("standalone HTML img line is not escaped",
   '<img src="public/shot.jpg" alt="shot">',
   '<img src="public/shot.jpg"',
   ["&lt;img"]);
+t("style block is kept as CSS instead of escaped text",
+  '<style>\nh1 { color: red; }\n.note { padding: 8px; }\n</style>',
+  ["<style>", "h1 { color: red; }", ".note { padding: 8px; }", "</style>"],
+  ["&lt;style", "&lt;/style"]);
+t("style element with attributes is kept",
+  '<style type="text/css">\n.box { margin: 0; }\n</style>',
+  ['<style type="text/css">', ".box { margin: 0; }"],
+  ["&lt;style"]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

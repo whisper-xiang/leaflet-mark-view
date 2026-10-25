@@ -478,6 +478,7 @@ function tryParseHtmlBlock(lines, startI, endI) {
     "p",
     "center",
     "picture",
+    "style",
   ]);
   if (!blockTags.has(rootTag)) return null;
 
