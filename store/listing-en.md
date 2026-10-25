@@ -29,6 +29,7 @@ Open
 • Optionally make Chrome the default app for .md files and enable “Allow access to file URLs” to open files with a double-click
 
 Read
+• Fold chapters from the arrow on the left of a heading. Several top-level headings each collapse on their own; a single document title folds each second-level chapter
 • Auto-scroll: 5–200 pixels/second, pause/resume, optional looping, and saved speed preferences
 • File tree, full-text search (Ctrl/⌘ K), outline, recents, and remembered scroll position
 • Themes (light, sepia, sage, dark, ink), sans or serif body font, four font sizes

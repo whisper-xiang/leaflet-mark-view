@@ -6,7 +6,15 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.7.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.8.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+
+### v1.8.0 更新
+
+- **章节折叠** — 标题左侧箭头可收起该节。有多个 `#` 时每个一级标题单独收起；只有一个文档标题时，收起每个 `##` 章节
+- **大纲联动** — 收起后隐藏对应子目录；从大纲或文内链接跳入已收起的章节时先展开再定位
+- **任务列表** — 长条目保持整行排列，勾选框与文字对齐
+
+已有用户更新后请在 `chrome://extensions` 重新加载扩展；使用解压安装时需先替换安装目录文件。
 
 ### v1.7.0 更新
 
@@ -193,6 +201,7 @@ cd leaflet-mark-view
 
 - **全文搜索** — `Ctrl+K` / `⌘K` 弹框搜索，同时匹配文件名与正文，命中片段高亮，路径面包屑导航
 - **大纲导航** — 自动提取 h2–h4 生成目录，滚动跟随高亮，点击平滑定位，侧栏宽度可拖拽调节
+- **章节折叠** — 标题左侧箭头收起该节；多个 `#` 各自收起，仅有一个文档标题时收起每个 `##`。跳入已收起章节会先展开
 - **阅读进度条** — 顶栏细线随滚动进度延伸（纯 CSS 实现）
 - **阅读记忆** — 记住每个文件的上次阅读位置与最后打开文件，下次自动恢复
 - **上下篇导航** — 按文件列表顺序切换，浮动按钮 + 正文底部卡片双入口
