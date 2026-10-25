@@ -2405,11 +2405,143 @@ function renderMarkdownInto(body, text, fileUrl) {
   body.querySelectorAll("table").forEach(setupResizableTable);
 
   buildOutline(body);
+  setupHeadingFolds(body);
 
   // Math + diagrams — vendored libraries, lazy-loaded only when present.
   renderMath(body);
   renderMermaid(body);
   renderPlantuml(body);
+}
+
+// Fold the document's chapter headings. Several `#` headings each collapse
+// until the next `#`. A single title does not: the repeated `##` chapters do.
+function chooseFoldLevel(body) {
+  const counts = [0, 0, 0, 0, 0, 0, 0];
+  for (const child of body.children) {
+    const match = /^H([1-6])$/.exec(child.tagName);
+    if (match) counts[+match[1]] += 1;
+  }
+  let lone = 0;
+  for (let level = 1; level <= 6; level++) {
+    if (counts[level] >= 2) return level;
+    if (counts[level] === 1 && !lone) lone = level;
+  }
+  return lone;
+}
+
+function nodeHasFoldContent(node) {
+  if (node.nodeType === 3) return node.textContent.trim().length > 0;
+  return node.nodeType === 1;
+}
+
+function headingPlainLabel(heading) {
+  const clone = heading.cloneNode(true);
+  clone.querySelectorAll(".heading-fold, .header-anchor").forEach((n) => n.remove());
+  return clone.textContent.replace(/\u200B/g, "").trim();
+}
+
+function setupHeadingFolds(body) {
+  const level = chooseFoldLevel(body);
+  if (!level) return;
+  const tag = "H" + level;
+  const kids = [...body.childNodes];
+  for (let i = 0; i < kids.length; i++) {
+    const heading = kids[i];
+    if (heading.nodeType !== 1 || heading.tagName !== tag) continue;
+    const chunk = [];
+    let j = i + 1;
+    while (j < kids.length) {
+      const next = kids[j];
+      if (next.nodeType === 1 && next.tagName === tag) break;
+      chunk.push(next);
+      j++;
+    }
+    if (!chunk.some(nodeHasFoldContent)) continue;
+
+    const title = document.createElement("span");
+    title.className = "heading-fold-title";
+    while (heading.firstChild) title.appendChild(heading.firstChild);
+
+    const section = document.createElement("div");
+    section.className = "heading-fold-body";
+    if (heading.id) section.id = heading.id + "-fold";
+    for (const node of chunk) section.appendChild(node);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "heading-fold";
+    btn.innerHTML =
+      '<svg class="heading-fold-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+    const name = headingPlainLabel(title);
+    btn.title = `收起「${name}」`;
+    btn.setAttribute("aria-label", btn.title);
+    btn.setAttribute("aria-expanded", "true");
+    if (section.id) btn.setAttribute("aria-controls", section.id);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setHeadingCollapsed(heading, !heading.classList.contains("is-collapsed"));
+      document.getElementById("contentArea")?.dispatchEvent(new Event("scroll"));
+    });
+
+    heading.classList.add("is-foldable");
+    heading.append(title, btn);
+    heading.after(section);
+  }
+}
+
+function setHeadingCollapsed(heading, collapsed) {
+  if (!heading) return;
+  heading.classList.toggle("is-collapsed", collapsed);
+  const btn = heading.querySelector(":scope > .heading-fold");
+  if (btn) {
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    const name = headingPlainLabel(heading);
+    const label = `${collapsed ? "展开" : "收起"}「${name}」`;
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
+  }
+  syncOutlineFolds();
+}
+
+function headingIsCollapsedAway(el) {
+  let node = el?.parentElement;
+  while (node) {
+    if (node.classList.contains("heading-fold-body")) {
+      const head = node.previousElementSibling;
+      if (head?.classList.contains("is-collapsed")) return true;
+    }
+    node = node.parentElement;
+  }
+  return false;
+}
+
+function expandFoldAncestors(el) {
+  const heads = [];
+  let node = el?.parentElement;
+  while (node) {
+    if (node.classList.contains("heading-fold-body")) {
+      const head = node.previousElementSibling;
+      if (head?.classList.contains("is-collapsed")) heads.push(head);
+    }
+    node = node.parentElement;
+  }
+  for (const head of heads.reverse()) setHeadingCollapsed(head, false);
+}
+
+function syncOutlineFolds() {
+  const body = document.getElementById("markdownBody");
+  const root = document.getElementById("outlineRoot");
+  if (!body || !root) return;
+  root.querySelectorAll(".outline-link").forEach((a) => {
+    const heading = body.querySelector("#" + CSS.escape(a.dataset.target || ""));
+    if (!heading) return;
+    a.classList.toggle("is-folded-away", headingIsCollapsedAway(heading));
+    a.closest("li")?.classList.toggle(
+      "is-section-collapsed",
+      heading.classList.contains("is-collapsed"),
+    );
+  });
 }
 
 // Make a rendered table's columns drag-resizable. Wraps the table in a
@@ -3225,6 +3357,7 @@ function highlightSidebar(node) {
 // Defers hash update so Chrome doesn't trigger its own anchor-scroll first.
 function scrollToHeading(h) {
   autoScroller?.stop();
+  expandFoldAncestors(h);
   const ca = document.getElementById("contentArea");
   let top = 0;
   let el = h;
@@ -3335,14 +3468,16 @@ function setupScrollSpy(headings) {
     ticking = false;
     const paneTop = ca.getBoundingClientRect().top;
     const activeLine = 100; // a heading within 100px of the pane top is "current"
-    let current = headings[0];
+    const visible = (h) => !headingIsCollapsedAway(h);
+    let current = headings.find(visible) || headings[0];
     for (const h of headings) {
+      if (!visible(h)) continue;
       if (h.getBoundingClientRect().top - paneTop <= activeLine) current = h;
       else break;
     }
     // At the bottom, the last headings can never reach the line: pin the last.
     if (ca.scrollTop + ca.clientHeight >= ca.scrollHeight - 4) {
-      current = headings[headings.length - 1];
+      current = [...headings].reverse().find(visible) || current;
     }
 
     let activeItem = null;

@@ -1728,6 +1728,71 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .tree-context-menu {
 .vp-doc h2 .header-anchor {
   top: 24px;
 }
+.markdown-body .is-foldable {
+  display: block;
+}
+.markdown-body .heading-fold-title {
+  display: inline;
+}
+.markdown-body .heading-fold {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(calc(-100% - 2px), -50%);
+}
+.markdown-body .is-foldable .header-anchor {
+  top: 50%;
+  margin-left: calc(-30px - 0.85em);
+  transform: translateY(-50%);
+}
+.markdown-body .heading-fold:hover,
+.markdown-body .heading-fold:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text);
+  outline: none;
+}
+.markdown-body .heading-fold-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+.markdown-body .is-foldable:not(.is-collapsed) .heading-fold-icon {
+  transform: rotate(90deg);
+}
+.markdown-body .is-foldable.is-collapsed {
+  box-shadow: inset 0 -1px 0 var(--border);
+  padding-bottom: 0.2em;
+}
+.markdown-body .is-foldable.is-collapsed + .heading-fold-body {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .markdown-body .heading-fold-icon {
+    transition: none;
+  }
+}
+@media (max-width: 700px) {
+  .markdown-body .is-foldable {
+    padding-left: 30px;
+  }
+  .markdown-body .heading-fold {
+    transform: translateY(-50%);
+  }
+}
+
 .markdown-body h1:hover .header-anchor,
 .markdown-body h1 .header-anchor:focus,
 .markdown-body h2:hover .header-anchor,
@@ -2511,6 +2576,12 @@ body.lightbox-open {
 }
 .outline-link.active {
   font-weight: 500;
+}
+.outline-root li.is-section-collapsed > .outline-nested {
+  display: none;
+}
+.outline-link.is-folded-away {
+  opacity: 0.4;
 }
 
 /* ── Doc-footer: VitePress pager — fills doc-main width ── */
