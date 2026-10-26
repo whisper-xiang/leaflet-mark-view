@@ -13,7 +13,7 @@ https://whisper-xiang.github.io/leaflet-mark-view/privacy.html
 ## Single purpose（单一用途）
 
 ```
-A local-first Markdown reader for Chrome. Users open a local folder, a local .md file, a GitHub / HTTPS Markdown URL, or explicitly convert the active webpage to Markdown and read it in a dedicated viewer, with optional export to HTML, Word, or Confluence wiki markup. There is no account and no cloud sync.
+A local-first Markdown reader for Chrome. Users open a local folder, a local .md file, a GitHub / HTTPS Markdown URL, or explicitly convert the active webpage to Markdown and read it in a dedicated viewer, with optional export to HTML, Word, or Confluence wiki markup, and an optional same-Wi-Fi read-only share of the open document. There is no account and no cloud sync.
 ```
 
 中文备忘（不必贴到英文框，供你对照）：
@@ -40,6 +40,12 @@ Provides temporary access to the current tab only after the user explicitly requ
 
 ```
 Adds a Read current webpage with Leaflet item to the context menu on HTTP/HTTPS pages. Conversion runs only when the user chooses it; the item captures the current page, not the target of a clicked link.
+```
+
+### `nativeMessaging`
+
+```
+Used only after the user turns on same-Wi-Fi share. The extension starts a local helper that serves the open document at a secret address on the local network. The document is not sent to the developer. Closing the share or the reader tab stops the page from being served.
 ```
 
 ### `scripting`
@@ -90,7 +96,7 @@ Mozilla Readability, Turndown, KaTeX, Mermaid, and PlantUML are bundled under ve
 
 网页转换会处理 **Website content（网站内容）**，最近阅读还会保存用户主动打开的来源网址。不得仅因为数据只保存在本机，就将「收集或使用数据」一律填为 No 或全部不勾选。
 
-按后台当前定义披露网站内容以及实际保存的来源网址 / 最近阅读数据；明确用途为用户主动发起的阅读、转换和本地历史恢复，不上传给开发者，不用于广告或画像。不要宣称读取完整浏览历史，扩展并无 history 权限。
+按后台当前定义披露网站内容以及实际保存的来源网址 / 最近阅读数据；明确用途为用户主动发起的阅读、转换、本地历史恢复和局域网分享，不上传给开发者，不用于广告或画像。不要宣称读取完整浏览历史，扩展并无 history 权限。局域网分享只在用户打开后，把当前文档交给本机组件，供同一 Wi-Fi 中持有链接的人阅读。
 
 Google 官方说明：即使数据仅在本机处理或保存，也要披露处理方式：
 https://developer.chrome.com/docs/webstore/program-policies/user-data-faq/

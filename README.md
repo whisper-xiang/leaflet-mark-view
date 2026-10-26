@@ -6,7 +6,16 @@
 
 > 本地文件夹、单篇文章、GitHub 远程仓库，拖进来就能读。本地渲染为主，不上传任何文件。
 
-[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v1.8.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+[官方网站](https://whisper-xiang.github.io/leaflet-mark-view/) · **[下载最新版 v2.0.0](https://github.com/whisper-xiang/leaflet-mark-view/releases/latest)** — 获取 `leaflet-mark-view.zip`，解压后在 Chrome 扩展页加载（见下方「快速开始」）。Chrome 网上应用店上架材料与提交步骤见 [`store/`](store/README.md)。官网源码在 [`docs/`](docs/)，仓库 Settings → Pages → Source 选 `main` / `/docs` 即可发布。
+
+### v2.0.0 更新
+
+- **局域网分享** — 设置中打开后，同一 Wi-Fi 可用带口令的地址只读查看当前文档。访客页沿用阅读器版式：侧栏、正文搜索、自动滚动、主题与字体、大纲，侧栏和大纲边缘都可以拖拽。文件留在本机。首次使用需按提示安装本机分享组件
+- **原文样式** — 文中的 `<style>` 和带 `style` 的行内标签按原文显示
+- **表格** — 最右侧列边也可以拖动调整宽度
+- **章节折叠** — 章节标题和下一层标题都能单独收起
+
+已有用户更新后请在 `chrome://extensions` 重新加载扩展；使用解压安装时需先替换安装目录文件。本版新增 `nativeMessaging` 权限，仅在打开局域网分享时启动本机组件。
 
 ### v1.8.0 更新
 
@@ -167,6 +176,7 @@ cd leaflet-mark-view
 | 切换主题 | 顶栏月亮 / 太阳图标（浅色系 ↔ 深色系，带视图过渡动画） |
 | 字体大小 / 阅读主题 / 正文字体 | 顶栏设置齿轮 → **主题** |
 | 大纲 / 背景图 | 顶栏设置齿轮 |
+| 局域网分享 | 顶栏设置齿轮 → **局域网分享** |
 | 折叠侧边栏 | 顶栏左侧图标 |
 | 固定文件夹 | 侧栏顶部图钉，固定后顶栏出现快捷分类 Tab |
 | 最近阅读 | 顶栏右侧 **最近阅读**，悬停打开；点条目继续，点 × 从列表移除 |
@@ -202,6 +212,7 @@ cd leaflet-mark-view
 - **全文搜索** — `Ctrl+K` / `⌘K` 弹框搜索，同时匹配文件名与正文，命中片段高亮，路径面包屑导航
 - **大纲导航** — 自动提取 h2–h4 生成目录，滚动跟随高亮，点击平滑定位，侧栏宽度可拖拽调节
 - **章节折叠** — 标题左侧箭头收起该节；一级标题及其下一级标题都能单独收起。跳入已收起章节会先展开
+- **局域网分享** — 同一 Wi-Fi 只读打开当前文档。访客页带侧栏、顶栏和大纲，可搜索、换主题、拖拽调整目录宽度。文件不上传；首次使用需安装本机分享组件
 - **阅读进度条** — 顶栏细线随滚动进度延伸（纯 CSS 实现）
 - **阅读记忆** — 记住每个文件的上次阅读位置与最后打开文件，下次自动恢复
 - **上下篇导航** — 按文件列表顺序切换，浮动按钮 + 正文底部卡片双入口
@@ -222,7 +233,8 @@ cd leaflet-mark-view
 - **失败占位** — 图片无法加载、Mermaid / PlantUML / 公式渲染失败时显示原因，而不是空白块
 - **代码高亮** — 内置 JS / TS / Python / Go / Java / Bash / CSS / SQL 等关键字高亮
 - **代码复制** — 代码块悬停显示一键复制
-- **可拖拽表格** — 渲染后的表格列宽可拖拽调整，双击表头自动适配内容宽度
+- **可拖拽表格** — 渲染后的表格列宽可拖拽调整，含最右侧列边；双击表头自动适配内容宽度
+- **原文样式** — `<style>` 样式块和允许的行内标签（如带 `style` 的 `strong`）按原文显示
 - **标题锚点** — VitePress 风格 permalink，中文标题生成有效锚点 ID
 - **站内跳转** — 文件夹内 `.md` 相对链接、脚注、页内锚点均在阅读器内导航，不另开标签页
 - **本地图片** — 相对路径与 `file://` 图片通过 Blob URL 正确显示
@@ -237,7 +249,7 @@ cd leaflet-mark-view
 ### 隐私与安全
 
 - **本地优先** — Markdown 解析、公式、Mermaid、PlantUML 均在浏览器本地完成，不上传本地文件
-- **最小权限** — `storage` 保存偏好；`activeTab` + `scripting` 在主动转换时临时读取当前页，`contextMenus` 提供网页右键入口；GitHub 域名预授权；其他 Markdown 直链按域名授权
+- **最小权限** — `storage` 保存偏好；`nativeMessaging` 仅在打开局域网分享时启动本机组件；`activeTab` + `scripting` 在主动转换时临时读取当前页，`contextMenus` 提供网页右键入口；GitHub 域名预授权；其他 Markdown 直链按域名授权
 - **数据本地存储** — 阅读记录、固定文件夹、自定义背景等存于 IndexedDB / localStorage，不上传云端
 - **[隐私政策](PRIVACY.md)** — Chrome 网上应用店所需的数据处理说明
 

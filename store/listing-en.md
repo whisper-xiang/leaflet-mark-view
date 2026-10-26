@@ -29,7 +29,9 @@ Open
 • Optionally make Chrome the default app for .md files and enable “Allow access to file URLs” to open files with a double-click
 
 Read
+• Same-Wi-Fi share: a secret, read-only link for the open document. The guest page keeps the sidebar, search, theme, and outline, and both panes can be resized. Files stay on your computer; the first use installs a local helper
 • Fold chapters from the arrow on the left of a heading. A chapter and the headings one level below it each collapse on their own. A single document title stays open and folding starts at the next level
+• Author style blocks and inline styles render as written. The rightmost table border resizes the last column
 • Auto-scroll: 5–200 pixels/second, pause/resume, optional looping, and saved speed preferences
 • File tree, full-text search (Ctrl/⌘ K), outline, recents, and remembered scroll position
 • Themes (light, sepia, sage, dark, ink), sans or serif body font, four font sizes
@@ -43,7 +45,7 @@ Export
 
 Privacy
 • No account, analytics, or ads
-• Only the storage permission is required; GitHub hosts are pre-granted; other sites are requested on demand
+• Required permissions are storage and nativeMessaging, the latter only while same-Wi-Fi share is on; GitHub hosts are pre-granted; other sites are requested on demand
 • Reading history stays on your device
 
 Requires Chrome 116+. Local folders use the File System Access API. To intercept .md files opened from disk, turn on “Allow access to file URLs” on the extension details page.
