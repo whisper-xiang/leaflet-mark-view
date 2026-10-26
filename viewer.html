@@ -206,6 +206,17 @@
                 </svg>
                 <span class="settings-label">大纲</span><span class="settings-val" id="outlineToggleLabel">开</span>
               </button>
+              <button class="settings-item" id="lanShareToggle" type="button" role="menuitem" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <path d="m8.59 13.51 6.83 3.98" />
+                  <path d="m15.41 6.51-6.82 3.98" />
+                </svg>
+                <span class="settings-label">局域网分享</span><span class="settings-val" id="lanShareToggleLabel">关</span>
+              </button>
               <div class="settings-submenu">
                 <button class="settings-item settings-submenu-trigger" type="button" role="menuitem" aria-haspopup="true" aria-expanded="false">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
@@ -263,6 +274,14 @@
           </div>
         </div>
       </header>
+
+      <div class="lan-share-bar" id="lanShareBar" hidden>
+        <span>同一 Wi-Fi</span>
+        <a id="lanShareUrl" target="_blank" rel="noopener noreferrer"></a>
+        <button type="button" id="lanShareCopy">复制</button>
+        <button type="button" id="lanShareStop">停止</button>
+        <span class="lan-share-alt" id="lanShareAlt" hidden></span>
+      </div>
 
       <!-- Doc viewport: scroll at window right edge; outline sticky beside content -->
       <div class="doc-viewport" id="contentArea">
@@ -533,7 +552,23 @@
   <script src="md-to-docx.js"></script>
   <script src="plantuml.js"></script>
   <script src="auto-scroll.js"></script>
+  <script src="lan-share.js"></script>
   <script src="viewer.js"></script>
+
+  <div class="lan-modal" id="lanShareModal" hidden>
+    <div class="lan-modal-backdrop" id="lanShareBackdrop"></div>
+    <div class="lan-modal-box" role="dialog" aria-modal="true" aria-labelledby="lanShareTitle">
+      <h2 id="lanShareTitle">安装局域网分享</h2>
+      <p id="lanShareLead"></p>
+      <ol id="lanShareSteps"></ol>
+      <pre id="lanShareCommand"></pre>
+      <div class="lan-modal-actions">
+        <button type="button" id="lanShareDownload">下载安装文件</button>
+        <button type="button" id="lanShareCopyCommand">复制命令</button>
+        <button type="button" id="lanShareModalClose">关闭</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

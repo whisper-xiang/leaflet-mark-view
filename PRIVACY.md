@@ -1,6 +1,6 @@
 # Leaflet Mark View 隐私政策
 
-生效日期：2026-10-09<br>
+生效日期：2026-10-25<br>
 开发者：轻语  
 扩展主页：https://github.com/whisper-xiang/leaflet-mark-view  
 联系：请通过 [GitHub Issues](https://github.com/whisper-xiang/leaflet-mark-view/issues) 联系。
@@ -34,8 +34,10 @@ Leaflet Mark View（「本扩展」）是一款在 Chrome 中阅读 Markdown 的
    首次使用时 Chrome 会弹出授权，仅授予你确认的那个域名。扩展默认不拥有「访问所有网站」的权限。
 3. **GitHub 仓库的 README 徽章等远程图片**  
    若文档本身引用了 `https` 图片，浏览器会按图片地址加载。
+4. **你打开「局域网分享」时**  
+   阅读页会把当前文档交给本机上的分享组件，由它在同一 Wi-Fi 内提供一个带口令的地址。文档不会发到开发者的服务器。关闭分享或关闭阅读页后，其他电脑不能再打开。
 
-打开本地文件夹或本地文件时，内容不会上传。
+打开本地文件夹或本地文件时，内容不会上传到开发者。
 
 ## 网页正文转换
 
@@ -58,17 +60,18 @@ Chrome 仍要求你在扩展详情页额外开启 **「允许访问文件网址�
 | `activeTab` | 主动点击扩展后临时读取当前网页正文 |
 | `scripting` | 主动转换时运行本地打包的正文提取和 Markdown 转换脚本 |
 | `contextMenus` | 在普通网页右键菜单中提供「用 Leaflet 阅读当前网页」入口 |
+| `nativeMessaging` | 仅在你打开局域网分享时，启动本机分享组件 |
 | `file:///*` | 拦截并阅读本地 Markdown 及同目录图片 |
 | `raw.githubusercontent.com` / `api.github.com` | 打开 GitHub 仓库或文件 |
 | 可选 `https://*/*` | 仅在你粘贴其他站点的 `.md` 链接并同意后，访问该域名 |
 
 ## 数据分享与保留
 
-不与第三方分享用户数据。没有云端副本，因此也没有「从开发者服务器删除」的流程；卸载扩展或清除浏览器数据即可。
+不把用户数据交给开发者或广告方。没有云端副本，因此也没有「从开发者服务器删除」的流程；卸载扩展或清除浏览器数据即可。你主动打开局域网分享时，同一 Wi-Fi 中拿到链接的人可以阅读当时打开的文档。
 
 ## 数据用途限制
 
-本扩展遵循 Chrome 网上应用店用户数据政策，包括 Limited Use 要求。读取的文档、网页正文与来源网址仅用于用户主动使用的阅读、转换、导出和最近阅读功能，不用于广告或用户画像。开发者不接收或人工查看这些内容。
+本扩展遵循 Chrome 网上应用店用户数据政策，包括 Limited Use 要求。读取的文档、网页正文与来源网址仅用于用户主动使用的阅读、转换、导出、最近阅读和局域网分享，不用于广告或用户画像。开发者不接收或人工查看这些内容。
 
 ## 儿童
 
@@ -82,7 +85,7 @@ Chrome 仍要求你在扩展详情页额外开启 **「允许访问文件网址�
 
 # Privacy Policy (English)
 
-Effective date: 9 October 2026<br>
+Effective date: 25 October 2026<br>
 Developer: 轻语 (Qingyu)  
 Homepage: https://github.com/whisper-xiang/leaflet-mark-view  
 Contact: [GitHub Issues](https://github.com/whisper-xiang/leaflet-mark-view/issues)
@@ -113,8 +116,9 @@ Network requests happen only after you take an action:
 1. **Opening a GitHub URL** — requests to `api.github.com` and/or `raw.githubusercontent.com`.
 2. **Opening a `.md` URL on another site** — Chrome prompts you the first time; only the host you approve is granted. The Extension does not ship with access to all websites.
 3. **Remote images referenced by a document** — the browser loads `https` image URLs that appear in the Markdown itself.
+4. **Same-Wi-Fi share, after you turn it on** — the viewer hands the open document to a helper on your computer, which serves it at a secret address on the local network. The document is not sent to the developer. Closing the share or the reader tab stops other computers from opening it.
 
-Local folders and local files are not uploaded.
+Local folders and local files are not uploaded to the developer.
 
 ## Webpage conversion
 
@@ -131,11 +135,11 @@ Chrome still requires **“Allow access to file URLs”** on the extension detai
 
 ## Data sharing and retention
 
-User data is not shared with third parties. There is no cloud copy, so there is no server-side deletion request. Uninstalling the Extension or clearing browser data removes local records.
+User data is not sent to the developer or to advertisers. There is no cloud copy, so there is no server-side deletion request. Uninstalling the Extension or clearing browser data removes local records. If you turn on same-Wi-Fi share, anyone on that network who has the link can read the document that is open.
 
 ## Limited use
 
-The Extension adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements. Documents, webpage content, and source URLs are used only for user-initiated reading, conversion, export, and recent-document features, not advertising or user profiling. The developer does not receive or manually review that content.
+The Extension adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements. Documents, webpage content, and source URLs are used only for user-initiated reading, conversion, export, recent-document, and same-Wi-Fi share features, not advertising or user profiling. The developer does not receive or manually review that content.
 
 ## Children
 

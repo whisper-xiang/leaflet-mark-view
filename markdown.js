@@ -40,6 +40,102 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+// Inline tags authors use for emphasis and color. Block HTML is handled
+// separately. Script-bearing and form tags stay escaped text.
+const INLINE_HTML_TAGS = new Set(
+  "a,abbr,b,big,br,cite,code,del,em,font,i,img,ins,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strike,strong,sub,sup,time,u,var,wbr".split(","),
+);
+const VOID_HTML_TAGS = new Set(["br", "img", "wbr", "hr"]);
+const INLINE_HTML_ATTRS = {
+  a: ["href", "name", "rel", "target"],
+  img: ["alt", "height", "src", "width"],
+  font: ["color", "face", "size"],
+  time: ["datetime"],
+  q: ["cite"],
+  abbr: ["title"],
+};
+
+function sanitizeInlineAttrs(tag, raw) {
+  const allowed = new Set(["class", "dir", "id", "lang", "style", "title", "align"]);
+  for (const name of INLINE_HTML_ATTRS[tag] || []) allowed.add(name);
+  const parts = [];
+  const re = /([^\s=\/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  let match;
+  const source = raw.replace(/\/\s*$/, "");
+  while ((match = re.exec(source))) {
+    const name = match[1].toLowerCase();
+    if (!allowed.has(name) || name.startsWith("on")) continue;
+    const value = match[2] ?? match[3] ?? match[4];
+    if (value == null) {
+      parts.push(name);
+      continue;
+    }
+    if ((name === "href" || name === "src") && /^\s*(?:javascript|vbscript):/i.test(value)) continue;
+    if (name === "style" && /expression\s*\(|javascript\s*:|@import|-moz-binding|behavior\s*:/i.test(value)) continue;
+    parts.push(`${name}="${escapeHtml(value)}"`);
+  }
+  return parts.length ? " " + parts.join(" ") : "";
+}
+
+function findMatchingClose(text, from, name) {
+  const re = /<(\/?)([a-zA-Z][\w-]*)\b[^>]*>/g;
+  re.lastIndex = from;
+  let depth = 1;
+  let match;
+  while ((match = re.exec(text))) {
+    if (match[2].toLowerCase() !== name) continue;
+    if (match[1] === "/") {
+      depth--;
+      if (depth === 0) return { start: match.index, end: match.index + match[0].length };
+    } else if (!/\/\s*>$/.test(match[0])) {
+      depth++;
+    }
+  }
+  return null;
+}
+
+// Lift safe inline tags out of the text before HTML escaping, so
+// `<strong style="color:red">` keeps its style instead of showing as text.
+function protectInlineHtml(text, htmls) {
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const lt = text.indexOf("<", i);
+    if (lt < 0) {
+      out += text.slice(i);
+      break;
+    }
+    out += text.slice(i, lt);
+    const open = /^<([a-zA-Z][\w-]*)\b([^>]*)>/.exec(text.slice(lt));
+    const name = open && open[1].toLowerCase();
+    if (!open || !INLINE_HTML_TAGS.has(name)) {
+      out += "<";
+      i = lt + 1;
+      continue;
+    }
+    const rawAttrs = open[2];
+    const openEnd = lt + open[0].length;
+    const selfClosing = /\/\s*$/.test(rawAttrs) || VOID_HTML_TAGS.has(name);
+    let next = openEnd;
+    let body = "";
+    if (!selfClosing) {
+      const close = findMatchingClose(text, openEnd, name);
+      if (!close) {
+        out += "<";
+        i = lt + 1;
+        continue;
+      }
+      body = parseInline(text.slice(openEnd, close.start));
+      next = close.end;
+    }
+    const attrs = sanitizeInlineAttrs(name, rawAttrs);
+    htmls.push(selfClosing ? `<${name}${attrs}>` : `<${name}${attrs}>${body}</${name}>`);
+    out += `\x02H${htmls.length - 1}\x02`;
+    i = next;
+  }
+  return out;
+}
+
 // Keep CJK (U+4E00–U+9FFF) so Chinese headings get real anchors instead of
 // collapsing to empty. MUST stay in sync with slugFromText() in viewer.js,
 // otherwise in-document links like [x](#中文标题) won't match heading ids.
@@ -83,6 +179,10 @@ function parseInline(text) {
       return `\x02M${maths.length - 1}\x02`;
     },
   );
+
+  // Keep author inline tags (and their style) before the rest is escaped.
+  const htmls = [];
+  text = protectInlineHtml(text, htmls);
 
   // Escape HTML in the non-code parts
   text = escapeHtml(text);
@@ -144,7 +244,8 @@ function parseInline(text) {
   // Line break (two trailing spaces)
   text = text.replace(/  \n/g, "<br>\n");
 
-  // Restore protected inline math, then code spans
+  // Restore protected inline HTML, math, then code spans
+  text = text.replace(/\x02H(\d+)\x02/g, (_, i) => htmls[+i]);
   text = text.replace(/\x02M(\d+)\x02/g, (_, i) => maths[+i]);
   text = text.replace(/\x02C(\d+)\x02/g, (_, i) => codes[+i]);
 

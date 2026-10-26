@@ -218,6 +218,7 @@ function handleReaderEscape(event) {
     ["docxModal", closeDocxExportModal],
     ["cfModal", closeConfluenceModal],
     ["searchModal", closeSearchModal],
+    ["lanShareModal", () => LanShare.closeModal()],
   ];
   for (const [id, close] of modals) {
     if (document.getElementById(id)?.classList.contains("open")) {
@@ -1974,6 +1975,7 @@ async function renderMath(body) {
       const tex = el.getAttribute("data-tex") || "";
       showMediaFallback(el, "公式引擎未能加载", tex);
     });
+    notifyLanShare();
     return;
   }
   els.forEach((el) => {
@@ -1987,6 +1989,7 @@ async function renderMath(body) {
       showMediaFallback(el, "公式无法渲染", tex);
     }
   });
+  notifyLanShare();
 }
 
 // Shared shell for Mermaid / PlantUML: preview ↔ source toggle + copy.
@@ -2083,6 +2086,7 @@ async function renderMermaid(body) {
     els.forEach((el) => {
       showMediaFallback(el, "Mermaid 引擎未能加载", (el.textContent || "").trim());
     });
+    notifyLanShare();
     return;
   }
   const dark = isDarkTheme(document.documentElement.getAttribute("data-theme"));
@@ -2120,6 +2124,7 @@ async function renderMermaid(body) {
       );
     }
   }
+  notifyLanShare();
 }
 
 // Render PlantUML locally via vendored @plantuml/core (no network).
@@ -2157,6 +2162,7 @@ async function renderPlantuml(body) {
       );
     }
   }
+  notifyLanShare();
 }
 
 function showPlantumlError(preview, message) {
@@ -2362,6 +2368,10 @@ function bindDiagramZoom(body) {
 }
 
 // Parse markdown into `body` and wire up links + heading anchors + outline.
+function notifyLanShare() {
+  try { LanShare.refresh(); } catch (_) {}
+}
+
 function renderMarkdownInto(body, text, fileUrl) {
   autoScroller?.stop();
   closeLightbox();
@@ -2411,10 +2421,13 @@ function renderMarkdownInto(body, text, fileUrl) {
   renderMath(body);
   renderMermaid(body);
   renderPlantuml(body);
+  notifyLanShare();
 }
 
-// Fold the document's chapter headings. Several `#` headings each collapse
-// until the next `#`. A single title does not: the repeated `##` chapters do.
+// Fold the document's chapter headings, and the headings one level below them.
+// Several `#` headings each collapse until the next `#`. A single title does
+// not: the repeated `##` chapters do. Either way, the next heading level
+// collapses on its own until the next heading of the same or higher rank.
 function chooseFoldLevel(body) {
   const counts = [0, 0, 0, 0, 0, 0, 0];
   for (const child of body.children) {
@@ -2429,6 +2442,12 @@ function chooseFoldLevel(body) {
   return lone;
 }
 
+function headingRank(node) {
+  if (!node || node.nodeType !== 1) return 0;
+  const match = /^H([1-6])$/.exec(node.tagName);
+  return match ? +match[1] : 0;
+}
+
 function nodeHasFoldContent(node) {
   if (node.nodeType === 3) return node.textContent.trim().length > 0;
   return node.nodeType === 1;
@@ -2440,19 +2459,19 @@ function headingPlainLabel(heading) {
   return clone.textContent.replace(/\u200B/g, "").trim();
 }
 
-function setupHeadingFolds(body) {
-  const level = chooseFoldLevel(body);
-  if (!level) return;
+function foldHeadingsIn(container, level) {
   const tag = "H" + level;
-  const kids = [...body.childNodes];
+  const kids = [...container.childNodes];
   for (let i = 0; i < kids.length; i++) {
     const heading = kids[i];
     if (heading.nodeType !== 1 || heading.tagName !== tag) continue;
+    if (heading.classList.contains("is-foldable")) continue;
     const chunk = [];
     let j = i + 1;
     while (j < kids.length) {
       const next = kids[j];
-      if (next.nodeType === 1 && next.tagName === tag) break;
+      const rank = headingRank(next);
+      if (rank && rank <= level) break;
       chunk.push(next);
       j++;
     }
@@ -2488,6 +2507,16 @@ function setupHeadingFolds(body) {
     heading.append(title, btn);
     heading.after(section);
   }
+}
+
+function setupHeadingFolds(body) {
+  const level = chooseFoldLevel(body);
+  if (!level) return;
+  foldHeadingsIn(body, level);
+  if (level >= 6) return;
+  const sections = [...body.querySelectorAll(".heading-fold-body")];
+  foldHeadingsIn(body, level + 1);
+  for (const section of sections) foldHeadingsIn(section, level + 1);
 }
 
 function setHeadingCollapsed(heading, collapsed) {
@@ -2546,7 +2575,8 @@ function syncOutlineFolds() {
 
 // Make a rendered table's columns drag-resizable. Wraps the table in a
 // horizontal-scroll container, locks it to a fixed layout sized from the
-// current column widths, and adds a grip on each header cell's right edge.
+// current column widths, and adds a grip on each column's right edge,
+// including the table's outer right edge (the last column).
 // Double-clicking a grip auto-fits all columns back to their content width.
 const MIN_COL_W = 48;
 function setupResizableTable(table) {
@@ -2576,32 +2606,28 @@ function setupResizableTable(table) {
   table.insertBefore(colgroup, table.firstChild);
   const cols = Array.from(colgroup.children);
 
+  let edgeGrip = null;
   const applyWidths = () => {
     cols.forEach((c, i) => (c.style.width = colW[i] + "px"));
     table.style.width = colW.reduce((a, b) => a + b, 0) + "px";
+    if (edgeGrip) {
+      edgeGrip.style.left = table.offsetLeft + table.offsetWidth - 9 + "px";
+    }
   };
   table.style.tableLayout = "fixed";
   applyWidths();
 
-  // Last column has no grip: resizing the others grows the scroll area.
-  cells.forEach((cell, i) => {
-    if (i === cells.length - 1) return;
-    cell.style.position = "relative";
-
-    const grip = document.createElement("span");
-    grip.className = "col-resizer";
-    cell.appendChild(grip);
-
+  const bindGrip = (grip, index) => {
     grip.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
       const startX = e.clientX;
-      const startW = colW[i];
+      const startW = colW[index];
       grip.setPointerCapture(e.pointerId);
       grip.classList.add("dragging");
 
       const onMove = (ev) => {
-        colW[i] = Math.max(MIN_COL_W, startW + (ev.clientX - startX));
+        colW[index] = Math.max(MIN_COL_W, startW + (ev.clientX - startX));
         applyWidths();
       };
       const onUp = () => {
@@ -2624,7 +2650,25 @@ function setupResizableTable(table) {
       table.style.tableLayout = "fixed";
       applyWidths();
     });
+  };
+
+  // Header grips sit on the borders between columns. The last column's
+  // border is the table's right edge, so its grip spans that full edge.
+  cells.forEach((cell, i) => {
+    if (i === cells.length - 1) return;
+    cell.style.position = "relative";
+    const grip = document.createElement("span");
+    grip.className = "col-resizer";
+    cell.appendChild(grip);
+    bindGrip(grip, i);
   });
+
+  edgeGrip = document.createElement("span");
+  edgeGrip.className = "col-resizer is-edge";
+  edgeGrip.title = "拖动调整最后一列宽度";
+  wrap.appendChild(edgeGrip);
+  bindGrip(edgeGrip, cells.length - 1);
+  applyWidths();
 }
 
 // Tag a <pre> with its language and add a hover copy button.
@@ -3541,6 +3585,7 @@ function slugFromText(text) {
 function setContent(html) {
   autoScroller?.stop();
   document.getElementById("markdownBody").innerHTML = html;
+  notifyLanShare();
 }
 
 // ── Utils ────────────────────────────────────────────────────────────

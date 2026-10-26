@@ -185,6 +185,22 @@ t("style element with attributes is kept",
   '<style type="text/css">\n.box { margin: 0; }\n</style>',
   ['<style type="text/css">', ".box { margin: 0; }"],
   ["&lt;style"]);
+t("inline strong keeps its style attribute",
+  '默认不随时间线下来，<strong style="color:red">只有用户打开「显示执行详情」（交互位置在哪儿？）</strong>，并且展开某一行时，前端才按这一行去查。',
+  '<strong style="color:red">只有用户打开「显示执行详情」（交互位置在哪儿？）</strong>',
+  ["&lt;strong", "&quot;color:red&quot;"]);
+t("span class and nested strong style are kept",
+  '<span class="note">见 <strong style="color: red">这里</strong></span>',
+  ['<span class="note">见 <strong style="color: red">这里</strong></span>'],
+  ["&lt;span"]);
+t("script and event handlers stay inert",
+  '<script>alert(1)</script> <strong onclick="alert(1)" style="color:red">x</strong>',
+  ["&lt;script&gt;", '<strong style="color:red">x</strong>'],
+  ["<script>", "onclick"]);
+t("javascript links are dropped",
+  '<a href="javascript:alert(1)">x</a>',
+  ["<a>x</a>"],
+  ["javascript:"]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

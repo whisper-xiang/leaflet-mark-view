@@ -1842,7 +1842,6 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .tree-context-menu {
 
 .markdown-body strong {
   font-weight: 650;
-  color: var(--text);
 }
 .markdown-body em {
   font-style: italic;
@@ -2061,6 +2060,7 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .tree-context-menu {
 
 /* Draggable table columns (added by setupResizableTable). */
 .markdown-body .table-wrap {
+  position: relative;
   overflow-x: auto;
   margin: 20px 0;
 }
@@ -2093,6 +2093,15 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .tree-context-menu {
 .markdown-body .col-resizer:hover::before,
 .markdown-body .col-resizer.dragging::before {
   background: var(--accent);
+}
+.markdown-body .col-resizer.is-edge {
+  right: auto;
+  bottom: 0;
+  height: auto;
+  z-index: 2;
+}
+.markdown-body .col-resizer.is-edge::before {
+  right: 0;
 }
 
 .markdown-body img {
@@ -3884,3 +3893,75 @@ html[data-scheme="dark"] body:not(.bg-off):not(.is-home) .feed-list {
 .auto-scroll-panel output, .auto-scroll-panel small, #autoScrollStatus { color: var(--text-muted); }
 #autoScrollToggle { padding: 8px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--accent-soft); color: var(--text); font: inherit; cursor: pointer; }
 #autoScrollToggle:hover { border-color: var(--accent); }
+
+.lan-share-bar,
+.lan-share-bar[hidden] { display: none; }
+.lan-share-bar:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  color: var(--text);
+  font-size: 13px;
+}
+.lan-share-bar a {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--accent);
+}
+.lan-share-bar button,
+.lan-modal-actions button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.lan-share-bar button:hover,
+.lan-modal-actions button:hover { border-color: var(--accent); }
+.lan-share-alt:not([hidden]) {
+  flex-basis: 100%;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lan-share-bar:not([hidden]) { flex-wrap: wrap; }
+.lan-modal[hidden] { display: none; }
+.lan-modal:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 13000;
+}
+.lan-modal-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+.lan-modal-box {
+  position: relative;
+  width: min(520px, calc(100% - 32px));
+  margin: 12vh auto 0;
+  padding: 22px 22px 18px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+}
+.lan-modal-box h2 { margin: 0 0 8px; font-size: 18px; }
+.lan-modal-box p, .lan-modal-box li { font-size: 14px; line-height: 1.6; }
+.lan-modal-box pre {
+  margin: 12px 0;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+.lan-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.lan-modal-actions button:disabled { opacity: 0.5; cursor: default; }
